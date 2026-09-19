@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
-"""Generate the zalgo marks used by the Minecraft render-subject page.
+"""Generate the zalgo marks used by the Minecraft pages.
 
-The marks are not decoration: they encode two facts about each subject so a
+The marks are not decoration: they encode two facts about each entry so a
 reader can sort a long list by eye before reading a single word.
 
-    direction   class   modeled  -> combining marks above the letters
-                        shadered -> combining marks below the letters
-                        both     -> marks above and below
-    density     tier    1 plain asset file      -> light
-                        2 runtime-resolved      -> medium
-                        3 compiled or code-only -> heavy
+    direction   what kind of thing it is   -> marks above / below / both
+    density     how reachable it is        -> 1, 2 or 4 marks per character
 
-Marks are seeded from the subject id, so the same registry always produces the
-same file and the diff stays empty unless the registry actually changed.
+Each registry keeps its own direction map, because "kind" means something
+different for a render subject than for a file on disk:
+
+    render subjects   modeled  -> above     geometry
+                      shadered -> below     shading
+                      both     -> both      resolves geometry and shading
+
+    .minecraft files  directory -> above    a container of other entries
+                      file      -> below    a leaf
+                      archive   -> both     a container that is also a leaf
+
+Density is the same axis everywhere: tier 1 is something you can open and
+edit by hand, tier 2 needs a tool, tier 3 is machine-owned - compiled,
+generated, locked or cached.
+
+Marks are seeded from each entry's id, so the same registry always produces
+the same file and the diff stays empty unless the registry actually changed.
 
 Usage:  python3 tools/zalgoize.py [--check]
 """
@@ -22,12 +33,11 @@ import hashlib
 import pathlib
 import random
 import sys
+from dataclasses import dataclass, field
 
 import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-REGISTRY = ROOT / "_data" / "minecraft_subjects.yml"
-MARKS = ROOT / "_data" / "zalgo_marks.yml"
 
 # Combining diacriticals, split by where they render relative to the glyph.
 ABOVE = "̀́̂̃̄̆̇̈̊̋̌̑̒̓̈́͆͊͐͑͗͛̚"
@@ -36,17 +46,58 @@ BELOW = "̧̖̗̘̙̜̝̞̟̠̣̤̥̦̩̭̮̰̱̹̼ͅ"
 # marks per character, by tier
 DENSITY = {1: 1, 2: 2, 3: 4}
 
-DIRECTION = {
-    "modeled": ("above",),
-    "shadered": ("below",),
-    "both": ("above", "below"),
-}
+
+@dataclass
+class Registry:
+    """One source file of entries and the marks file generated from it."""
+
+    source: str
+    key: str            # top-level list key inside the source file
+    out: str
+    label: str          # field holding the human-readable name
+    kind: str           # field holding the class/kind
+    directions: dict = field(default_factory=dict)
+
+    @property
+    def source_path(self):
+        return ROOT / self.source
+
+    @property
+    def out_path(self):
+        return ROOT / self.out
 
 
-def mark(text, subject_class, tier, seed):
+REGISTRIES = [
+    Registry(
+        source="_data/minecraft_subjects.yml",
+        key="subjects",
+        out="_data/zalgo_marks.yml",
+        label="subject",
+        kind="class",
+        directions={
+            "modeled": ("above",),
+            "shadered": ("below",),
+            "both": ("above", "below"),
+        },
+    ),
+    Registry(
+        source="_data/minecraft_filesets.yml",
+        key="entries",
+        out="_data/zalgo_filesets.yml",
+        label="name",
+        kind="kind",
+        directions={
+            "directory": ("above",),
+            "file": ("below",),
+            "archive": ("above", "below"),
+        },
+    ),
+]
+
+
+def mark(text, sides, tier, seed):
     """Return `text` with combining marks layered on, deterministically."""
     rng = random.Random(seed)
-    sides = DIRECTION[subject_class]
     per_char = DENSITY[tier]
     out = []
     for char in text:
@@ -60,39 +111,39 @@ def mark(text, subject_class, tier, seed):
     return "".join(out)
 
 
-def sigil(subject_class, tier, seed):
-    """A short standalone badge, same encoding, for tables and legends."""
-    return mark("█", subject_class, tier, seed + ":sigil")
-
-
-def build():
-    registry = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))
+def build(registry):
+    data = yaml.safe_load(registry.source_path.read_text(encoding="utf-8"))
     marks = {}
-    for entry in registry["subjects"]:
-        subject_id = entry["id"]
-        subject_class = entry["class"]
+    for entry in data[registry.key]:
+        entry_id = entry["id"]
+        kind = entry[registry.kind]
         tier = int(entry["tier"])
-        if subject_class not in DIRECTION:
-            raise SystemExit(f"{subject_id}: unknown class {subject_class!r}")
+        if kind not in registry.directions:
+            raise SystemExit(f"{entry_id}: unknown {registry.kind} {kind!r}")
         if tier not in DENSITY:
-            raise SystemExit(f"{subject_id}: unknown tier {tier!r}")
+            raise SystemExit(f"{entry_id}: unknown tier {tier!r}")
+        sides = registry.directions[kind]
         # Seed on the id only. Renaming the display text must not reshuffle
-        # marks for every other subject in the file.
-        seed = hashlib.sha256(subject_id.encode("utf-8")).hexdigest()
-        marks[subject_id] = {
-            "name": mark(entry["subject"], subject_class, tier, seed),
-            "sigil": sigil(subject_class, tier, seed),
+        # marks for every other entry in the file.
+        seed = hashlib.sha256(entry_id.encode("utf-8")).hexdigest()
+        marks[entry_id] = {
+            # the marked copy of the name, for skimming
+            "name": mark(entry[registry.label], sides, tier, seed),
+            # a short standalone badge, same encoding, for tables and legends
+            "sigil": mark("█", sides, tier, seed + ":sigil"),
         }
 
+    legend = " / ".join(
+        f"{k} = {'+'.join(v)}" for k, v in registry.directions.items()
+    )
     header = (
         "# GENERATED by tools/zalgoize.py - do not edit by hand.\n"
-        "# Source: _data/minecraft_subjects.yml\n"
-        "# Marks above = 3d modelled, marks below = shadered, both = both.\n"
-        "# Mark density tracks tier 1/2/3 (asset file / runtime / compiled).\n"
+        f"# Source: {registry.source}\n"
+        f"# Mark direction ({registry.kind}): {legend}.\n"
+        "# Mark density tracks tier 1/2/3 (hand-editable / needs a tool / machine-owned).\n"
         "\n"
     )
-    body = yaml.safe_dump(marks, allow_unicode=True, sort_keys=False, width=4096)
-    return header + body
+    return header + yaml.safe_dump(marks, allow_unicode=True, sort_keys=False, width=4096)
 
 
 def main():
@@ -104,17 +155,29 @@ def main():
     )
     args = parser.parse_args()
 
-    generated = build()
-    if args.check:
-        current = MARKS.read_text(encoding="utf-8") if MARKS.exists() else ""
-        if current != generated:
-            print(f"{MARKS.relative_to(ROOT)} is stale - run python3 tools/zalgoize.py", file=sys.stderr)
-            return 1
-        print(f"{MARKS.relative_to(ROOT)} is up to date")
-        return 0
+    stale = []
+    for registry in REGISTRIES:
+        generated = build(registry)
+        if args.check:
+            current = (
+                registry.out_path.read_text(encoding="utf-8")
+                if registry.out_path.exists()
+                else ""
+            )
+            if current != generated:
+                stale.append(registry.out)
+            else:
+                print(f"{registry.out} is up to date")
+        else:
+            registry.out_path.write_text(generated, encoding="utf-8")
+            print(f"wrote {registry.out}")
 
-    MARKS.write_text(generated, encoding="utf-8")
-    print(f"wrote {MARKS.relative_to(ROOT)}")
+    if stale:
+        print(
+            "stale, run python3 tools/zalgoize.py: " + ", ".join(stale),
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

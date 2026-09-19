@@ -12,4 +12,9 @@ Marks above the letters mean the subject is 3D modelled. Marks below mean it is
 shaded. Marks on both sides mean it resolves geometry and shading together. The
 heavier the marks, the less of the subject a resource pack can reach.
 
-[Open the registry →]({{ '/minecraft-zalgo/' | relative_url }})
+[Render subjects →]({{ '/minecraft-zalgo/' | relative_url }}) — models, shaders and
+the controllers that resolve both, per edition.
+
+[The `.minecraft` fileset →]({{ '/minecraft-filesets/' | relative_url }}) — the same
+marking applied to the entries on disk: file, directory, archive, and how far into
+each one you can reach.

@@ -20,6 +20,10 @@ two editions keep those subjects in completely different places, under completel
 different names. This page is the registry, and the Zalgo marks are the index:
 they tell you what kind of subject you are looking at before you read the row.
 
+The companion page, [the `.minecraft` fileset]({{ '/minecraft-filesets/' | relative_url }}),
+does the same for the entries on disk — which of them a renderer ever reads, and
+which are just state, backup and cache.
+
 ## How to read a mark
 
 The marks are generated, not typed. Two properties are encoded:
@@ -110,11 +114,14 @@ entity models are the closed half; on Bedrock it is exactly reversed.
 
 `_data/minecraft_subjects.yml` is the source of truth. The marks in
 `_data/zalgo_marks.yml` are generated and seeded from each subject's `id`, so
-they are stable across runs and the diff stays empty unless the registry changed:
+they are stable across runs and the diff stays empty unless the registry changed.
+The same generator also marks the
+[`.minecraft` fileset]({{ '/minecraft-filesets/' | relative_url }}), with its own
+direction map:
 
 ```sh
-python3 tools/zalgoize.py          # rewrite the marks
-python3 tools/zalgoize.py --check  # fail if the committed marks are stale
+python3 tools/zalgoize.py          # rewrite both mark files
+python3 tools/zalgoize.py --check  # fail if either is stale
 ```
 
 Add a subject by appending to the registry with an `id`, a `class`

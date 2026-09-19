@@ -1,0 +1,325 @@
+# Referential .minecraft fileset.
+#
+# The entries and their order are taken verbatim from the sprite listing that
+# was supplied (file / directory / archive icons), one row per sprite. What is
+# added here is the reading: where the entry actually lives, what owns it, and
+# which render subject in _data/minecraft_subjects.yml it feeds.
+#
+# Source of truth. Edit here, then regenerate the marks with:
+#   python3 tools/zalgoize.py
+#
+# Fields
+#   id        slug, stable, also the anchor on the page
+#   name      entry as it appears on disk (the sprite label)
+#   kind      file | directory | archive  -> decides the direction of the mark
+#             this mirrors the three sprites in the source listing
+#   tier      1 | 2 | 3                   -> decides how dense the mark is
+#             1 open it in an editor and it makes sense
+#             2 structured binary, needs a tool (NBT, PNG)
+#             3 machine-owned: generated, locked, cached or rotated
+#   status    current | legacy | unverified
+#             unverified = present in the source listing, not confirmed here
+#   location  which folder it sits in
+#   tell      what it is and how you know
+#   see       ids from the render-subject registry this entry feeds (optional)
+
+entries:
+  - id: fs-level-dat
+    name: level.dat
+    kind: file
+    tier: 2
+    status: current
+    location: saves/<world>/
+    tell: >-
+      Gzipped NBT holding the world's own metadata - seed, generator, spawn,
+      game rules, time, player data in singleplayer. Not text: open it with an
+      NBT editor or it looks like noise.
+
+  - id: fs-level-dat-mcr
+    name: level.dat_mcr
+    kind: file
+    tier: 3
+    status: legacy
+    location: saves/<world>/
+    tell: >-
+      The McRegion-era level.dat kept behind when a world was converted to the
+      Anvil format. A conversion leftover, not a live file.
+
+  - id: fs-level-dat-old
+    name: level.dat_old
+    kind: file
+    tier: 3
+    status: current
+    location: saves/<world>/
+    tell: >-
+      The previous level.dat, rotated automatically on each save. Machine-owned
+      backup - rename it over level.dat to roll back, never hand-edit in place.
+
+  - id: fs-special-level-dat
+    name: special_level.dat
+    kind: file
+    tier: 3
+    status: unverified
+    location: saves/<world>/
+    tell: >-
+      Listed in the source fileset alongside level.dat. Carried here for
+      completeness; treat it as an auxiliary level record and confirm against
+      the version that wrote it before relying on it.
+
+  - id: fs-special-level-dat-old
+    name: special_level.dat_old
+    kind: file
+    tier: 3
+    status: unverified
+    location: saves/<world>/
+    tell: >-
+      The rotated-out copy of special_level.dat, same caveat as the file it
+      backs up.
+
+  - id: fs-resourcepacks
+    name: resourcepacks
+    kind: directory
+    tier: 1
+    status: current
+    location: .minecraft/
+    tell: >-
+      Where a pack is dropped, as a folder or a .zip with pack.mcmeta at its
+      root. Everything modelled or shaded that a Java pack can reach enters
+      the game through here.
+    see: [je-block-model, je-item-model, je-core-shader, je-texture-atlas]
+
+  - id: fs-resources-zip
+    name: resources.zip
+    kind: archive
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      A bundled resource archive from the pre-1.6 layout, before the launcher
+      moved shared assets into assets/ with hashed objects and an index JSON.
+      Both a container and a leaf, which is why it carries marks on both sides.
+    see: [je-texture-atlas]
+
+  - id: fs-session-lock
+    name: session.lock
+    kind: file
+    tier: 3
+    status: current
+    location: saves/<world>/
+    tell: >-
+      Written and held open while a world is loaded so a second client cannot
+      open it at the same time. Purely machine-owned; a stale one is the usual
+      cause of "world is already in use".
+
+  - id: fs-screenshots
+    name: screenshots
+    kind: directory
+    tier: 1
+    status: current
+    location: .minecraft/
+    tell: >-
+      Flat output folder for F2 captures. Nothing reads it back - the game only
+      ever appends.
+
+  - id: fs-screenshot-png
+    name: year-month-day_hour.minute.second.png
+    kind: file
+    tier: 2
+    status: current
+    location: .minecraft/screenshots/
+    tell: >-
+      One capture, named from the clock at the moment of the keypress. A second
+      shot inside the same second gets an instance suffix appended before the
+      extension so the names cannot collide.
+
+  - id: fs-stats
+    name: stats
+    kind: directory
+    tier: 1
+    status: current
+    location: saves/<world>/ (modern) or .minecraft/ (legacy)
+    tell: >-
+      Per-player counters. Modern versions keep one JSON per player UUID inside
+      the world folder; the .dat files below are what the same directory held
+      before that move.
+
+  - id: fs-stats-unsent-dat
+    name: stats_player_unsent.dat
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/stats/
+    tell: >-
+      Buffer of statistics recorded locally but not yet accepted by the server,
+      from the era when stats were synced rather than stored per world.
+
+  - id: fs-stats-unsent-old
+    name: stats_player_unsent.old
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/stats/
+    tell: >-
+      The rotated-out copy of the unsent-stats buffer. Same era, same handling:
+      leave it to the client.
+
+  - id: fs-texturepacks
+    name: texturepacks
+    kind: directory
+    tier: 1
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      The pre-1.6 ancestor of resourcepacks/. Flat texture sheets, no
+      pack.mcmeta, no model or shader overrides - modern clients ignore it.
+    see: [je-block-model, je-texture-atlas]
+
+  - id: fs-texturepacks-mp-cache
+    name: texturepacks-mp-cache
+    kind: directory
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      Cache of packs pushed by multiplayer servers under the old texture-pack
+      system. Machine-owned and disposable; deleting it only forces a re-fetch.
+    see: [je-texture-atlas]
+
+  - id: fs-command-history
+    name: command_history.txt
+    kind: file
+    tier: 1
+    status: current
+    location: .minecraft/
+    tell: >-
+      Plain-text log of commands sent from the chat box, persisted so the
+      up-arrow history survives a restart. One line per command.
+
+  - id: fs-debug-stitched-items
+    name: debug.stitched_items.png
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      A dump of the stitched item sheet, written by the client for inspection
+      rather than read back. The direct ancestor of modern atlas dumps.
+    see: [je-texture-atlas]
+
+  - id: fs-debug-stitched-terrain
+    name: debug.stitched_terrain.png
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      The same dump for the terrain sheet - the block atlas as the renderer
+      assembled it, useful for spotting a sprite that failed to stitch.
+    see: [je-texture-atlas]
+
+  - id: fs-hotbar-nbt
+    name: hotbar.nbt
+    kind: file
+    tier: 2
+    status: current
+    location: .minecraft/
+    tell: >-
+      The saved creative hotbars (C plus a number key), stored as NBT item
+      stacks. Client-side and world-independent.
+    see: [je-item-model]
+
+  - id: fs-options-txt
+    name: options.txt
+    kind: file
+    tier: 1
+    status: current
+    location: .minecraft/
+    tell: >-
+      Every client setting as key:value on its own line, including the render
+      settings - render distance, graphics, entity distance - that decide how
+      much of the shading path runs.
+    see: [je-shaderpack]
+
+  - id: fs-realms-persistence
+    name: realms_persistence.json
+    kind: file
+    tier: 1
+    status: current
+    location: .minecraft/
+    tell: >-
+      Small JSON of Realms client state, such as which news items have already
+      been shown. Readable, but nothing here is worth editing.
+
+  - id: fs-servers-dat
+    name: servers.dat
+    kind: file
+    tier: 2
+    status: current
+    location: .minecraft/
+    tell: >-
+      The multiplayer server list as NBT - name, address, accepted-textures
+      flag and the cached server icon, one compound per entry.
+
+  - id: fs-textures-0
+    name: textures_0.png
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      First of the numbered atlas sheets written out beside the debug.stitched_
+      dumps. Generated by the client, never read back - safe to delete, it
+      simply reappears.
+    see: [je-texture-atlas]
+
+  - id: fs-textures-1
+    name: textures_1.png
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      Second numbered atlas sheet. The numbering is page order, not content, so
+      the same index means different sprites between versions.
+    see: [je-texture-atlas]
+
+  - id: fs-textures-2
+    name: textures_2.png
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      Third numbered atlas sheet. Machine-owned like the rest of the series.
+    see: [je-texture-atlas]
+
+  - id: fs-textures-3
+    name: textures_3.png
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      Fourth numbered atlas sheet. Machine-owned like the rest of the series.
+    see: [je-texture-atlas]
+
+  - id: fs-textures-4
+    name: textures_4.png
+    kind: file
+    tier: 3
+    status: legacy
+    location: .minecraft/
+    tell: >-
+      Fifth numbered atlas sheet, and the end of the series in the source
+      listing. Machine-owned like the rest.
+    see: [je-texture-atlas]
+
+  - id: fs-usercache
+    name: usercache.json
+    kind: file
+    tier: 1
+    status: current
+    location: .minecraft/
+    tell: >-
+      Cached name-to-UUID lookups with expiry timestamps, so the client or a
+      LAN host does not re-resolve a profile it has already seen.
