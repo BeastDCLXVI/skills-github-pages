@@ -1,0 +1,57 @@
+---
+layout: page
+---
+
+{% assign m = site.data.zalgo_marks[page.sid] %}
+
+<p>
+  <span aria-hidden="true" style="font-family: ui-monospace, monospace; font-size: 1.3rem;"
+        title="{{ page.render_class }}, tier {{ page.tier }}">{{ m.name }}</span>
+</p>
+
+<dl>
+  <dt><strong>id</strong></dt><dd><code>{{ page.sid }}</code> (sequence <code>{{ page.seq }}</code>)</dd>
+  <dt><strong>Edition</strong></dt><dd>{{ page.edition }}</dd>
+  <dt><strong>Class</strong></dt><dd>{{ page.render_class }} —
+    {% if page.render_class == "modeled" %}geometry, so the mark sits above the letters
+    {% elsif page.render_class == "shadered" %}shading, so the mark sits below the letters
+    {% else %}geometry and shading together, so the mark sits on both sides{% endif %}</dd>
+  <dt><strong>Tier</strong></dt><dd>{{ page.tier }} —
+    {% if page.tier == 1 %}a plain asset file you can open and grep
+    {% elsif page.tier == 2 %}engine-side config resolved at runtime
+    {% else %}compiled or code-only, not authorable from a pack{% endif %}</dd>
+  <dt><strong>Stack</strong></dt><dd>{{ page.stack | escape }}</dd>
+  <dt><strong>Where it lives</strong></dt><dd><code>{{ page.where | escape }}</code></dd>
+</dl>
+
+<h2>The tell</h2>
+
+{{ content }}
+
+{% assign feeders = site.data.minecraft_filesets.entries | where_exp: "e", "e.see contains page.sid" %}
+{% if feeders.size > 0 %}
+<h2>Reached through</h2>
+<p>Entries in the <a href="{{ '/minecraft-filesets/' | relative_url }}">.minecraft fileset</a>
+that feed this subject:</p>
+<ul>
+  {% for e in feeders %}
+  <li><a href="{{ '/minecraft-filesets/' | relative_url }}#{{ e.id }}"><code>{{ e.name | escape }}</code></a>
+      — {{ e.location | escape }}, {{ e.status }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+
+{% assign ordered = site.subjects | sort: "seq" %}
+{% for s in ordered %}{% if s.sid == page.sid %}{% assign idx = forloop.index0 %}{% assign lastidx = forloop.length | minus: 1 %}{% endif %}{% endfor %}
+{% if idx > 0 %}{% assign j = idx | minus: 1 %}{% assign prev = ordered[j] %}{% endif %}
+{% if idx < lastidx %}{% assign k = idx | plus: 1 %}{% assign nxt = ordered[k] %}{% endif %}
+
+<p>
+  {% if prev %}← <a href="{{ prev.url | relative_url }}">{{ prev.title }}</a>{% endif %}
+  {% if prev and nxt %} · {% endif %}
+  {% if nxt %}<a href="{{ nxt.url | relative_url }}">{{ nxt.title }}</a> →{% endif %}
+</p>
+
+<p><a href="{{ '/minecraft-zalgo/' | relative_url }}">All render subjects</a></p>

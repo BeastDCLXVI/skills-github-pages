@@ -18,7 +18,8 @@ layout: page
   .status-unverified { font-weight: 700; }
 </style>
 
-The companion registry to the [render subjects]({{ '/minecraft-zalgo/' | relative_url }}):
+The companion registry to the [render subjects]({{ '/minecraft-zalgo/' | relative_url }}), each of
+which now has [a page of its own]({{ '/subjects/je-core-shader/' | relative_url }}):
 the entries on disk, in the order of the source sprite listing, one row per
 sprite. The sprites already sorted them into **file**, **directory** and
 **archive** — the marks carry that same split, plus how much of the entry is
@@ -63,7 +64,7 @@ than guessed at.
       <td>{{ e.tell | escape }}</td>
       <td>
         {% if e.see %}
-          {% for sid in e.see %}<a href="{{ '/minecraft-zalgo/' | relative_url }}#{{ sid }}"><code>{{ sid }}</code></a>{% unless forloop.last %}<br>{% endunless %}{% endfor %}
+          {% for sid in e.see %}<a href="{{ '/subjects/' | append: sid | append: '/' | relative_url }}"><code>{{ sid }}</code></a>{% unless forloop.last %}<br>{% endunless %}{% endfor %}
         {% else %}—{% endif %}
       </td>
     </tr>
@@ -99,7 +100,7 @@ is state, backup and cache:
 
 | Entry | Feeds |
 | --- | --- |
-{% for e in feeding %}| [`{{ e.name }}`](#{{ e.id }}) | {% for sid in e.see %}[`{{ sid }}`]({{ '/minecraft-zalgo/' | relative_url }}#{{ sid }}){% unless forloop.last %}, {% endunless %}{% endfor %} |
+{% for e in feeding %}| [`{{ e.name }}`](#{{ e.id }}) | {% for sid in e.see %}[`{{ sid }}`]({{ '/subjects/' | append: sid | append: '/' | relative_url }}){% unless forloop.last %}, {% endunless %}{% endfor %} |
 {% endfor %}
 
 Note the shape of that list: every entry feeding the renderer is either a pack

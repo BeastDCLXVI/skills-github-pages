@@ -47,16 +47,38 @@ BELOW = "̧̖̗̘̙̜̝̞̟̠̣̤̥̦̩̭̮̰̱̹̼ͅ"
 DENSITY = {1: 1, 2: 2, 3: 4}
 
 
+def front_matter(path):
+    """Parse the YAML front matter of a Markdown file."""
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---"):
+        raise SystemExit(f"{path}: no front matter")
+    _, fm, _ = text.split("---", 2)
+    entry = yaml.safe_load(fm)
+    entry["_path"] = str(path)
+    return entry
+
+
 @dataclass
 class Registry:
-    """One source file of entries and the marks file generated from it."""
+    """One source of entries and the marks file generated from it.
+
+    `ident` is the field holding the slug each mark is seeded from. It is not
+    always "id": a Jekyll collection document already has an `id` of its own,
+    so the subject files carry `sid` instead.
+
+    `loader` is either "yaml_list" - a single YAML file with a list under
+    `key` - or "frontmatter_dir", a folder of Markdown files whose YAML front
+    matter carries the fields and whose body carries the prose.
+    """
 
     source: str
-    key: str            # top-level list key inside the source file
+    key: str            # top-level list key, yaml_list only
     out: str
     label: str          # field holding the human-readable name
     kind: str           # field holding the class/kind
+    ident: str = "id"   # field holding the stable slug the mark is seeded from
     directions: dict = field(default_factory=dict)
+    loader: str = "yaml_list"
 
     @property
     def source_path(self):
@@ -66,14 +88,22 @@ class Registry:
     def out_path(self):
         return ROOT / self.out
 
+    def load(self):
+        if self.loader == "yaml_list":
+            data = yaml.safe_load(self.source_path.read_text(encoding="utf-8"))
+            return data[self.key]
+        return [front_matter(p) for p in sorted(self.source_path.glob("*.md"))]
+
 
 REGISTRIES = [
     Registry(
-        source="_data/minecraft_subjects.yml",
-        key="subjects",
+        source="_subjects",
+        key="",
         out="_data/zalgo_marks.yml",
-        label="subject",
-        kind="class",
+        label="title",
+        kind="render_class",
+        ident="sid",
+        loader="frontmatter_dir",
         directions={
             "modeled": ("above",),
             "shadered": ("below",),
@@ -111,11 +141,22 @@ def mark(text, sides, tier, seed):
     return "".join(out)
 
 
+def next_seq(last):
+    """Next label in the fixed-width letter sequence: aa, ab, ... az, ba.
+
+    Fixed width is the point - it keeps lexical order and append order the
+    same, so a new subject never renumbers an existing one.
+    """
+    index = (ord(last[0]) - ord("a")) * 26 + (ord(last[1]) - ord("a")) + 1
+    if index >= 26 * 26:
+        raise SystemExit("sequence exhausted at zz")
+    return chr(ord("a") + index // 26) + chr(ord("a") + index % 26)
+
+
 def build(registry):
-    data = yaml.safe_load(registry.source_path.read_text(encoding="utf-8"))
     marks = {}
-    for entry in data[registry.key]:
-        entry_id = entry["id"]
+    for entry in registry.load():
+        entry_id = entry[registry.ident]
         kind = entry[registry.kind]
         tier = int(entry["tier"])
         if kind not in registry.directions:
@@ -153,7 +194,24 @@ def main():
         action="store_true",
         help="fail instead of writing if the committed marks are stale",
     )
+    parser.add_argument(
+        "--next",
+        action="store_true",
+        help="print the next free sequence letters for each collection registry",
+    )
     args = parser.parse_args()
+
+    if args.next:
+        for registry in REGISTRIES:
+            if registry.loader != "frontmatter_dir":
+                continue
+            used = sorted(e["seq"] for e in registry.load())
+            print(
+                f"{registry.source}/: {len(used)} entries, "
+                f"last {used[-1]}, next {next_seq(used[-1])} "
+                f"-> {registry.source}/{next_seq(used[-1])}-<id>.md"
+            )
+        return 0
 
     stale = []
     for registry in REGISTRIES:

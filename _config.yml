@@ -1,3 +1,7 @@
 theme: minima
 title: BeastDCLXVI
 description: Notes on rendering, models and shaders across the two Minecraft editions.
+
+collections:
+  subjects:
+    output: true
