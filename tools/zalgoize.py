@@ -122,6 +122,18 @@ REGISTRIES = [
             "archive": ("above", "below"),
         },
     ),
+    Registry(
+        source="_data/minecraft_jar.yml",
+        key="entries",
+        out="_data/zalgo_jar.yml",
+        label="name",
+        kind="kind",
+        directions={
+            "directory": ("above",),
+            "file": ("below",),
+            "archive": ("above", "below"),
+        },
+    ),
 ]
 
 
@@ -203,14 +215,17 @@ def main():
 
     if args.next:
         for registry in REGISTRIES:
-            if registry.loader != "frontmatter_dir":
+            entries = registry.load()
+            used = sorted(e["seq"] for e in entries if e.get("seq"))
+            if not used:
                 continue
-            used = sorted(e["seq"] for e in registry.load())
-            print(
-                f"{registry.source}/: {len(used)} entries, "
-                f"last {used[-1]}, next {next_seq(used[-1])} "
-                f"-> {registry.source}/{next_seq(used[-1])}-<id>.md"
+            nxt = next_seq(used[-1])
+            where = (
+                f"{registry.source}/{nxt}-<id>.md"
+                if registry.loader == "frontmatter_dir"
+                else f"a new entry in {registry.source} with seq: {nxt}"
             )
+            print(f"{registry.source}: {len(used)} entries, last {used[-1]}, next {nxt} -> {where}")
         return 0
 
     stale = []

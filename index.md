@@ -18,3 +18,7 @@ the controllers that resolve both, per edition.
 [The `.minecraft` fileset →]({{ '/minecraft-filesets/' | relative_url }}) — the same
 marking applied to the entries on disk: file, directory, archive, and how far into
 each one you can reach.
+
+[Inside the jar →]({{ '/minecraft-jar/' | relative_url }}) — where the defaults for
+every subject actually ship, and the one directory in there that has no files to
+open at all.

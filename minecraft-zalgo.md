@@ -22,7 +22,9 @@ they tell you what kind of subject you are looking at before you read the row.
 
 The companion page, [the `.minecraft` fileset]({{ '/minecraft-filesets/' | relative_url }}),
 does the same for the entries on disk — which of them a renderer ever reads, and
-which are just state, backup and cache.
+which are just state, backup and cache. A third,
+[inside the jar]({{ '/minecraft-jar/' | relative_url }}), covers where the
+defaults for every subject below actually ship.
 
 ## How to read a mark
 

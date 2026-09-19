@@ -1,0 +1,324 @@
+# The client jar, from the outside in.
+#
+# The fileset page ends on the observation that nothing in .minecraft holds
+# geometry or a shader program of its own. This is where they are: the version
+# jar, which lands inside .minecraft itself at versions/<version>/<version>.jar
+# and was not in the source sprite listing.
+#
+# Source of truth. Edit here, then regenerate the marks with:
+#   python3 tools/zalgoize.py
+#
+# Fields as in _data/minecraft_filesets.yml, plus:
+#   seq     two fixed-width letters, the stable handle (see tools/zalgoize.py --next)
+#   depth   nesting level for the tree rendering, 0 = the jar itself
+#   see     ids from _subjects/ that this entry supplies
+
+entries:
+  - id: jar-archive
+    seq: aa
+    name: <version>.jar
+    kind: archive
+    tier: 3
+    depth: 0
+    status: current
+    location: .minecraft/versions/<version>/
+    tell: >-
+      The client itself: a signed zip holding the code and every default asset.
+      Both a container and a leaf, so it carries marks on both sides - the same
+      shape resources.zip has in the fileset, one era later.
+
+  - id: jar-pack-mcmeta
+    seq: ab
+    name: pack.mcmeta
+    kind: file
+    tier: 1
+    depth: 1
+    status: current
+    location: <jar root>
+    tell: >-
+      Declares the pack_format of the built-in resources. The jar is a resource
+      pack - the lowest one in the stack, which is why a pack only has to
+      override the files it actually changes.
+
+  - id: jar-version-json
+    seq: ac
+    name: version.json
+    kind: file
+    tier: 1
+    depth: 1
+    status: current
+    location: <jar root>
+    tell: >-
+      Version id, release target, world and pack format numbers. The quickest
+      honest answer to "which version is this jar".
+
+  - id: jar-meta-inf
+    seq: ad
+    name: META-INF/
+    kind: directory
+    tier: 3
+    depth: 1
+    status: current
+    location: <jar root>
+    tell: >-
+      Manifest and signature files. Repacking the jar invalidates what is in
+      here, which is the first thing that breaks when the jar is edited by hand.
+
+  - id: jar-manifest
+    seq: ae
+    name: MANIFEST.MF
+    kind: file
+    tier: 1
+    depth: 2
+    status: current
+    location: <jar root>/META-INF/
+    tell: >-
+      Plain-text manifest - main class and attributes. Readable, but signed
+      alongside, so reading is all you should do.
+
+  - id: jar-classes
+    seq: af
+    name: net/minecraft/
+    kind: directory
+    tier: 3
+    depth: 1
+    status: current
+    location: <jar root>
+    tell: >-
+      The compiled client. Every subject that has no file of its own lives here
+      as bytecode - entity models, block entity renderers, render types, the
+      lightmap. This is the whole reason those subjects are tier 3.
+    see: [je-entity-model, je-block-entity-renderer, je-baked-quad, je-render-type, je-light-texture]
+
+  - id: jar-assets
+    seq: ag
+    name: assets/
+    kind: directory
+    tier: 1
+    depth: 1
+    status: current
+    location: <jar root>
+    tell: >-
+      The default resource pack's payload, laid out exactly as a resource pack
+      in .minecraft/resourcepacks/ lays itself out. Same tree, lower priority.
+
+  - id: jar-mcassetsroot
+    seq: ah
+    name: .mcassetsroot
+    kind: file
+    tier: 3
+    depth: 2
+    status: current
+    location: <jar root>/assets/
+    tell: >-
+      A zero-content marker the game uses to recognise an asset root. Nothing to
+      read; deleting it breaks resolution.
+
+  - id: jar-assets-minecraft
+    seq: ai
+    name: assets/minecraft/
+    kind: directory
+    tier: 1
+    depth: 2
+    status: current
+    location: <jar root>
+    tell: >-
+      The vanilla namespace. Everything below is what a resource pack shadows
+      file by file - and the namespace is why a pack can add its own alongside
+      rather than replacing this one.
+
+  - id: jar-blockstates
+    seq: aj
+    name: blockstates/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      One JSON per block, mapping its states to models. The routing layer, and
+      the first file to check when a block renders as the wrong shape.
+    see: [je-blockstate]
+
+  - id: jar-models-block
+    seq: ak
+    name: models/block/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      Every default block model, most of them a few lines inheriting a parent.
+      Copy one out, edit it in a pack, and the pack's copy wins.
+    see: [je-block-model]
+
+  - id: jar-models-item
+    seq: al
+    name: models/item/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      Item models and their display transforms. Most are generated from the
+      sprite; the handheld ones differ only in how they sit in the hand.
+    see: [je-item-model]
+
+  - id: jar-textures
+    seq: am
+    name: textures/
+    kind: directory
+    tier: 2
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      Loose PNGs - block, item, entity, gui, and the .mcmeta files beside them
+      that declare animation frames. Stitched into atlases at load, never
+      shipped pre-stitched.
+    see: [je-texture-atlas]
+
+  - id: jar-atlases
+    seq: an
+    name: atlases/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      The stitching instructions - which directories and single sprites go into
+      which atlas. Small files with outsized effect on load.
+    see: [je-texture-atlas]
+
+  - id: jar-shaders-core
+    seq: ao
+    name: shaders/core/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      The vanilla vertex and fragment programs as plain text, one trio of
+      .json/.vsh/.fsh per render type. This directory is the whole argument for
+      Java being the open half: Bedrock's equivalent ships compiled.
+    see: [je-core-shader]
+
+  - id: jar-shaders-post
+    seq: ap
+    name: shaders/post/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      Screen-effect chains and their programs - creeper, spider, invert, and the
+      targets they draw through.
+    see: [je-post-chain]
+
+  - id: jar-shaders-include
+    seq: aq
+    name: shaders/include/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      Shared GLSL pulled into the core programs - fog and light helpers. Edit one
+      of these in a pack and every shader that includes it changes at once.
+    see: [je-core-shader]
+
+  - id: jar-particles
+    seq: ar
+    name: particles/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      One JSON per particle type, each naming the textures it cycles through.
+      Thinner than Bedrock's equivalent, which also carries the material and the
+      sizing Molang.
+    see: [pe-particle]
+
+  - id: jar-font
+    seq: as
+    name: font/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      Font providers - bitmap sheets, glyph sizes, the unicode fallback. Where
+      combining marks like the ones on this site either render or do not.
+
+  - id: jar-lang
+    seq: at
+    name: lang/en_us.json
+    kind: file
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      The only language that ships inside the jar. Every other locale is
+      downloaded to .minecraft/assets/ and resolved through an index, which is
+      why a jar is smaller than the game's total assets.
+
+  - id: jar-sounds-json
+    seq: au
+    name: sounds.json
+    kind: file
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      Sound event definitions - names, weights, subtitles. The .ogg files
+      themselves are not here; like the extra languages they live in the
+      launcher's hashed object store.
+
+  - id: jar-texts
+    seq: av
+    name: texts/
+    kind: directory
+    tier: 1
+    depth: 3
+    status: current
+    location: <jar root>/assets/minecraft/
+    tell: >-
+      splashes.txt, credits, the end poem. Plain text, no structure, and the
+      easiest safe edit anyone ever makes to a pack.
+
+  - id: jar-data
+    seq: aw
+    name: data/
+    kind: directory
+    tier: 1
+    depth: 1
+    status: current
+    location: <jar root>
+    tell: >-
+      The built-in datapack, parallel to assets/ - the server half of the jar.
+      Nothing here reaches the renderer, which is the cleanest demonstration of
+      where the line between the two actually falls.
+
+  - id: jar-data-minecraft
+    seq: ax
+    name: data/minecraft/
+    kind: directory
+    tier: 1
+    depth: 2
+    status: current
+    location: <jar root>
+    tell: >-
+      Recipes, loot tables, tags, advancements, worldgen. A datapack in
+      .minecraft/saves/<world>/datapacks/ shadows these the same way a resource
+      pack shadows assets/.

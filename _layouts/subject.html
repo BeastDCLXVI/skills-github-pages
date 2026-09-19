@@ -29,6 +29,17 @@ layout: page
 {{ content }}
 
 {% assign feeders = site.data.minecraft_filesets.entries | where_exp: "e", "e.see contains page.sid" %}
+{% assign shippers = site.data.minecraft_jar.entries | where_exp: "e", "e.see contains page.sid" %}
+{% if shippers.size > 0 %}
+<h2>Ships from</h2>
+<p>Where the default lives <a href="{{ '/minecraft-jar/' | relative_url }}">inside the jar</a>:</p>
+<ul>
+  {% for e in shippers %}
+  <li><a href="{{ '/minecraft-jar/' | relative_url }}#{{ e.id }}"><code>{{ e.name | escape }}</code></a>
+      — {{ e.location | escape }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
 {% if feeders.size > 0 %}
 <h2>Reached through</h2>
 <p>Entries in the <a href="{{ '/minecraft-filesets/' | relative_url }}">.minecraft fileset</a>

@@ -50,12 +50,13 @@ than guessed at.
 {% assign entries = site.data.minecraft_filesets.entries %}
 <table class="zalgo">
   <thead>
-    <tr><th>Mark</th><th>Entry</th><th>Kind</th><th class="tier">Tier</th><th>Status</th><th>What it is</th><th>Feeds</th></tr>
+    <tr><th class="tier">Seq</th><th>Mark</th><th>Entry</th><th>Kind</th><th class="tier">Tier</th><th>Status</th><th>What it is</th><th>Feeds</th></tr>
   </thead>
   <tbody>
   {% for e in entries %}
     {% assign m = site.data.zalgo_filesets[e.id] %}
     <tr id="{{ e.id }}">
+      <td class="tier"><code>{{ e.seq }}</code></td>
       <td class="zalgo-mark" aria-hidden="true" title="{{ e.kind }}, tier {{ e.tier }}">{{ m.sigil }}</td>
       <td><code>{{ e.name | escape }}</code><br><small>{{ e.location | escape }}</small></td>
       <td>{{ e.kind }}</td>
@@ -86,7 +87,7 @@ is the view for spotting a kind at a glance rather than reading a table.
 <ul class="zalgo-roll">
 {% for e in group %}
   <li><span aria-hidden="true">{{ site.data.zalgo_filesets[e.id].name }}</span>
-      <code>{{ e.id }}</code> — tier {{ e.tier }}, {{ e.status }}</li>
+      <code>{{ e.seq }}</code> <code>{{ e.id }}</code> — tier {{ e.tier }}, {{ e.status }}</li>
 {% endfor %}
 </ul>
 {% endfor %}
@@ -105,18 +106,26 @@ is state, backup and cache:
 
 Note the shape of that list: every entry feeding the renderer is either a pack
 folder or an atlas dump. Nothing in `.minecraft` holds geometry or a shader
-program of its own — the game ships those inside the jar, and a pack folder is
-the only door in. That is the same asymmetry the subject page ends on, seen
-from the filesystem instead of the renderer.
+program of its own — the game ships those
+[inside the jar]({{ '/minecraft-jar/' | relative_url }}), and a pack folder is
+the only door in. That is the same asymmetry the subject page ends on, seen from
+the filesystem instead of the renderer.
+
+The jar lands in `.minecraft` as well, at `versions/<version>/<version>.jar`. It
+was not in the source sprite listing, so it is catalogued
+[on its own page]({{ '/minecraft-jar/' | relative_url }}) rather than folded in
+here.
 
 ## Regenerating
 
 Both registries share one generator, each with its own direction map:
 
 ```sh
-python3 tools/zalgoize.py          # rewrite _data/zalgo_marks.yml and _data/zalgo_filesets.yml
-python3 tools/zalgoize.py --check  # fail if either committed mark file is stale
+python3 tools/zalgoize.py          # rewrite all three mark files
+python3 tools/zalgoize.py --check  # fail if any committed mark file is stale
+python3 tools/zalgoize.py --next   # the next free sequence letters in each registry
 ```
 
 Marks are seeded from each entry's `id`, so adding a row here never reshuffles
-the marks on any other row, in either registry.
+the marks on any other row, in any registry. The `seq` letters are fixed-width
+for the same reason: appending never renumbers what is already there.

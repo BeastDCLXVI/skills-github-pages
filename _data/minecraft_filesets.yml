@@ -10,6 +10,8 @@
 #
 # Fields
 #   id        slug, stable, also the anchor on the page
+#   seq       two fixed-width letters, the stable handle
+#             (tools/zalgoize.py --next prints the next free one)
 #   name      entry as it appears on disk (the sprite label)
 #   kind      file | directory | archive  -> decides the direction of the mark
 #             this mirrors the three sprites in the source listing
@@ -25,6 +27,7 @@
 
 entries:
   - id: fs-level-dat
+    seq: aa
     name: level.dat
     kind: file
     tier: 2
@@ -36,6 +39,7 @@ entries:
       NBT editor or it looks like noise.
 
   - id: fs-level-dat-mcr
+    seq: ab
     name: level.dat_mcr
     kind: file
     tier: 3
@@ -46,6 +50,7 @@ entries:
       Anvil format. A conversion leftover, not a live file.
 
   - id: fs-level-dat-old
+    seq: ac
     name: level.dat_old
     kind: file
     tier: 3
@@ -56,6 +61,7 @@ entries:
       backup - rename it over level.dat to roll back, never hand-edit in place.
 
   - id: fs-special-level-dat
+    seq: ad
     name: special_level.dat
     kind: file
     tier: 3
@@ -67,6 +73,7 @@ entries:
       the version that wrote it before relying on it.
 
   - id: fs-special-level-dat-old
+    seq: ae
     name: special_level.dat_old
     kind: file
     tier: 3
@@ -77,6 +84,7 @@ entries:
       backs up.
 
   - id: fs-resourcepacks
+    seq: af
     name: resourcepacks
     kind: directory
     tier: 1
@@ -89,6 +97,7 @@ entries:
     see: [je-block-model, je-item-model, je-core-shader, je-texture-atlas]
 
   - id: fs-resources-zip
+    seq: ag
     name: resources.zip
     kind: archive
     tier: 3
@@ -101,6 +110,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-session-lock
+    seq: ah
     name: session.lock
     kind: file
     tier: 3
@@ -112,6 +122,7 @@ entries:
       cause of "world is already in use".
 
   - id: fs-screenshots
+    seq: ai
     name: screenshots
     kind: directory
     tier: 1
@@ -122,6 +133,7 @@ entries:
       ever appends.
 
   - id: fs-screenshot-png
+    seq: aj
     name: year-month-day_hour.minute.second.png
     kind: file
     tier: 2
@@ -133,6 +145,7 @@ entries:
       extension so the names cannot collide.
 
   - id: fs-stats
+    seq: ak
     name: stats
     kind: directory
     tier: 1
@@ -144,6 +157,7 @@ entries:
       before that move.
 
   - id: fs-stats-unsent-dat
+    seq: al
     name: stats_player_unsent.dat
     kind: file
     tier: 3
@@ -154,6 +168,7 @@ entries:
       from the era when stats were synced rather than stored per world.
 
   - id: fs-stats-unsent-old
+    seq: am
     name: stats_player_unsent.old
     kind: file
     tier: 3
@@ -164,6 +179,7 @@ entries:
       leave it to the client.
 
   - id: fs-texturepacks
+    seq: an
     name: texturepacks
     kind: directory
     tier: 1
@@ -175,6 +191,7 @@ entries:
     see: [je-block-model, je-texture-atlas]
 
   - id: fs-texturepacks-mp-cache
+    seq: ao
     name: texturepacks-mp-cache
     kind: directory
     tier: 3
@@ -186,6 +203,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-command-history
+    seq: ap
     name: command_history.txt
     kind: file
     tier: 1
@@ -196,6 +214,7 @@ entries:
       up-arrow history survives a restart. One line per command.
 
   - id: fs-debug-stitched-items
+    seq: aq
     name: debug.stitched_items.png
     kind: file
     tier: 3
@@ -207,6 +226,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-debug-stitched-terrain
+    seq: ar
     name: debug.stitched_terrain.png
     kind: file
     tier: 3
@@ -218,6 +238,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-hotbar-nbt
+    seq: as
     name: hotbar.nbt
     kind: file
     tier: 2
@@ -229,6 +250,7 @@ entries:
     see: [je-item-model]
 
   - id: fs-options-txt
+    seq: at
     name: options.txt
     kind: file
     tier: 1
@@ -241,6 +263,7 @@ entries:
     see: [je-shaderpack]
 
   - id: fs-realms-persistence
+    seq: au
     name: realms_persistence.json
     kind: file
     tier: 1
@@ -251,6 +274,7 @@ entries:
       been shown. Readable, but nothing here is worth editing.
 
   - id: fs-servers-dat
+    seq: av
     name: servers.dat
     kind: file
     tier: 2
@@ -261,6 +285,7 @@ entries:
       flag and the cached server icon, one compound per entry.
 
   - id: fs-textures-0
+    seq: aw
     name: textures_0.png
     kind: file
     tier: 3
@@ -273,6 +298,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-textures-1
+    seq: ax
     name: textures_1.png
     kind: file
     tier: 3
@@ -284,6 +310,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-textures-2
+    seq: ay
     name: textures_2.png
     kind: file
     tier: 3
@@ -294,6 +321,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-textures-3
+    seq: az
     name: textures_3.png
     kind: file
     tier: 3
@@ -304,6 +332,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-textures-4
+    seq: ba
     name: textures_4.png
     kind: file
     tier: 3
@@ -315,6 +344,7 @@ entries:
     see: [je-texture-atlas]
 
   - id: fs-usercache
+    seq: bb
     name: usercache.json
     kind: file
     tier: 1
