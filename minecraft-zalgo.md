@@ -4,16 +4,6 @@ permalink: /minecraft-zalgo/
 layout: page
 ---
 
-<style>
-  .zalgo-mark { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.15rem; line-height: 1; }
-  .zalgo-roll { font-size: 1.05rem; line-height: 2.6; }
-  .zalgo-roll code { font-size: .8rem; opacity: .75; }
-  table.zalgo { border-collapse: collapse; width: 100%; font-size: .92rem; }
-  table.zalgo th, table.zalgo td { border: 1px solid rgba(128,128,128,.35); padding: .45rem .55rem; vertical-align: top; text-align: left; }
-  table.zalgo th { white-space: nowrap; }
-  table.zalgo code { white-space: nowrap; font-size: .82rem; }
-  .tier { font-variant-numeric: tabular-nums; }
-</style>
 
 Every visible thing in Minecraft is either **modelled**, **shaded**, or both — but the
 two editions keep those subjects in completely different places, under completely

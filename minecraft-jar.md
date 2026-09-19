@@ -4,15 +4,6 @@ permalink: /minecraft-jar/
 layout: page
 ---
 
-<style>
-  .zalgo-mark { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.15rem; line-height: 1; }
-  table.zalgo { border-collapse: collapse; width: 100%; font-size: .92rem; }
-  table.zalgo th, table.zalgo td { border: 1px solid rgba(128,128,128,.35); padding: .45rem .55rem; vertical-align: top; text-align: left; }
-  table.zalgo th { white-space: nowrap; }
-  table.zalgo code { font-size: .82rem; }
-  .tier { font-variant-numeric: tabular-nums; }
-  .node { white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-</style>
 
 The [fileset]({{ '/minecraft-filesets/' | relative_url }}) ends on a gap: nothing
 in `.minecraft` holds geometry or a shader program of its own. This is where they

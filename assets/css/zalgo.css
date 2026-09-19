@@ -1,0 +1,68 @@
+/* Shared styling for the Zalgo deployment pages.
+   Previously this block was pasted into each page; it lives here now and is
+   linked from _includes/custom-head.html. */
+
+/* Marks stack above and below the line, so the cells that carry them need room
+   to draw outside their own line box. */
+.zalgo-mark {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.15rem;
+  line-height: 1.8;
+  overflow: visible;
+}
+
+/* the marked name at the head of a subject page */
+.zalgo-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.3rem;
+  line-height: 2.2;
+}
+
+.zalgo-roll {
+  font-size: 1.05rem;
+  line-height: 2.8;
+  list-style: none;
+  padding-left: 0;
+}
+.zalgo-roll code { font-size: .8rem; opacity: .75; }
+
+table.zalgo {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: .92rem;
+}
+table.zalgo th,
+table.zalgo td {
+  border: 1px solid rgba(128, 128, 128, .35);
+  padding: .45rem .55rem;
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+table.zalgo th { white-space: nowrap; }
+table.zalgo code { font-size: .82rem; }
+
+/* tabular figures so the seq and tier columns line up */
+.tier { font-variant-numeric: tabular-nums; }
+
+.status {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.status-legacy { opacity: .7; }
+.status-unverified { font-weight: 700; }
+
+/* jar tree nodes keep their indentation rather than wrapping under it */
+.node {
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Six and seven column tables do not fit a phone; let them scroll rather than
+   crushing the prose column. */
+@media (max-width: 700px) {
+  table.zalgo { display: block; overflow-x: auto; }
+  .node { white-space: normal; }
+}
