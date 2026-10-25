@@ -181,6 +181,34 @@ def crystal_ice() -> Image.Image:
     return img
 
 
+def sand_wall() -> Image.Image:
+    """v2.0: Gaara's chakra-bound sand: packed grains in swirling layers."""
+    rng = random.Random(61)
+    img = Image.new("RGBA", (N, N))
+    px = img.load()
+    base = hexc("#d8b56a")
+    for y in range(N):
+        for x in range(N):
+            band = 0.06 * math.sin((y + math.sin(x * 0.35) * 2.5) * 0.7)
+            px[x, y] = shade(base, 1 + band + rng.uniform(-0.09, 0.09))
+    for _ in range(40):
+        px[rng.randrange(N), rng.randrange(N)] = shade(base, rng.choice((0.7, 1.25)))
+    return img
+
+
+def chakra_barrier() -> Image.Image:
+    """v2.0: a translucent wall of violet chakra (Four Violet Flames, Rashomon, sealing barriers)."""
+    img = Image.new("RGBA", (N, N))
+    px = img.load()
+    for y in range(N):
+        for x in range(N):
+            t = (math.sin(x * 0.4 + y * 0.25) + math.sin(y * 0.55 - x * 0.2) + 2) / 4
+            edge = x in (0, N - 1) or y in (0, N - 1)
+            c = mix(hexc("#6a2fd0"), hexc("#d8b8ff"), t)
+            px[x, y] = (c[0], c[1], c[2], 235 if edge else 120 + int(60 * t))
+    return img
+
+
 BLOCKS = [
     Block("chakra_ore", "Chakra Ore", chakra_ore, 3.0, 3.0, "stone", light=3, map_color="#7d7d7d",
           loot="loot_tables/blocks/chakra_ore.json"),
@@ -191,6 +219,9 @@ BLOCKS = [
     Block("earth_wall", "Earth Style Wall", earth_wall, 2.0, 12.0, "gravel", map_color="#8a6a42"),
     Block("hashirama_wood", "Wood Style Timber", hashirama_wood, 2.0, 3.0, "wood", map_color="#6b4a2b"),
     Block("crystal_ice", "Crystal Ice", crystal_ice, 0.6, 1.0, "glass", light=2, map_color="#bfefff",
+          render="blend"),
+    Block("sand_wall", "Chakra Sand", sand_wall, 1.5, 8.0, "sand", map_color="#d8b56a"),
+    Block("chakra_barrier", "Chakra Barrier", chakra_barrier, 60.0, 1000.0, "glass", light=6, map_color="#6a2fd0",
           render="blend"),
 ]
 

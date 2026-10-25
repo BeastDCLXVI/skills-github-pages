@@ -318,8 +318,8 @@ export function onKill(killer, dead) {
     if (a instanceof Player) {
       strengthen(killer, a, 2);
       strengthen(a, killer, 2);
-    } else {
-      strengthen(killer, a, 1);
+    } else if (typeof a.getDynamicProperty('sr:until') !== 'number') {
+      strengthen(killer, a, 1); // companions only: temporary summons do not form bonds
     }
   }
 }
@@ -449,7 +449,7 @@ export function beginTrial(p) {
   title(p, '§5Waterfall of Truth', '§7Your reflection steps out of the water...', 70);
   tell(p, '§5The Waterfall of Truth shows who you really are.§7 You cannot win this fight by fighting. Stay calm, and do not strike.');
   sound(p.dimension, SOUND.whisper, at, 0.7, 1);
-  fx(p.dimension, PARTICLE.smoke, at, DARK);
+  fx(p.dimension, PARTICLE.wisp, at, DARK);
   return true;
 }
 
@@ -530,7 +530,7 @@ function stepTrial(pid, t) {
 function endTrial(pid, won, p, e, why) {
   trials.delete(pid);
   if (e && valid(e)) {
-    fx(e.dimension, won ? PARTICLE.burst : PARTICLE.smoke, add(e.location, v3(0, 1, 0)), won ? LIGHT : DARK);
+    fx(e.dimension, won ? PARTICLE.sparkle : PARTICLE.wisp, add(e.location, v3(0, 1, 0)), won ? LIGHT : DARK);
     try {
       e.remove();
     } catch {}

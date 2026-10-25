@@ -17,8 +17,8 @@ import {
  * @typedef {{
  *   id: string, name: string, desc: string, rank: number, cost: number, cd: number, seals: string[],
  *   school: string,
- *   nature?: string, clan?: string, kekkei?: string, eyes?: string[], requires?: string[],
- *   flag?: 'jinchuriki' | 'karma' | 'ascended' | 'clay' | 'puppet' | 'curse' | 'code',
+ *   nature?: string, natures?: string[], clan?: string, kekkei?: string, eyes?: string[], requires?: string[],
+ *   flag?: 'jinchuriki' | 'karma' | 'ascended' | 'clay' | 'puppet' | 'curse' | 'code' | 'sand', ext?: boolean,
  *   contract?: 'toad' | 'snake' | 'slug', beast?: string, active?: string, minSync?: number,
  *   auto?: boolean, jp?: number, strain?: number,
  *   toggle?: { upkeep: number, onSecond?: (ctx: Ctx) => void, onStart?: (ctx: Ctx) => boolean | void, onEnd?: (p: Player) => void },
@@ -45,6 +45,7 @@ export const UNLOCKS = {
   puppet: 'the Puppet Technique Scroll',
   curse: 'the Cursed Seal',
   code: 'the White Karma Seal (defeat Code)',
+  sand: 'the Sand Gourd (or Shukaku sealed inside you)',
 };
 
 /**
@@ -55,6 +56,9 @@ export const UNLOCKS = {
 export function meets(d, j) {
   if (d.rank < j.rank) return { ok: false, why: `requires ${RANKS[j.rank].name}` };
   if (j.nature && !d.natures.includes(j.nature)) return { ok: false, why: `requires ${NATURES[j.nature].name} nature` };
+  if (j.natures && !j.natures.every((n) => d.natures.includes(n))) {
+    return { ok: false, why: `requires ${j.natures.map((n) => NATURES[n]?.name ?? n).join(' + ')} natures` };
+  }
   if (j.clan && d.clan !== j.clan) return { ok: false, why: `${j.clan} clan secret technique` };
   if (j.kekkei) {
     const has = d.clan === KEKKEI_CLAN[j.kekkei] || (j.kekkei === 'wood' && d.wood);
@@ -63,7 +67,8 @@ export function meets(d, j) {
   if (j.eyes && !(d.eye && j.eyes.includes(d.eye))) return { ok: false, why: 'requires a stronger dojutsu' };
   if (j.contract && !d.contracts.includes(j.contract)) return { ok: false, why: `requires the ${j.contract} summoning contract` };
   if (j.beast && d.bijuu !== j.beast) return { ok: false, why: `requires ${j.beast} sealed inside you` };
-  if (j.flag && UNLOCKS[j.flag] && !d.unlocks.includes(j.flag)) return { ok: false, why: `requires ${UNLOCKS[j.flag]}` };
+  const shukaku = j.flag === 'sand' && d.bijuu === 'shukaku';
+  if (j.flag && UNLOCKS[j.flag] && !d.unlocks.includes(j.flag) && !shukaku) return { ok: false, why: `requires ${UNLOCKS[j.flag]}` };
   if (j.flag === 'jinchuriki' && !d.bijuu) return { ok: false, why: 'requires a tailed beast' };
   if (j.flag === 'karma' && !d.karma) return { ok: false, why: 'requires the Karma seal' };
   if (j.flag === 'ascended' && !d.ascended) return { ok: false, why: 'requires Otsutsuki ascension' };

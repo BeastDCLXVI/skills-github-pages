@@ -107,6 +107,9 @@ def all_recipes() -> list[dict]:
         # v1.3: Boruto
         shaped("kara_inner_mark", ["OCO", "CRC", "OCO"], {"O": "minecraft:obsidian", "C": CC, "R": "kara_ring"},
                "kara_inner_mark", unlock="kara_ring"),
+        # v2.0
+        shaped("sand_gourd", ["SLS", "SBS", "SSS"], {"S": "minecraft:sand", "L": "minecraft:leather", "B": CCB},
+               "sand_gourd", unlock="minecraft:sand"),
         shapeless("explosive_clay", ["minecraft:clay_ball", "minecraft:gunpowder", CC], "explosive_clay", 4, unlock=CC),
         shapeless("kiba", ["minecraft:iron_sword", "minecraft:iron_sword", "minecraft:lightning_rod", CCB], "kiba",
                   unlock=CCB),

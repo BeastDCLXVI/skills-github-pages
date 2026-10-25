@@ -178,6 +178,14 @@ function onPlayerHurt(p, damage, src) {
     heal(p, damage);
     addChakra(p, damage * 3);
   }
+  if (r.izanagiUntil > now && healthFraction(p) < 0.25) {
+    // Izanagi: the blow that would have felled you is rewritten out of reality
+    r.izanagiUntil = 0;
+    const h = p.getComponent('minecraft:health');
+    if (h) heal(p, h.effectiveMax);
+    title(p, '§cIzanagi', '§7That never happened.', 40);
+    fx(p.dimension, PARTICLE.tomoe, eyes(p), rgb('#d01020'));
+  }
   if (d.bijuu && healthFraction(p) < 0.3 && cooldownLeft(p, 'beast_save') === 0) {
     setCooldown(p, 'beast_save', 1200);
     const b = bijuuByKey(d.bijuu);
@@ -206,7 +214,9 @@ function onDeath(dead, src) {
   const killer = responsiblePlayer(src.damagingEntity) ?? responsiblePlayer(src.damagingProjectile);
   // Mangekyo: an Uchiha whose companion dies before their eyes
   const owner = ownerId(dead);
-  const ownerPlayer = owner ? world.getAllPlayers().find((x) => x.id === owner) : undefined;
+  // summons (clones, jutsu-called beasts) are not companions: no bonds to mourn, no Mangekyo
+  const summoned = typeof dead.getDynamicProperty('sr:until') === 'number';
+  const ownerPlayer = owner && !summoned ? world.getAllPlayers().find((x) => x.id === owner) : undefined;
   if (ownerPlayer) onCompanionDeath(ownerPlayer, dead);
   if (ownerPlayer && (dead.typeId === 'minecraft:wolf' || dead.typeId === ENTITY.leaf)) {
     try {

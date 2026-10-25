@@ -93,7 +93,8 @@ export function summonBoss(p, typeId, distance = 14) {
   }
   const dir = flatDir(v3(0, 0, 0), p.getViewDirection());
   const at = ground(p.dimension, add(p.location, mul(dir, distance))) ?? add(p.location, mul(dir, distance));
-  for (let i = 0; i < 6; i++) fx(p.dimension, PARTICLE.smoke, add(at, v3(Math.random() * 4 - 2, i, Math.random() * 4 - 2)));
+  fx(p.dimension, PARTICLE.smoke, add(at, v3(0, 1, 0)));
+  for (let i = 0; i < 4; i++) fx(p.dimension, PARTICLE.wisp, add(at, v3(Math.random() * 4 - 2, i * 1.5, Math.random() * 4 - 2)));
   sound(p.dimension, SOUND.witherSpawn, at, 0.8, 2);
   try {
     p.dimension.spawnEntity(typeId, at);
@@ -183,7 +184,7 @@ function signature(boss, t, ability, tails) {
         effect(e, FX.poison, 6, 1);
         hurt(e, 4, boss);
       }
-      for (const pt of ring(boss.location, 4, 10)) fx(dim, PARTICLE.smoke, pt, rgb('#d8e86a'));
+      for (const pt of ring(boss.location, 4, 10)) fx(dim, PARTICLE.wisp, pt, rgb('#d8e86a'));
       break;
     case 'scales':
       for (const e of enemiesAround(boss, boss.location, 12)) {

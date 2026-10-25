@@ -7,6 +7,7 @@ import './medical.js';
 import './taijutsu.js';
 import './arts.js';
 import './boruto.js';
+import './catalog.js';
 
 export { JUTSU, learnCost, meets } from './core.js';
 export { releaseCharged } from './basic.js';

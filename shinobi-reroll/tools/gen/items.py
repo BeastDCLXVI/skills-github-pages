@@ -149,6 +149,8 @@ def build_items() -> list[Item]:
              rarity="epic"),
         Item("white_karma_seal", "White Karma Seal", S.white_karma_seal, stack=1, use_label="Accept White Karma",
              glint=True, rarity="epic"),
+        # v2.0: the great catalogue
+        Item("sand_gourd", "Sand Gourd", S.sand_gourd, stack=1, use_label="Bind the Sand", rarity="rare"),
         Item("blueprint_leaf_gate", "Blueprint: Leaf Village Gate", lambda: S.blueprint("#3a7a3a"), stack=16,
              use_label="Build"),
         Item("blueprint_ramen_stand", "Blueprint: Ichiraku Ramen Stand", lambda: S.blueprint("#c0262b"), stack=16,

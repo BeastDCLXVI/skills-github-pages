@@ -812,3 +812,236 @@ def white_karma_seal() -> Image.Image:
             if px[x, y] in swap:
                 px[x, y] = swap[px[x, y]]
     return img
+
+
+# --- v2.0: refined chakra shapes: jutsu projectiles drawn natively at 64x64 -------------------
+
+ORB_HD = 64
+
+
+def _halo(img: Image.Image, color: str, strength: float = 0.55) -> Image.Image:
+    """Soft glow behind the shape: chakra light bleeding into the air."""
+    size = img.size[0]
+    out = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    px = out.load()
+    c = hexc(color)
+    mid = (size - 1) / 2
+    for y in range(size):
+        for x in range(size):
+            t = math.hypot(x - mid, y - mid) / (size / 2)
+            if t < 1:
+                px[x, y] = (c[0], c[1], c[2], round(255 * strength * (1 - t) ** 2.2))
+    out.alpha_composite(img)
+    return out
+
+
+def _tongues(img: Image.Image, n: int, inner: float, outer: float, color: str, tip: str, seed: int = 1) -> None:
+    """Flame tongues licking outwards from a ball."""
+    d = ImageDraw.Draw(img)
+    size = img.size[0]
+    mid = (size - 1) / 2
+    rng = random.Random(seed)
+    for i in range(n):
+        a = i / n * math.tau + rng.uniform(-0.2, 0.2)
+        r1, r2 = size * inner, size * (outer + rng.uniform(-0.04, 0.04))
+        w = 0.32
+        pts = [(mid + math.cos(a - w) * r1, mid + math.sin(a - w) * r1),
+               (mid + math.cos(a) * r2, mid + math.sin(a) * r2),
+               (mid + math.cos(a + w) * r1, mid + math.sin(a + w) * r1)]
+        d.polygon(pts, fill=hexc(color, 230))
+        d.line([pts[1], (mid + math.cos(a) * r1, mid + math.sin(a) * r1)], fill=hexc(tip, 200), width=2)
+
+
+def _arcs(img: Image.Image, n: int, color: str, seed: int = 3) -> None:
+    """Jagged lightning arcs crossing the ball."""
+    d = ImageDraw.Draw(img)
+    size = img.size[0]
+    mid = (size - 1) / 2
+    rng = random.Random(seed)
+    for _ in range(n):
+        a = rng.uniform(0, math.tau)
+        pts = []
+        for k in range(6):
+            rr = size * 0.48 * k / 5
+            j = rng.uniform(-0.35, 0.35)
+            pts.append((mid + math.cos(a + j) * rr, mid + math.sin(a + j) * rr))
+        d.line(pts, fill=hexc(color), width=2)
+
+
+def _blades(img: Image.Image, n: int, color: str, twist: float = 0.6) -> None:
+    """Curved shuriken blades (Rasenshuriken)."""
+    d = ImageDraw.Draw(img)
+    size = img.size[0]
+    mid = (size - 1) / 2
+    for i in range(n):
+        a0 = i / n * math.tau
+        pts = []
+        for k in range(12):
+            t = k / 11
+            a = a0 + twist * t
+            r = size * (0.18 + 0.32 * t)
+            pts.append((mid + math.cos(a) * r, mid + math.sin(a) * r))
+        back = [(mid + math.cos(a0 + 0.55 + twist * k / 11 * 0.6) * size * (0.18 + 0.22 * k / 11),
+                 mid + math.sin(a0 + 0.55 + twist * k / 11 * 0.6) * size * (0.18 + 0.22 * k / 11)) for k in range(11, -1, -1)]
+        d.polygon(pts + back, fill=hexc(color, 215))
+
+
+def _rock(size: int, base: str, seed: int = 4) -> Image.Image:
+    """Faceted boulder: polygon facets lit from the upper left."""
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    rng = random.Random(seed)
+    mid = (size - 1) / 2
+    pts = []
+    for i in range(9):
+        a = i / 9 * math.tau
+        r = size * rng.uniform(0.36, 0.46)
+        pts.append((mid + math.cos(a) * r, mid + math.sin(a) * r))
+    c = hexc(base)
+    d.polygon(pts, fill=c)
+    for i in range(9):
+        p1, p2 = pts[i], pts[(i + 1) % 9]
+        nx, ny = (p1[0] + p2[0]) / 2 - mid, (p1[1] + p2[1]) / 2 - mid
+        light = -(nx * 0.7 + ny * 0.7) / (size * 0.4)
+        d.polygon([(mid + rng.uniform(-4, 4), mid + rng.uniform(-4, 4)), p1, p2], fill=shade(c, 1 + light * 0.35))
+    d.polygon(pts, outline=shade(c, 0.45))
+    return img
+
+
+def _shard_cluster(size: int, color: str) -> Image.Image:
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    c = hexc(color)
+    mid = size / 2
+    for a, ln, w in ((-1.9, 0.46, 0.09), (-1.2, 0.4, 0.08), (-2.6, 0.38, 0.07), (-0.6, 0.3, 0.07), (2.4, 0.3, 0.06)):
+        tip = (mid + math.cos(a) * size * ln, mid + math.sin(a) * size * ln)
+        l = (mid + math.cos(a + 1.5) * size * w, mid + math.sin(a + 1.5) * size * w)
+        r = (mid + math.cos(a - 1.5) * size * w, mid + math.sin(a - 1.5) * size * w)
+        d.polygon([l, tip, r], fill=shade(c, 1.15))
+        d.polygon([(mid, mid), tip, r], fill=shade(c, 0.85))
+    return img
+
+
+def _bone_spike(size: int, light: str, dark: str) -> Image.Image:
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    a, b = (size * 0.12, size * 0.88), (size * 0.9, size * 0.1)
+    d.line([a, b], fill=hexc(dark), width=size // 7)
+    d.line([a, b], fill=hexc(light), width=size // 11)
+    d.ellipse((a[0] - size * 0.09, a[1] - size * 0.09, a[0] + size * 0.09, a[1] + size * 0.09), fill=hexc(light))
+    d.polygon([b, (b[0] - size * 0.14, b[1] + size * 0.03), (b[0] - size * 0.03, b[1] + size * 0.14)], fill=hexc(light))
+    return img
+
+
+def jutsu_sprite_hd(kind: str, size: int = ORB_HD) -> Image.Image:
+    """Projectile sprite for one jutsu element, drawn at full resolution."""
+    if kind == "hidden":
+        return Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    if kind in ("fire", "amaterasu"):
+        dark = kind == "amaterasu"
+        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        _tongues(img, 10, 0.2, 0.5, "#0a040c" if dark else "#ff7a2a", "#5a1a6a" if dark else "#ffe08a", seed=7 if dark else 1)
+        inner = round(size * 0.68)
+        ball = (swirl(inner, "#3a0a3a", "#050307", arms=6, glow="#26062a", twist=2.2) if dark
+                else swirl(inner, "#fff6c8", "#e2461f", arms=5, glow="#ff9a2a", twist=1.4))
+        img.alpha_composite(ball, ((size - inner) // 2, (size - inner) // 2))
+        return _halo(img, "#3a0a4a" if dark else "#ff8a2a", 0.4 if dark else 0.55)
+    if kind == "water":
+        ball = swirl(size, "#e6fbff", "#1f6fd8", arms=2, glow="#56b6ff", twist=1.0)
+        shine = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        d = ImageDraw.Draw(shine)
+        for x, y, r in ((0.32, 0.3, 0.07), (0.62, 0.24, 0.04), (0.7, 0.6, 0.05)):
+            d.ellipse(((x - r) * size, (y - r) * size, (x + r) * size, (y + r) * size), fill=hexc("#ffffff", 170))
+        ball.alpha_composite(shine)
+        return _halo(ball, "#56b6ff", 0.4)
+    if kind == "wind":
+        ball = swirl(size, "#ffffff", "#9fe6c4", arms=4, glow="#d8fff0", twist=3.0)
+        _blades(ball, 3, "#e8fff6", twist=1.2)
+        return _halo(ball, "#c8ffe8", 0.35)
+    if kind == "lightning":
+        ball = swirl(size, "#ffffff", "#7fb6ff", arms=7, glow="#e8f4ff", twist=4.0)
+        _arcs(ball, 5, "#ffffff")
+        return _halo(ball, "#9fc8ff", 0.6)
+    if kind == "rasengan":
+        ball = swirl(size, "#ffffff", "#2f7fd8", arms=3, glow="#7fe0ff", twist=2.6)
+        return _halo(ball, "#6fc8ff", 0.65)
+    if kind == "rasenshuriken":
+        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        _blades(img, 4, "#eef8ff", twist=0.5)
+        core = swirl(size // 2, "#ffffff", "#2f7fd8", arms=3, glow="#7fe0ff", twist=2.6)
+        img.alpha_composite(core, (size // 4, size // 4))
+        return _halo(img, "#cfefff", 0.45)
+    if kind == "earth":
+        return _rock(size, "#8a6a42")
+    if kind == "ice":
+        return _halo(_shard_cluster(size, "#9fe8ff"), "#dff8ff", 0.3)
+    if kind == "lava":
+        ball = swirl(size, "#ffd36a", "#5a1608", arms=3, glow="#ff5a1f", twist=1.2)
+        _arcs(ball, 4, "#ffb43a", seed=9)
+        return _halo(ball, "#ff5a1f", 0.5)
+    if kind == "bone":
+        return _bone_spike(size, "#fbf6ea", "#b9ae96")
+    if kind == "ash_bone":
+        return _bone_spike(size, "#e4e4e4", "#5a5a5a")
+    if kind == "truth":
+        ball = orb(size, "#16121c", rim="#4b3a66", radius=size * 0.42)
+        return _halo(ball, "#6a5a8a", 0.3)
+    if kind == "bijuu_bomb":
+        ball = swirl(size, "#1a0f24", "#5a1b6e", arms=5, glow="#ff3b5c", twist=2.0)
+        _arcs(ball, 3, "#ff6a8a", seed=11)
+        return _halo(ball, "#ff3b5c", 0.55)
+    if kind == "karma":
+        ball = swirl(size, "#0e0a14", "#6b2d8f", arms=2, glow="#c78cff", twist=1.6)
+        return _halo(ball, "#b46cf0", 0.55)
+    if kind == "wood":
+        img = _rock(size, "#6b4a2b", seed=13)
+        d = ImageDraw.Draw(img)
+        for x, y in ((0.3, 0.3), (0.62, 0.4), (0.45, 0.66)):
+            d.ellipse(((x - 0.06) * size, (y - 0.04) * size, (x + 0.06) * size, (y + 0.04) * size), fill=hexc("#5aa04a"))
+        return img
+    if kind == "boil":
+        ball = swirl(size, "#fbfff0", "#b8c94a", arms=3, glow="#e8f59a", twist=1.0)
+        return _halo(ball, "#f4ffd0", 0.6)
+    if kind == "sand":
+        ball = swirl(size, "#f6e2a8", "#b88a3a", arms=3, glow="#d8b56a", twist=1.8)
+        px = ball.load()
+        rng = random.Random(17)
+        for _ in range(size * 4):
+            x, y = rng.randrange(size), rng.randrange(size)
+            if px[x, y][3]:
+                px[x, y] = shade(px[x, y], rng.uniform(0.75, 1.2))
+        return ball
+    if kind == "ink":
+        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+        for (cx, cy, r) in ((0.5, 0.5, 0.3), (0.28, 0.36, 0.12), (0.74, 0.66, 0.1), (0.66, 0.24, 0.08), (0.36, 0.74, 0.07)):
+            d.ellipse(((cx - r) * size, (cy - r) * size, (cx + r) * size, (cy + r) * size), fill=hexc("#14101e"))
+        d.ellipse((0.36 * size, 0.34 * size, 0.46 * size, 0.42 * size), fill=hexc("#5a5070"))
+        return img
+    raise KeyError(kind)
+
+
+def sand_gourd() -> Image.Image:
+    """v2.0: Gaara's sand gourd: a double-bulb gourd with a strap."""
+    rows = [
+        "................",
+        "......oooo......",
+        ".....ossllo.....",
+        ".....osslllo....",
+        "....ossssllo....",
+        "....osssssllo...",
+        ".....osssslo....",
+        "......ossso.....",
+        ".....ossssslo...",
+        "....ossssssllo..",
+        "...osssssssslo..",
+        "...osssssssslo..",
+        "...oddsssssslo..",
+        "....oddddddso...",
+        ".....oooooooo...",
+        "................",
+    ]
+    img = sprite(rows, {"o": OUT, "s": hexc("#c9a46a"), "l": hexc("#e8cf98"), "d": hexc("#8a6a3a")})
+    d = ImageDraw.Draw(img)
+    d.line([(4, 7), (11, 3)], fill=hexc("#7a1418"))
+    return img

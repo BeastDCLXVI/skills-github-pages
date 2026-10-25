@@ -257,6 +257,18 @@ function acceptWhiteKarma(p) {
   ping(p, SOUND.curse, 1.2);
 }
 
+/** Gaara's gourd: the sand answers your chakra. @param {Player} p */
+function bindSand(p) {
+  const d = getData(p);
+  if (d.unlocks.includes('sand')) return tell(p, '§7The sand already answers you.');
+  consumeHeld(p);
+  d.unlocks.push('sand');
+  touch(p);
+  title(p, '§6Sand Gourd', '§7Shield of Sand, Sand Coffin and the rest of the Sand arts can now be learned.', 70);
+  fx(p.dimension, PARTICLE.grains, add(p.location, v3(0, 1, 0)));
+  ping(p, SOUND.stone, 0.8);
+}
+
 /** @param {Player} p @param {string} kind */
 function signContract(p, kind) {
   const d = getData(p);
@@ -356,6 +368,8 @@ function onUse(p, item) {
       return;
     case ITEM.whiteKarmaSeal:
       return acceptWhiteKarma(p);
+    case ITEM.sandGourd:
+      return bindSand(p);
     case ITEM.clay:
       return moldClay(p);
     case ITEM.uchihaEye:
@@ -465,7 +479,7 @@ const USABLE = new Set([
   ITEM.toadContract, ITEM.forbiddenScroll, ITEM.sigil, ITEM.gedoCore, ITEM.karmaSeal, ITEM.hashiramaCells, ITEM.kote,
   ITEM.explosiveTag, ITEM.gunbai, ITEM.karaRing, ITEM.clay, ITEM.uchihaEye, ITEM.curseSeal, ITEM.snakeContract,
   ITEM.slugContract, ITEM.puppetScroll, ITEM.blueprintGate, ITEM.blueprintRamen, ITEM.blueprintTraining, ITEM.hiramekarei,
-  ITEM.journal, ITEM.karaInnerMark, ITEM.whiteKarmaSeal,
+  ITEM.journal, ITEM.karaInnerMark, ITEM.whiteKarmaSeal, ITEM.sandGourd,
 ]);
 
 /** @type {Map<string, number>} */

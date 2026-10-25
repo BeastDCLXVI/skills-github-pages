@@ -22,7 +22,7 @@ const HELP = [
   `  clan <${Object.keys(CLANS).join('|')}>`,
   `  nature <${Object.keys(NATURES).join('|')}> · eye <${Object.keys(DOJUTSU).join('|')}|none>`,
   `  bijuu <${BIJUU.map((b) => b.key).join('|')}|none> · karma · ascend · wood · eternal`,
-  '  contract <toad|snake|slug> · unlock <clay|puppet|curse|code> · ryo <n> · mission <reroll|complete>',
+  '  contract <toad|snake|slug> · unlock <clay|puppet|curse|code|sand> · ryo <n> · mission <reroll|complete>',
   `  nindo <${Object.keys(NINDO).join('|')}|none> · resolve <0-100> · peace · journal · trial`,
   '  learn <jutsu_id|all> · reset · cleanup',
   '  griefing <on|off> · pvp <on|off> · npcjutsu <on|off> · xprate <0.1-10> · hud <on|off>',
@@ -90,7 +90,7 @@ function run(p, args) {
       if (!d.contracts.includes(/** @type {string} */ (a1))) d.contracts.push(/** @type {string} */ (a1));
       break;
     case 'unlock':
-      if (!['clay', 'puppet', 'curse', 'code'].includes(a1 ?? '')) return tell(p, '§cUsage: unlock <clay|puppet|curse|code>');
+      if (!['clay', 'puppet', 'curse', 'code', 'sand'].includes(a1 ?? '')) return tell(p, '§cUsage: unlock <clay|puppet|curse|code|sand>');
       if (!d.unlocks.includes(/** @type {string} */ (a1))) d.unlocks.push(/** @type {string} */ (a1));
       break;
     case 'eternal':

@@ -164,51 +164,114 @@ def emit_armor(b: Build, items) -> None:
 # --- particles -----------------------------------------------------------------------
 
 ATLAS = "textures/particle/shinobi_particles"
-CELLS = {"dot": (0, 0), "spark": (8, 0), "smoke": (16, 0), "ring": (24, 0),
-         "leaf": (0, 8), "shard": (8, 8), "flame": (16, 8), "tomoe": (24, 8)}
+CELL = 32  # v2.0: HD particle sprites (were 8px)
+GRID = ["dot", "spark", "smoke", "ring",
+        "leaf", "shard", "flame", "tomoe",
+        "crescent", "bolt", "droplet", "petal",
+        "grain", "sparkle", "wisp", "ink"]
+CELLS = {name: ((i % 4) * CELL, (i // 4) * CELL) for i, name in enumerate(GRID)}
+ATLAS_W, ATLAS_H = 4 * CELL, 4 * CELL
+
+
+def _cell_canvas():
+    """Draw each sprite at 4x and downsample, so every edge is antialiased."""
+    big = Image.new("RGBA", (CELL * 4, CELL * 4), (0, 0, 0, 0))
+    return big, ImageDraw.Draw(big)
+
+
+def _radial(alpha_fn) -> Image.Image:
+    img = Image.new("RGBA", (CELL, CELL), (0, 0, 0, 0))
+    c = (CELL - 1) / 2
+    for y in range(CELL):
+        for x in range(CELL):
+            a = alpha_fn(math.hypot(x - c, y - c) / c, x, y)
+            if a > 0:
+                img.putpixel((x, y), (255, 255, 255, max(0, min(255, int(255 * a)))))
+    return img
+
+
+def _sprite(name: str) -> Image.Image:
+    S = CELL * 4
+    big, d = _cell_canvas()
+    W = (255, 255, 255, 255)
+    if name == "dot":
+        return _radial(lambda r, x, y: (1 - r) ** 1.6 if r < 1 else 0)
+    if name == "spark":
+        img = _radial(lambda r, x, y: max(0.0, 1 - r * 3.2))
+        dd = ImageDraw.Draw(img)
+        c = CELL // 2
+        dd.line([(c, 1), (c, CELL - 2)], fill=W, width=2)
+        dd.line([(1, c), (CELL - 2, c)], fill=W, width=2)
+        return img
+    if name == "smoke":  # soft, faint puff of overlapping blobs (v2.0: lighter)
+        blobs = ((0.42, 0.55, 0.3), (0.62, 0.45, 0.28), (0.5, 0.32, 0.24), (0.3, 0.38, 0.2), (0.7, 0.66, 0.22))
+
+        def puff(r, x, y):
+            a = 0.0
+            for bx, by, br in blobs:
+                dd = math.hypot(x / (CELL - 1) - bx, y / (CELL - 1) - by) / br
+                a = max(a, (1 - dd) ** 1.2 if dd < 1 else 0)
+            return 0.5 * a
+        return _radial(puff)
+    if name == "ring":
+        return _radial(lambda r, x, y: max(0.0, 1 - abs(r - 0.78) * 7) + max(0.0, 0.35 - abs(r - 0.6) * 4))
+    if name == "leaf":
+        d.polygon([(S * 0.1, S * 0.9), (S * 0.25, S * 0.35), (S * 0.65, S * 0.1), (S * 0.9, S * 0.12),
+                   (S * 0.85, S * 0.45), (S * 0.55, S * 0.8)], fill=W)
+        d.line([(S * 0.12, S * 0.88), (S * 0.8, S * 0.2)], fill=(190, 190, 190, 255), width=S // 28)
+    elif name == "shard":
+        d.polygon([(S * 0.5, S * 0.04), (S * 0.78, S * 0.42), (S * 0.56, S * 0.96), (S * 0.24, S * 0.5)], fill=W)
+        d.polygon([(S * 0.5, S * 0.04), (S * 0.56, S * 0.96), (S * 0.24, S * 0.5)], fill=(225, 225, 225, 255))
+    elif name == "flame":  # a tongue of fire with two side licks
+        d.polygon([(S * 0.52, S * 0.0), (S * 0.62, S * 0.28), (S * 0.78, S * 0.18), (S * 0.76, S * 0.48),
+                   (S * 0.86, S * 0.66), (S * 0.72, S * 0.92), (S * 0.5, S * 0.99), (S * 0.28, S * 0.92),
+                   (S * 0.14, S * 0.66), (S * 0.24, S * 0.42), (S * 0.22, S * 0.24), (S * 0.38, S * 0.36)], fill=W)
+    elif name == "tomoe":  # comma: a round head with a tail curling around it
+        d.ellipse((S * 0.34, S * 0.4, S * 0.84, S * 0.9), fill=W)
+        for i in range(24):
+            t = i / 23
+            a = math.pi * (1.05 + 0.75 * t)
+            rr = S * (0.25 + 0.12 * t)
+            cx, cy = S * 0.59 + math.cos(a) * rr, S * 0.65 + math.sin(a) * rr
+            w = S * (0.15 * (1 - t) + 0.02)
+            d.ellipse((cx - w, cy - w, cx + w, cy + w), fill=W)
+    elif name == "crescent":  # wind blade
+        d.ellipse((S * 0.05, S * 0.2, S * 0.95, S * 0.9), fill=W)
+        d.ellipse((S * 0.05, S * 0.02, S * 0.95, S * 0.7), fill=(0, 0, 0, 0))
+    elif name == "bolt":  # jagged lightning arc
+        pts = [(0.15, 0.02), (0.55, 0.32), (0.38, 0.42), (0.78, 0.7), (0.6, 0.74), (0.9, 0.98)]
+        d.line([(x * S, y * S) for x, y in pts], fill=W, width=S // 12, joint="curve")
+    elif name == "droplet":
+        d.ellipse((S * 0.22, S * 0.36, S * 0.78, S * 0.92), fill=W)
+        d.polygon([(S * 0.5, S * 0.04), (S * 0.74, S * 0.5), (S * 0.26, S * 0.5)], fill=W)
+    elif name == "petal":
+        d.ellipse((S * 0.2, S * 0.1, S * 0.8, S * 0.9), fill=W)
+        d.polygon([(S * 0.5, S * 0.0), (S * 0.62, S * 0.2), (S * 0.38, S * 0.2)], fill=(0, 0, 0, 0))
+    elif name == "grain":
+        for (cx, cy, r) in ((0.3, 0.35, 0.12), (0.62, 0.3, 0.09), (0.5, 0.62, 0.14), (0.75, 0.7, 0.08), (0.25, 0.72, 0.07)):
+            d.ellipse(((cx - r) * S, (cy - r) * S, (cx + r) * S, (cy + r) * S), fill=W)
+    elif name == "sparkle":
+        c = S / 2
+        d.polygon([(c, 0), (c + S * 0.09, c - S * 0.09), (S, c), (c + S * 0.09, c + S * 0.09), (c, S),
+                   (c - S * 0.09, c + S * 0.09), (0, c), (c - S * 0.09, c - S * 0.09)], fill=W)
+    elif name == "wisp":  # soft vertical streak: chakra flow, shockwave dust
+        return _radial(lambda r, x, y: max(0.0, 1 - abs(x - (CELL - 1) / 2) / 5) * max(0.0, 1 - abs(y - (CELL - 1) / 2) / 15) * 0.9)
+    elif name == "ink":
+        for (cx, cy, r) in ((0.5, 0.5, 0.32), (0.25, 0.35, 0.14), (0.75, 0.68, 0.12), (0.68, 0.22, 0.09)):
+            d.ellipse(((cx - r) * S, (cy - r) * S, (cx + r) * S, (cy + r) * S), fill=W)
+    return big.resize((CELL, CELL), Image.LANCZOS)
 
 
 def particle_atlas() -> Image.Image:
-    img = Image.new("RGBA", (32, 16), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    # soft dot
-    for y in range(8):
-        for x in range(8):
-            r = math.hypot(x - 3.5, y - 3.5)
-            if r < 3.6:
-                img.putpixel((x, y), (255, 255, 255, int(255 * max(0.0, 1 - (r / 3.6) ** 2))))
-    # spark star
-    for i in range(8):
-        img.putpixel((8 + i, 3), (255, 255, 255, 200 if i in (0, 7) else 255))
-        img.putpixel((8 + 3, i), (255, 255, 255, 200 if i in (0, 7) else 255))
-    for p in ((9, 1), (13, 1), (9, 5), (13, 5)):
-        img.putpixel(p, (255, 255, 255, 140))
-    # smoke puff
-    for y in range(8):
-        for x in range(8):
-            r = math.hypot(x - 3.5, y - 3.5) + (0.6 if (x * 7 + y * 3) % 5 == 0 else 0)
-            if r < 3.8:
-                v = 235 - int(r * 12)
-                img.putpixel((16 + x, y), (v, v, v, int(220 * (1 - r / 3.8) ** 0.6)))
-    # ring
-    d.ellipse((24, 0, 31, 7), outline=(255, 255, 255, 255))
-    d.ellipse((25, 1, 30, 6), outline=(255, 255, 255, 120))
-    # leaf
-    d.polygon([(1, 14), (4, 9), (7, 9), (5, 13)], fill=(255, 255, 255, 255))
-    d.line([(1, 14), (5, 10)], fill=(200, 200, 200, 255))
-    # shard
-    d.polygon([(11, 8), (14, 11), (11, 15), (8, 11)], fill=(255, 255, 255, 255))
-    # flame tongue
-    d.polygon([(19, 8), (22, 12), (21, 15), (17, 15), (16, 12)], fill=(255, 255, 255, 230))
-    # tomoe
-    d.ellipse((25, 10, 30, 15), fill=(255, 255, 255, 255))
-    d.line([(29, 10), (31, 8)], fill=(255, 255, 255, 255))
+    img = Image.new("RGBA", (ATLAS_W, ATLAS_H), (0, 0, 0, 0))
+    for name, (u, v) in CELLS.items():
+        img.alpha_composite(_sprite(name), (u, v))
     return img
 
 
 def _uv(cell: str) -> dict:
     u, v = CELLS[cell]
-    return {"texture_width": 32, "texture_height": 16, "uv": [u, v], "uv_size": [8, 8]}
+    return {"texture_width": ATLAS_W, "texture_height": ATLAS_H, "uv": [u, v], "uv_size": [CELL, CELL]}
 
 
 def _tint(default: tuple[float, float, float], fade=True) -> dict:
@@ -226,6 +289,10 @@ def _effect(name: str, components: dict, material: str = "particles_alpha") -> d
 
 def _billboard(cell: str, size) -> dict:
     return {"size": [size, size], "facing_camera_mode": "rotate_xyz", "uv": _uv(cell)}
+
+
+def _once(n: int, t: float = 0.05) -> dict:
+    return {"minecraft:emitter_rate_instant": {"num_particles": n}, "minecraft:emitter_lifetime_once": {"active_time": t}}
 
 
 PARTICLES = {
@@ -251,13 +318,13 @@ PARTICLES = {
         "minecraft:particle_appearance_tinting": _tint((0.35, 0.75, 1.0)),
     }, material="particles_blend"),
     "smoke_poof": _effect("smoke_poof", {
-        "minecraft:emitter_rate_instant": {"num_particles": 22},
+        "minecraft:emitter_rate_instant": {"num_particles": 9},
         "minecraft:emitter_lifetime_once": {"active_time": 0.1},
-        "minecraft:emitter_shape_sphere": {"radius": 0.7, "direction": "outwards"},
-        "minecraft:particle_initial_speed": "Math.random(0.6, 1.8)",
-        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.6, 0], "linear_drag_coefficient": 1.6},
-        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.7, 1.3)"},
-        "minecraft:particle_appearance_billboard": _billboard("smoke", "0.5 + variable.particle_age * 0.6"),
+        "minecraft:emitter_shape_sphere": {"radius": 0.5, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(0.6, 1.4)",
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 0.6, 0], "linear_drag_coefficient": 2.2},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.35, 0.7)"},
+        "minecraft:particle_appearance_billboard": _billboard("smoke", "0.35 + variable.particle_age * 0.5"),
         "minecraft:particle_appearance_tinting": _tint((0.92, 0.92, 0.94)),
     }),
     "trail": _effect("trail", {
@@ -277,9 +344,9 @@ PARTICLES = {
         "minecraft:particle_initial_speed": "Math.random(6.0, 9.0)",
         "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 2.2},
         "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.5, 0.8)"},
-        "minecraft:particle_appearance_billboard": _billboard("smoke", "0.45"),
+        "minecraft:particle_appearance_billboard": _billboard("wisp", "0.4"),
         "minecraft:particle_appearance_tinting": _tint((0.85, 0.9, 1.0)),
-    }),
+    }, material="particles_blend"),
     "sparks": _effect("sparks", {
         "minecraft:emitter_rate_instant": {"num_particles": 18},
         "minecraft:emitter_lifetime_once": {"active_time": 0.05},
@@ -359,6 +426,144 @@ PARTICLES = {
         "minecraft:particle_appearance_tinting": _tint((0.75, 0.95, 1.0)),
     }),
 }
+
+
+PARTICLES.update({
+    # --- v2.0: refined chakra shapes ------------------------------------------------
+    "sphere": _effect("sphere", {  # Rasengan-like sphere: particles orbiting on random great circles
+        "minecraft:emitter_local_space": {"position": True, "rotation": False},
+        **_once(36),
+        "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.25, 0.4)"},
+        "minecraft:particle_motion_parametric": {"relative_position": [
+            "math.cos(variable.particle_age * 1080 + variable.particle_random_1 * 360) * 0.42",
+            "math.sin(variable.particle_age * 1080 + variable.particle_random_1 * 360) * math.cos(variable.particle_random_2 * 360) * 0.42",
+            "math.sin(variable.particle_age * 1080 + variable.particle_random_1 * 360) * math.sin(variable.particle_random_2 * 360) * 0.42",
+        ]},
+        "minecraft:particle_appearance_billboard": _billboard("dot", "0.1"),
+        "minecraft:particle_appearance_tinting": _tint((0.45, 0.8, 1.0), fade=False),
+    }, material="particles_blend"),
+    "helix": _effect("helix", {  # double helix rising around a shinobi: cloaks, buffs, healing
+        "minecraft:emitter_local_space": {"position": True, "rotation": False},
+        **_once(28),
+        "minecraft:emitter_shape_point": {},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "0.6 + variable.particle_random_3 * 0.3"},
+        "minecraft:particle_motion_parametric": {"relative_position": [
+            "math.cos(variable.particle_age * 600 + (variable.particle_random_1 > 0.5 ? 180 : 0)) * 0.65",
+            "variable.particle_age * 2.6",
+            "math.sin(variable.particle_age * 600 + (variable.particle_random_1 > 0.5 ? 180 : 0)) * 0.65",
+        ]},
+        "minecraft:particle_appearance_billboard": _billboard("sparkle", "0.14 - variable.particle_age * 0.08"),
+        "minecraft:particle_appearance_tinting": _tint((0.45, 0.8, 1.0)),
+    }, material="particles_blend"),
+    "ring": _effect("ring", {  # expanding flat ring of chakra: impacts and bursts
+        **_once(40),
+        "minecraft:emitter_shape_disc": {"radius": 0.3, "plane_normal": "y", "surface_only": True, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(5.0, 6.5)",
+        "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 3.2},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.35, 0.5)"},
+        "minecraft:particle_appearance_billboard": _billboard("dot", "0.16"),
+        "minecraft:particle_appearance_tinting": _tint((0.6, 0.85, 1.0)),
+    }, material="particles_blend"),
+    "sparkle": _effect("sparkle", {
+        **_once(10),
+        "minecraft:emitter_shape_sphere": {"radius": 0.8, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(0.2, 0.8)",
+        "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 1.5},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.5, 1.0)"},
+        "minecraft:particle_initial_spin": {"rotation": "Math.random(0, 90)", "rotation_rate": 120},
+        "minecraft:particle_appearance_billboard": _billboard("sparkle", "0.16 * (1 - variable.particle_age / variable.particle_lifetime)"),
+        "minecraft:particle_appearance_tinting": _tint((0.7, 1.0, 0.75)),
+    }, material="particles_blend"),
+    "wisp": _effect("wisp", {  # chakra flowing upwards
+        **_once(8),
+        "minecraft:emitter_shape_disc": {"radius": 0.6, "plane_normal": "y", "direction": [0, 1, 0]},
+        "minecraft:particle_initial_speed": "Math.random(1.0, 2.2)",
+        "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 1.4},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.4, 0.7)"},
+        "minecraft:particle_appearance_billboard": {"size": [0.12, "0.45 - variable.particle_age * 0.3"],
+                                                   "facing_camera_mode": "lookat_y", "uv": _uv("wisp")},
+        "minecraft:particle_appearance_tinting": _tint((0.45, 0.8, 1.0)),
+    }, material="particles_blend"),
+    # --- element impacts --------------------------------------------------------------
+    "flame": _effect("flame", {
+        **_once(16, 0.1),
+        "minecraft:emitter_shape_sphere": {"radius": 0.5, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(0.8, 2.4)",
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, 2.2, 0], "linear_drag_coefficient": 2.0},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.35, 0.7)"},
+        "minecraft:particle_appearance_billboard": _billboard("flame", "0.34 - variable.particle_age * 0.3"),
+        "minecraft:particle_appearance_tinting": {"color": {
+            "interpolant": "variable.particle_age / variable.particle_lifetime",
+            "gradient": {"0.0": [1.0, 0.95, 0.6, 1.0], "0.4": [1.0, 0.55, 0.15, 0.9], "1.0": [0.5, 0.12, 0.05, 0.0]}}},
+    }, material="particles_blend"),
+    "splash": _effect("splash", {
+        **_once(18),
+        "minecraft:emitter_shape_sphere": {"radius": 0.4, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(2.0, 4.5)",
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -12, 0], "linear_drag_coefficient": 0.6},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.4, 0.8)"},
+        "minecraft:particle_appearance_billboard": {"size": [0.1, 0.14], "facing_camera_mode": "lookat_direction",
+                                                   "uv": _uv("droplet")},
+        "minecraft:particle_appearance_tinting": _tint((0.45, 0.7, 1.0)),
+    }, material="particles_blend"),
+    "gust": _effect("gust", {  # spinning wind blades
+        **_once(10),
+        "minecraft:emitter_shape_disc": {"radius": 0.4, "plane_normal": "y", "surface_only": True, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(3.0, 6.0)",
+        "minecraft:particle_initial_spin": {"rotation": "Math.random(0, 360)", "rotation_rate": 720},
+        "minecraft:particle_motion_dynamic": {"linear_drag_coefficient": 2.4},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.3, 0.55)"},
+        "minecraft:particle_appearance_billboard": _billboard("crescent", "0.4"),
+        "minecraft:particle_appearance_tinting": _tint((0.8, 1.0, 0.92)),
+    }, material="particles_blend"),
+    "arc": _effect("arc", {  # flickering lightning arcs
+        **_once(8),
+        "minecraft:emitter_shape_sphere": {"radius": 0.6, "direction": "outwards"},
+        "minecraft:particle_initial_spin": {"rotation": "Math.random(0, 360)"},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.08, 0.2)"},
+        "minecraft:particle_appearance_billboard": _billboard("bolt", "Math.random(0.3, 0.55)"),
+        "minecraft:particle_appearance_tinting": _tint((0.8, 0.9, 1.0), fade=False),
+    }, material="particles_blend"),
+    "debris": _effect("debris", {
+        **_once(14),
+        "minecraft:emitter_shape_sphere": {"radius": 0.5, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(2.0, 5.0)",
+        "minecraft:particle_initial_spin": {"rotation": "Math.random(0, 360)", "rotation_rate": 240},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -14, 0], "linear_drag_coefficient": 0.5},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.5, 0.9)"},
+        "minecraft:particle_appearance_billboard": _billboard("shard", "0.2"),
+        "minecraft:particle_appearance_tinting": _tint((0.6, 0.45, 0.3), fade=False),
+    }),
+    "grains": _effect("grains", {
+        **_once(22),
+        "minecraft:emitter_shape_sphere": {"radius": 0.7, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(0.8, 2.5)",
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -5, 0], "linear_drag_coefficient": 1.2},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.5, 1.0)"},
+        "minecraft:particle_appearance_billboard": _billboard("grain", "0.14"),
+        "minecraft:particle_appearance_tinting": _tint((0.85, 0.72, 0.45)),
+    }),
+    "ink": _effect("ink", {
+        **_once(10),
+        "minecraft:emitter_shape_sphere": {"radius": 0.4, "direction": "outwards"},
+        "minecraft:particle_initial_speed": "Math.random(1.0, 2.5)",
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -4, 0], "linear_drag_coefficient": 1.5},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(0.4, 0.8)"},
+        "minecraft:particle_appearance_billboard": _billboard("ink", "0.22"),
+        "minecraft:particle_appearance_tinting": _tint((0.08, 0.06, 0.12)),
+    }),
+    "petals": _effect("petals", {  # genjutsu petals and feathers
+        **_once(14, 0.1),
+        "minecraft:emitter_shape_disc": {"radius": 1.2, "plane_normal": "y", "direction": [0, 1, 0]},
+        "minecraft:particle_initial_speed": "Math.random(0.5, 1.5)",
+        "minecraft:particle_initial_spin": {"rotation": "Math.random(0, 360)", "rotation_rate": "Math.random(-200, 200)"},
+        "minecraft:particle_motion_dynamic": {"linear_acceleration": [0, -0.9, 0], "linear_drag_coefficient": 1.4},
+        "minecraft:particle_lifetime_expression": {"max_lifetime": "Math.random(1.0, 1.8)"},
+        "minecraft:particle_appearance_billboard": _billboard("petal", "0.16"),
+        "minecraft:particle_appearance_tinting": _tint((1.0, 0.7, 0.82)),
+    }),
+})
 
 
 def emit_particles(b: Build) -> None:

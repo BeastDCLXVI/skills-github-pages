@@ -207,7 +207,7 @@ export const FOCI = {
   },
   logic: {
     name: 'Mind', art: 'Strategy & sealing', mind: 'logic smarts', perk: '',
-    schools: ['Nara', 'Uzumaki', 'Puppetry', 'Cursed Seal'],
+    schools: ['Nara', 'Uzumaki', 'Puppetry', 'Cursed Seal', 'Fuinjutsu'],
   },
   space: {
     name: 'Space', art: 'Ninjutsu shaping', mind: 'picture smarts', perk: '',
@@ -215,7 +215,7 @@ export const FOCI = {
   },
   rhythm: {
     name: 'Rhythm', art: 'Eyes & illusions', mind: 'music smarts', perk: '',
-    schools: ['Mangekyo', 'Rinnegan', 'Rinne-Sharingan', 'Tenseigan', 'Yamanaka'],
+    schools: ['Mangekyo', 'Rinnegan', 'Rinne-Sharingan', 'Tenseigan', 'Yamanaka', 'Genjutsu', 'Sharingan'],
   },
   words: {
     name: 'Words', art: 'Missions & diplomacy', mind: 'word smarts', schools: [],
@@ -231,7 +231,8 @@ export const FOCI = {
   },
   nature: {
     name: 'Nature', art: 'Elemental releases', mind: 'nature smarts', perk: '',
-    schools: ['Fire', 'Wind', 'Lightning', 'Earth', 'Water', 'Wood', 'Ice', 'Lava', 'Bone', 'Hozuki'],
+    schools: ['Fire', 'Wind', 'Lightning', 'Earth', 'Water', 'Wood', 'Ice', 'Lava', 'Bone', 'Hozuki', 'Sand', 'Dust', 'Storm',
+      'Scorch'],
   },
 };
 

@@ -2,18 +2,21 @@
 
 A full-scale **Bedrock add-on (`.mcaddon`)** that rebuilds the Java-edition Naruto/Boruto mod
 experience (Forge / NeoForge / Fabric / LiteLoader, Mixin-based) natively on the Bedrock Script API.
-It includes chakra, ranks, **clan rerolls**, nature releases and kekkei genkai, **101 jutsu**, dojutsu
+It includes chakra, ranks, **clan rerolls**, nature releases and kekkei genkai, **229 jutsu in 41 schools**, dojutsu
 evolution, all nine tailed beasts plus the Ten-Tails, Akatsuki and Otsutsuki bosses, the Karma, a
 **mission board with a Ryo economy**, village blueprints, ninja tools, legendary swords and pills, and
 **the Inner Path**: your Nindo, Resolve, bonds, a private journal and the Waterfall of Truth. v1.3 adds the
-**Boruto era** (Code, Claw Grime, Isshiki) and **HD textures** throughout.
+**Boruto era** (Code, Claw Grime, Isshiki) and **HD textures** throughout. v2.0 is **the Great Catalogue**:
+128 more canon techniques, refined chakra shapes, rounder tailed beasts, and an **extension API** so
+other add-ons can add their own jutsu.
 
 > Unofficial fan work. *Naruto* and *Boruto* belong to Masashi Kishimoto / Shueisha / Studio Pierrot.
 > This project is not affiliated with them, Mojang or Microsoft. All code and every texture and model
 > here is original: generated procedurally by `tools/gen`. No code or assets from existing mods are used.
 
-**Download:** [`dist/ShinobiReroll-v1.3.0.mcaddon`](dist/ShinobiReroll-v1.3.0.mcaddon), with separate
-`.mcpack` files alongside it.
+**Download:** [`dist/ShinobiReroll-v2.0.0.mcaddon`](dist/ShinobiReroll-v2.0.0.mcaddon), with separate
+`.mcpack` files alongside it, plus an optional example add-on (`ShinobiReroll_ExampleJutsu-v2.0.0.mcpack`)
+that shows how to add your own jutsu.
 **Requires:** Minecraft Bedrock **1.21.90 or newer** (Script API `@minecraft/server` 2.0.0, stable).
 No experimental toggles.
 
@@ -166,7 +169,7 @@ Naruto is a story about loneliness, bonds and the promises people live by. v1.2 
   health he tears off his limiters. He drops the **White Karma Seal**.
 * **Claw Grime.** Black long-clawed beasts that roam at night (normal difficulty and above) and devour the
   chakra of anyone they claw.
-* **New jutsu** (101 total):
+* **New jutsu** (101 at v1.3):
   * Wind Style: Gale Palm (Boruto's opener, Genin)
   * Lightning Style: Purple Lightning (Kakashi, Jonin; chains to two more enemies)
   * From the White Karma Seal: **Claw Marks** (carve a mark, cast again to vanish to it, slashing everything
@@ -188,6 +191,108 @@ Every texture is still *designed* at classic resolution, then rendered in HD by 
 
 Bedrock samples entity textures by normalised UVs, so the vanilla 64×64 humanoid geometry carries the HD
 skins unchanged. The validator accepts any power-of-two multiple of a geometry's texture size.
+
+## The Great Catalogue (v2.0)
+
+Every jutsu, with its rank, cost and requirements, is listed in **[docs/JUTSU.md](docs/JUTSU.md)**.
+v2.0 adds 128 signature techniques from Naruto, Shippuden, Boruto and the films:
+
+* **Ninjutsu:** Clone Technique, Multi Shadow Clone, Shadow Clone Explosion, Rasengan Barrage, Planetary
+  Rasengan, Hiding in Mist and in Camouflage, Super Beast Imitating Drawing, Dance of the Shikigami,
+  Striking Shadow Snakes, Summoning: Rashomon.
+* **Natures:**
+  * Fire: Great Dragon Fire, Dragon Fire, Hiding Ash, Running Fire, Phoenix Flower Nail Crimson, Majestic
+    Demolisher Flame.
+  * Wind: Sickle Weasel, Great Sickle Weasel, Summoning: Kamatari, Vacuum Great Sphere, Pressure Damage.
+  * Lightning: Lightning Cutter, Chidori Stream, Chidori Sharp Spear, Chidori Senbon, Lightning Beast
+    Running, Black Panther, False Darkness, Lariat.
+  * Earth: Headhunter, Earth Dragon Bullet, Earth Flow River, Swamp of the Underworld, Light Weight Rock and
+    Added Weight Rock.
+  * Water: Water Clone, Starch Syrup, Water Shark Bomb, Water Formation Wall, Water Fang Bullet, Great
+    Waterfall, Exploding Water Colliding Wave, Thousand Feeding Sharks.
+* **Kekkei tōta and advanced natures** (several natures at once): Storm Release: Laser Circus (Lightning +
+  Water), Scorch Release: Extra Steaming Murder (Fire + Wind), and Dust Release (Earth + Wind + Fire).
+* **Bloodlines:**
+  * Wood: Four Pillar Prison, Wood Clone, True Several Thousand Hands.
+  * Ice: Swallow Snow Storm, Black Dragon Blizzard.
+  * The Kaguya dances: Camellia, Willow, Clematis Vine and Flower, Seedling Fern.
+  * Hozuki: Great Water Arm.
+* **Clans:**
+  * Nara: Shadow Sewing.
+  * Akimichi: Partial Expansion, Butterfly Bullet Bombing.
+  * Yamanaka: Mind Body Disturbance.
+  * Aburame: Insect Clone.
+  * Inuzuka: Tunneling Fang, Two-Headed Wolf.
+  * Hyuga: Vacuum Palm, Twin Lion Fists, Protective 64 Palms, Mountain Crusher, 128 Palms.
+* **Sand** (craft a **Sand Gourd**, or have Shukaku sealed inside you): Shield of Sand, Armour of Sand, Sand
+  Binding Coffin, Sand Waterfall Funeral, Sand Shower, Quicksand Waterfall Flow.
+* **Puppetry and Explosion:** Chikamatsu's Ten Puppets, Performance of a Hundred Puppets, Iron Sand: Drizzle
+  and Gathering Assault, C3.
+* **Taijutsu:** Dynamic Entry, Leaf Rising Wind, Leaf Gale, Severe Leaf Hurricane, Drunken Fist, Lion Combo,
+  Reverse Lotus.
+* **Genjutsu:** Genjutsu Release, Hell Viewing, Mirror Heaven and Earth Change, Tree Binding Death, Temple
+  of Nirvana.
+* **Fuinjutsu:**
+  * **Flying Thunder God:** cast once to place a mark, cast again to flash to it.
+  * Five Elements Seal and Unseal, Evil Sealing Method, Four Violet Flames Formation.
+  * **Reaper Death Seal:** a lesser foe is sealed outright, a great one loses a quarter of its life, and it
+    costs you half of yours.
+* **Medical:** Chakra Scalpel, Poison Mist, Creation Rebirth.
+* **Sage Mode** (while active): Frog Kumite, Goemon, Toad Confrontation Chant, Super Big Ball Rasengan, Many
+  Super Big Ball Rasengan, Sage Art: Rasenshuriken.
+* **Six Paths:** Lava Release Rasenshuriken, Magnet Release Rasengan.
+* **Jinchuriki** (Kurama): Super Tailed Beast Rasenshuriken, Kurama Mode: Chakra Arms.
+* **Tenseigan:** Golden Wheel Rebirth Explosion.
+* **Sharingan and Mangekyo:** Sharingan Genjutsu, Kagutsuchi, Yasaka Magatama, Totsuka Blade, Indra's Arrow,
+  Kotoamatsukami, Izanagi (the next blow that would fell you never happened), Izanami.
+* **Rinnegan, the Six Paths of Pain:** Asura (missiles), Preta (absorption), Human (soul removal), Naraka
+  (healing), Animal (summoning), Limbo: Border Jail, and Outer Path: Samsara of Heavenly Life.
+
+That covers the signature techniques of the major characters, not literally every named jutsu in the
+franchise. That is what the extension API below is for.
+
+### Refined chakra shapes
+
+* **Jutsu projectiles** are drawn natively at 64×64:
+  * Fire and Amaterasu are ringed with flame tongues.
+  * Lightning crackles with arcs.
+  * The Rasenshuriken has curved blades around a Rasengan core.
+  * Earth is a faceted boulder; Ice is a cluster of shards.
+  * Most have a soft glow.
+* **Particles** use a new HD sprite atlas (32 px shapes).
+* **Every element lands with its own shape:** flame tongues, water splashes, spinning wind blades,
+  lightning arcs, rock debris, sand grains, ink blots, leaves or ice shards.
+* **Charged Rasengan:** a spinning sphere of chakra forms in your palm while it charges, and Rasengan
+  projectiles keep that sphere in flight.
+* **Other shapes:** buffs and cloaks raise a double helix, and area techniques expand a chakra ring.
+* **Less smoke:** puffs are smaller, fainter and shorter. Smoke is kept only where the story calls for it
+  (summons, Substitution, smoke bombs). Teleports, steam and boss arrivals use chakra wisps and leaves.
+
+### Rounder tailed beasts
+
+* Bodies, heads, snouts, limbs and tail segments are now **rounded boxes**: three overlapping cubes bevel
+  every edge, giving octagonal silhouettes.
+* Tails have twice as many, shorter segments, so they curl instead of kinking.
+* The large beasts carry **4× textures** (Kurama's is 1024×512) with fur, scale or hide detail.
+
+## Extending: add your own jutsu (v2.0)
+
+Every jutsu above is *data*: an archetype plus numbers, built by the **jutsu forge**
+(`src/scripts/jutsu/forge.js`). There are 17 archetypes: bolt, barrage, cone, burst, beam, chain, strike,
+dash, buff, aura, heal, summon, terrain, bind, field, mark and cleanse. Other add-ons use the same format:
+
+```js
+system.sendScriptEvent('shinobi:jutsu', JSON.stringify({
+  id: 'my_storm_spear', name: 'Lightning Style: Storm Spear', school: 'Lightning', nature: 'lightning',
+  rank: 2, cost: 35, cd: 8, kind: 'beam', element: 'lightning', length: 18, damage: 12,
+}));
+```
+
+Registered jutsu are learnable from the Shinobi Scroll and saved with the world. Operators can do the same
+from chat with `/scriptevent shinobi:jutsu {...}` and remove one with `/scriptevent shinobi:jutsu_remove <id>`.
+Every field is validated and clamped, and external specs cannot run code. The full reference is in
+**[docs/EXTENDING.md](docs/EXTENDING.md)**. A ready-to-copy example add-on is in `examples/custom-jutsu-pack/`
+and ships as `dist/ShinobiReroll_ExampleJutsu-v2.0.0.mcpack`.
 
 ## Tools, weapons, food
 
@@ -223,8 +328,9 @@ NPCs: **Leaf Shinobi** (tame with ramen; they fight and throw shuriken for you),
 | Kiba · Nuibari · Shibuki · Hiramekarei | Iron sword(s) + Lightning Rod / String / Explosive Tags / Prismarine Crystals + Chakra Crystal Block |
 | Shinobi Journal | Book + Chakra Crystal |
 | Kara Inner Mark | Kara Ring, 4 Chakra Crystals, 4 Obsidian |
+| Sand Gourd | 6 Sand, Leather, Block of Chakra Crystal |
 
-All 48 recipes appear in the recipe book once you hold an ingredient.
+All 49 recipes appear in the recipe book once you hold an ingredient.
 
 ## Operator commands
 
@@ -242,7 +348,8 @@ Waterfall trial here), `reset`, `cleanup`. World rules: `griefing on|off`
 shinobi-reroll/
 ├─ src/scripts/        Script API gameplay (ES modules, type-checked JS)
 │  ├─ main.js          entry: wires every system
-│  ├─ jutsu/           101 jutsu in 8 files + registry/requirements
+│  ├─ jutsu/           229 jutsu: hand-written schools, catalog.js (forge specs), forge.js (archetypes)
+│  ├─ extend.js        extension API: shinobi:jutsu script event, validation, persistence
 │  ├─ casting.js       cast pipeline, hand seals, toggles, chakra regen, HUD
 │  ├─ store.js         persistent shinobi profiles (dynamic properties)
 │  ├─ missions.js      daily mission board, progress hooks, rewards
@@ -254,13 +361,14 @@ shinobi-reroll/
 │  └─ …                dojutsu, combat, bosses, npc, items, ui, terrain, admin
 ├─ tools/
 │  ├─ gen/             generator for every BP/RP file, model, texture, particle, recipe
-│  │  └─ hd.py         material-aware HD renderer (4x skins, 2x models, 32x icons)
+│  │  └─ hd.py         material-aware HD renderer (4x skins and bosses, 2x models, 32x icons)
 │  ├─ build.py         generate → validate → package dist/*.mcaddon
 │  ├─ validate.py      cross-reference + optional official-schema validation
 │  ├─ preview.py       software renderer for the generated models
 │  └─ catalogue.mjs    regenerates docs/JUTSU.md
+├─ examples/           custom-jutsu-pack: a companion add-on that registers jutsu through the API
 ├─ tests/              Node smoke tests against a mock Script API
-└─ docs/               JUTSU.md (generated), TRANSFORMATION.md
+└─ docs/               JUTSU.md (generated), EXTENDING.md, TRANSFORMATION.md
 ```
 
 ```bash
@@ -278,11 +386,22 @@ See [docs/TRANSFORMATION.md](docs/TRANSFORMATION.md) for how each Java mod-loade
 layers do and don't prove.
 
 **Testing status:** the add-on is type-checked against the official API typings, smoke-tested
-(25 scenarios; every jutsu, item, menu, mission, shop, blueprint, AI loop, the Inner Path and the Boruto bosses run without errors against a mock API, and HD texture sizes are checked),
+(27 scenarios; all 229 jutsu, every item, menu, mission, shop, blueprint, AI loop, the Inner Path, the Boruto bosses and the extension API, with the shipped example add-on, run without errors against a mock API, and HD texture sizes are checked),
 cross-reference validated, and checked against Mojang's JSON schemas. It has **not** been play-tested in a live
 Minecraft client from the build environment, so please report anything that behaves differently in game.
 
 ## Changelog
+
+**2.0.0: The Great Catalogue**
+* 128 new canon techniques (229 in total, 41 schools), including multi-nature releases (Storm, Scorch, Dust),
+  Sand (new Sand Gourd), Genjutsu, Fuinjutsu (Flying Thunder God, Reaper Death Seal), the Six Paths of Pain,
+  Mangekyo techniques (Indra's Arrow, Kotoamatsukami, Izanagi, Izanami) and Sage Art techniques.
+* The jutsu forge: a data-driven engine with 17 archetypes. The **extension API** (`shinobi:jutsu`) lets other
+  add-ons and operators add jutsu safely; an example companion add-on ships alongside.
+* Refined chakra shapes: an HD particle atlas, element-specific impacts, native 64×64 projectile sprites,
+  a Rasengan sphere in your palm, helix auras and chakra rings. Much less smoke.
+* Rounder tailed beasts (beveled boxes, smoother tails) and 4× textures for the large beasts.
+* New temporary blocks: Chakra Sand and Chakra Barrier.
 
 **1.3.0: Boruto & HD**
 * HD textures: 4× skins (32×32×32-texel heads) and armor, 2× creature textures, 32×32 icons and blocks, rendered

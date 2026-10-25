@@ -26,8 +26,9 @@ from gen.recipes import emit_recipes  # noqa: E402
 
 BP_DIR = "ShinobiReroll_BP"
 RP_DIR = "ShinobiReroll_RP"
-DESCRIPTION = ("Naruto, Shippuden & Boruto on Bedrock: chakra, 50+ jutsu, clan rerolls, dojutsu, "
+DESCRIPTION = ("Naruto, Shippuden & Boruto on Bedrock: chakra, 220+ jutsu, clan rerolls, dojutsu, "
                "tailed beasts, Karma and the Otsutsuki. v" + ".".join(map(str, VERSION)))
+EXAMPLE_DIR = "ShinobiReroll_ExampleJutsu_BP"
 
 
 def manifests(b: Build) -> None:
@@ -109,6 +110,27 @@ def _zip(path: Path, entries: list[tuple[str, bytes]]) -> None:
             z.writestr(info, data)
 
 
+def example_pack() -> Pack:
+    """The optional companion add-on from examples/custom-jutsu-pack: it registers jutsu through the
+    extension API, and doubles as a template for anyone writing their own jutsu pack."""
+    ex = Pack(EXAMPLE_DIR)
+    src = ROOT / "examples" / "custom-jutsu-pack"
+    ex.json("manifest.json", {
+        "format_version": 2,
+        "header": {"name": "Shinobi Reroll: Example Jutsu", "description": "Adds three jutsu through the Shinobi Reroll extension API.",
+                   "uuid": stable_uuid("example/header"), "version": VERSION, "min_engine_version": MIN_ENGINE},
+        "modules": [{"type": "script", "language": "javascript", "uuid": stable_uuid("example/script"),
+                     "version": VERSION, "entry": "scripts/main.js"}],
+        "dependencies": [{"uuid": stable_uuid("bp/header"), "version": VERSION},
+                         {"module_name": "@minecraft/server", "version": SCRIPT_MODULES["@minecraft/server"]}],
+        "metadata": {"authors": ["Shinobi Reroll contributors"], "license": "MIT", "product_type": "addon"},
+    })
+    for f in sorted((src / "scripts").rglob("*.js")):
+        ex.raw(f"scripts/{f.relative_to(src / 'scripts').as_posix()}", f.read_bytes())
+    ex.raw("pack_icon.png", (ROOT / "build" / BP_DIR / "pack_icon.png").read_bytes())
+    return ex
+
+
 def package(b: Build, dist: Path) -> list[Path]:
     ver = ".".join(map(str, VERSION))
     addon = dist / f"ShinobiReroll-v{ver}.mcaddon"
@@ -118,6 +140,10 @@ def package(b: Build, dist: Path) -> list[Path]:
         path = dist / f"ShinobiReroll_{suffix}-v{ver}.mcpack"
         _zip(path, list(p.files.items()))
         outs.append(path)
+    ex = example_pack()
+    path = dist / f"ShinobiReroll_ExampleJutsu-v{ver}.mcpack"
+    _zip(path, list(ex.files.items()))
+    outs.append(path)
     return outs
 
 

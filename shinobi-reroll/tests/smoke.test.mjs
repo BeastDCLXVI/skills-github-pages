@@ -124,7 +124,7 @@ test('every jutsu executes against a live target without errors', () => {
     d.eyeOn = !!j.eyes;
     d.eyeStage = 3;
     d.contracts = ['toad', 'snake', 'slug'];
-    d.unlocks = ['clay', 'puppet', 'curse', 'code'];
+    d.unlocks = ['clay', 'puppet', 'curse', 'code', 'sand'];
     d.bijuu = 'kurama';
     d.sync = 100;
     d.karma = true;
@@ -767,4 +767,109 @@ test('HD textures: 32-texel heads, 32x icons and blocks, 2x creature textures', 
   assert.deepEqual(size('textures/models/armor/leaf_headband.png'), [256, 128]);
   const geo = JSON.parse(readFileSync(new URL('models/entity/claw_grime.geo.json', rp), 'utf8'))['minecraft:geometry'][0].description;
   assert.deepEqual(size('textures/entity/claw_grime.png'), [geo.texture_width * 2, geo.texture_height * 2]);
+});
+
+// ------------------------------------------------------------------ v2.0: the forge and the extension API
+
+test('extension API: another add-on registers jutsu that players can learn and cast', async () => {
+  const ext = await import('../src/scripts/extend.js');
+  // the shipped example pack, loaded exactly as Bedrock would run it
+  await import('../examples/custom-jutsu-pack/scripts/main.js');
+  world.afterEvents.worldLoad.fire({});
+  for (const id of ['ex_crimson_spiral', 'ex_frost_ring', 'ex_guardian_wolves']) assert.ok(JUTSU.has(id), `${id} registered`);
+  assert.ok(JUTSU.get('ex_crimson_spiral').ext, 'marked external');
+
+  const p = makePlayer('Modder');
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
+  tick(60);
+  const d = store.getData(p);
+  d.rank = 2;
+  d.jp = 20;
+  const { learn } = await import('../src/scripts/progression.js');
+  assert.equal(learn(p, 'ex_frost_ring'), null, 'learnable like any jutsu');
+  store.setChakra(p, 500);
+  const casts = d.casts;
+  dummy('minecraft:zombie', { x: p.location.x + 2, y: 64, z: p.location.z });
+  casting.cast(p, 'ex_frost_ring');
+  tick(40);
+  assert.equal(d.casts, casts + 1, 'external jutsu cast');
+
+  // validation: no code, no clashes, numbers clamped
+  assert.match(ext.registerExternal({ id: 'ex_bad', kind: 'custom', run: 'x' }) ?? '', /kind/);
+  assert.match(ext.registerExternal({ id: 'rasengan', kind: 'bolt' }) ?? '', /built-in/);
+  assert.match(ext.registerExternal({ id: 'Bad Id!', kind: 'bolt' }) ?? '', /id/);
+  assert.match(ext.registerExternal({ id: 'ex_army', kind: 'summon', entity: 'iron_golem' }) ?? '', /summon entity/);
+  assert.equal(ext.registerExternal({ id: 'ex_huge', kind: 'bolt', damage: 99999, radius: 500, effects: [['wither', 9999, 99], ['not_real', 1, 1]] }), null);
+  const huge = ext.sanitize({ id: 'ex_huge', kind: 'bolt', damage: 99999, radius: 500, effects: [['wither', 9999, 99]] }).spec;
+  assert.equal(huge.damage, 120);
+  assert.equal(huge.radius, 12);
+  assert.deepEqual(huge.effects, [['wither', 60, 4]]);
+
+  // operators can do the same from chat, and remove them again
+  admin(p, 'help');
+  system.afterEvents.scriptEventReceive.fire({ id: 'shinobi:jutsu', message: '{"id":"ex_chat","kind":"cone","element":"fire","damage":5}', sourceEntity: p });
+  assert.ok(JUTSU.has('ex_chat'));
+  assert.ok(p.chat.some((m) => m.includes('Jutsu registered')));
+  system.afterEvents.scriptEventReceive.fire({ id: 'shinobi:jutsu', message: 'not json', sourceEntity: p });
+  assert.ok(p.chat.some((m) => m.includes('expects a JSON')));
+  system.afterEvents.scriptEventReceive.fire({ id: 'shinobi:jutsu_remove', message: 'ex_chat', sourceEntity: p });
+  assert.ok(!JUTSU.has('ex_chat'), 'removed');
+  // persisted for the next session
+  const saved = JSON.parse(world.getDynamicProperty('sr:ext'));
+  assert.ok(saved.some((s) => s.id === 'ex_frost_ring'));
+  assert.ok(!saved.some((s) => s.id === 'ex_chat'));
+  noWarnings('extensions');
+});
+
+test('forge archetypes: every kind draws its shape and lands its effect', async () => {
+  const { KIND_NAMES } = await import('../src/scripts/jutsu/forge.js');
+  const kinds = new Set([...JUTSU.values()].filter((j) => j.cast || j.toggle).map((j) => j));
+  assert.ok(kinds.size > 200, `catalogue has ${kinds.size} jutsu`);
+  // every archetype is exercised by at least one catalogue entry
+  const src = (await import('node:fs')).readFileSync(new URL('../src/scripts/jutsu/catalog.js', import.meta.url), 'utf8');
+  for (const k of KIND_NAMES.filter((k) => k !== 'chain')) assert.ok(src.includes(`kind: '${k}'`), `catalogue uses kind ${k}`);
+  // particles of the refined shapes are emitted when jutsu land
+  const before = log.particles;
+  const p = makePlayer('Shapes');
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
+  tick(60);
+  const d = store.getData(p);
+  d.rank = 5;
+  d.natures = ['fire', 'wind', 'lightning', 'earth', 'water'];
+  d.learned.push('great_dragon_fire', 'severe_leaf_hurricane');
+  store.setChakra(p, 999);
+  casting.cast(p, 'great_dragon_fire');
+  tick(80);
+  casting.cast(p, 'severe_leaf_hurricane');
+  tick(20);
+  assert.ok(log.particles > before + 10, 'chakra shapes emitted');
+  noWarnings('forge');
+});
+
+test('summons are not companions: no Mangekyo, no bonds from temporary allies', async () => {
+  const p = makePlayer('Summoner');
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
+  tick(60);
+  p.location = { x: 500, y: 64, z: 500 };
+  admin(p, 'clan uchiha');
+  admin(p, 'xp 2500');
+  admin(p, 'eye sharingan');
+  const d = store.getData(p);
+  d.eyeStage = 3;
+  // a summoned wolf (Animal Path) fights beside you and dies
+  const wolf = overworld.spawnEntity('minecraft:wolf', { x: 501, y: 64, z: 500 });
+  wolf.tamedTo = p.id;
+  wolf.setDynamicProperty('sr:owner', p.id);
+  wolf.setDynamicProperty('sr:until', world.getAbsoluteTime() + 600);
+  const z = dummy('minecraft:zombie', { x: 500, y: 64, z: 503 });
+  world.afterEvents.entityDie.fire({ deadEntity: z, damageSource: { cause: 'entityAttack', damagingEntity: p } });
+  assert.equal(d.bonds[`c:${wolf.id}`], undefined, 'no bond with a temporary summon');
+  world.afterEvents.entityDie.fire({ deadEntity: wolf, damageSource: { cause: 'entityAttack' } });
+  assert.equal(d.eye, 'sharingan', 'a summon\'s death does not awaken the Mangekyo');
+  // control: a real companion's death still does
+  const friend = overworld.spawnEntity('minecraft:wolf', { x: 501, y: 64, z: 501 });
+  friend.tamedTo = p.id;
+  world.afterEvents.entityDie.fire({ deadEntity: friend, damageSource: { cause: 'entityAttack' } });
+  assert.equal(d.eye, 'mangekyo', 'losing a true companion awakens the Mangekyo');
+  noWarnings('summons');
 });

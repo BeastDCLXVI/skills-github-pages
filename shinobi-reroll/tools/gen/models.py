@@ -36,6 +36,7 @@ class Cube:
     rotation: tuple[float, float, float] | None = None
     uv: tuple[int, int] | None = None
     mirror: bool = False
+    aux: bool = False  # bevel piece of a rounded box (no face features)
 
 
 @dataclass
@@ -69,6 +70,21 @@ class Model:
         c = Cube(bone, tuple(round(o, 3) for o in origin), size, role, pivot, rotation)
         self.cubes.append(c)
         return c
+
+    def rcube(self, bone, origin, size, role, r=None, pivot=None, rotation=None) -> Cube:
+        """Rounded (chamfered) box: three overlapping cubes bevel every edge by r texels, so a beast's
+        body reads as a rounded mass instead of a crate. The full-depth core carries the face; the
+        overlapping faces of the other two sit inside it, so nothing z-fights."""
+        w, h, d = (max(1, int(round(s))) for s in size)
+        if r is None:
+            r = max(1, round(min(w, h, d) * 0.24))
+        if min(w, h, d) < 2 * r + 2:
+            return self.cube(bone, origin, size, role, pivot, rotation)
+        ox, oy, oz = origin
+        core = self.cube(bone, (ox + r, oy + r, oz), (w - 2 * r, h - 2 * r, d), role, pivot, rotation)
+        for o, s in (((ox, oy + r, oz + r), (w, h - 2 * r, d - 2 * r)), ((ox + r, oy, oz + r), (w - 2 * r, h, d - 2 * r))):
+            self.cube(bone, o, s, role, pivot, rotation).aux = True
+        return core
 
     # -- UV packing --------------------------------------------------------
     def pack(self) -> None:
@@ -176,7 +192,7 @@ class Model:
                         else:
                             px[fx + xx, fy + yy] = col
             img.material, body_mat = FLAT, img.material  # eyes, mouths and rings stay crisp
-            if c.role == "head":
+            if c.role == "head" and not c.aux:
                 self._face(img, faces["north"])
             if c.role == "eye_bump":
                 fx, fy, fw, fh = faces["north"]
@@ -289,9 +305,10 @@ class Model:
                 "loop": True, "anim_time_update": "query.modified_distance_moved", "bones": move_bones}
         idle_bones: dict = {}
         for i, chain in enumerate(tails):
+            k = 1 / self.features.get("tail_smooth", 1)
             for j, bone in enumerate(chain):
-                amp_y = 10.0 if j == 0 else 7.0
-                amp_x = 5.0 if j == 0 else 6.0
+                amp_y = 10.0 if j == 0 else round(7.0 * k * 1.15, 2)
+                amp_x = 5.0 if j == 0 else round(6.0 * k * 1.15, 2)
                 ph = i * 40 + j * 35
                 idle_bones[bone] = {"rotation": [
                     f"math.cos(query.life_time * 50.0 + {ph}) * {amp_x}",
@@ -315,7 +332,10 @@ class Model:
 
 def _tails(m: Model, count: int, base: tuple[float, float, float], segs: int, width: float, seg_len: float,
            spread: float, lift: float, role: str = "tail", taper: float = 0.82, parent: str = "body",
-           tip_segments: int = 0) -> None:
+           tip_segments: int = 0, smooth: int = 2) -> None:
+    # v2.0: each segment is split in `smooth` shorter, rounder ones, so tails curve instead of kinking
+    segs, seg_len, taper, tip_segments = segs * smooth, seg_len / smooth, taper ** (1 / smooth), tip_segments * smooth
+    m.features["tail_smooth"] = smooth
     chains = []
     tips = []
     for i in range(count):
@@ -326,10 +346,11 @@ def _tails(m: Model, count: int, base: tuple[float, float, float], segs: int, wi
         w = width
         prev = name
         for j in range(segs):
-            bname = name if j == 0 else m.bone(f"tail{i}_{j}", prev, (base[0], base[1], z), rotation=(-lift * 0.25, 0, 0))
+            bname = name if j == 0 else m.bone(f"tail{i}_{j}", prev, (base[0], base[1], z),
+                                                rotation=(-lift * 0.25 / smooth, 0, 0))
             if j:
                 chain.append(bname)
-            m.cube(bname, (base[0] - w / 2, base[1] - w / 2, z), (w, w, seg_len), role)
+            m.rcube(bname, (base[0] - w / 2, base[1] - w / 2, z), (w, w, seg_len + 0.5), role, r=1)
             if j >= segs - tip_segments:
                 tips.append(bname)
             z += seg_len - 0.5
@@ -353,7 +374,7 @@ def quadruped(key: str, palette: dict, *, body=(12, 10, 20), head=(10, 9, 8), sn
     m.bone("root")
     body_y = lh
     m.bone("body", "root", (0, body_y + bh / 2, 0))
-    m.cube("body", (-bw / 2, body_y, -bl / 2), (bw, bh, bl), "body")
+    m.rcube("body", (-bw / 2, body_y, -bl / 2), (bw, bh, bl), "body")
     if shell:
         sh_w, sh_h, sh_l = bw + 6, 6, bl + 4
         m.cube("body", (-sh_w / 2, body_y + bh - 2, -sh_l / 2), (sh_w, sh_h, sh_l), "shell")
@@ -366,17 +387,17 @@ def quadruped(key: str, palette: dict, *, body=(12, 10, 20), head=(10, 9, 8), sn
             x = sx * (bw / 2 - lw / 2)
             z = sz * (bl / 2 - lw / 2 - 1)
             n = m.bone(f"leg{i}", "root", (x, lh, z))
-            m.cube(n, (x - lw / 2, 0, z - lw / 2), (lw, lh, lw), "leg")
+            m.rcube(n, (x - lw / 2, 0, z - lw / 2), (lw, lh, lw), "leg", r=1)
             legs_names.append(n)
     m.features["legs"] = legs_names
     hw, hh, hd = head
     head_y = body_y + bh * 0.45
     hz = -bl / 2
     m.bone("head", "body", (0, head_y + hh / 2, hz))
-    m.cube("head", (-hw / 2, head_y, hz - hd), (hw, hh, hd), "head")
+    m.rcube("head", (-hw / 2, head_y, hz - hd), (hw, hh, hd), "head")
     if snout:
         sw, sh, sd = snout
-        m.cube("head", (-sw / 2, head_y, hz - hd - sd), (sw, sh, sd), "snout")
+        m.rcube("head", (-sw / 2, head_y, hz - hd - sd), (sw, sh, sd), "snout", r=1)
     top = head_y + hh
     if ears == "fox":
         for sx in (-1, 1):
@@ -425,25 +446,25 @@ def upright(key: str, palette: dict, *, torso=(14, 16, 10), head=(10, 10, 9), le
     aw, ah, _ = arm
     m.bone("root")
     m.bone("body", "root", (0, lh + th / 2, 0))
-    m.cube("body", (-tw / 2, lh, -td / 2), (tw, th, td), "body")
+    m.rcube("body", (-tw / 2, lh, -td / 2), (tw, th, td), "body")
     m.cube("body", (-tw / 2 + 2, lh + 1, -td / 2 - 1), (tw - 4, th - 5, 1), "belly")
     legs = []
     for i, sx in enumerate((-1, 1)):
         x = sx * (tw / 2 - lw / 2 - 0.5)
         n = m.bone(f"leg{i}", "root", (x, lh, 0))
-        m.cube(n, (x - lw / 2, 0, -lw / 2), (lw, lh, lw), "leg")
+        m.rcube(n, (x - lw / 2, 0, -lw / 2), (lw, lh, lw), "leg", r=1)
         legs.append(n)
     m.features["legs"] = legs
     arms = []
     for i, sx in enumerate((-1, 1)):
         x = sx * (tw / 2 + aw / 2)
         n = m.bone(f"arm{i}", "body", (x, lh + th - 2, 0))
-        m.cube(n, (x - aw / 2, lh + th - ah, -aw / 2), (aw, ah, aw), "arm")
+        m.rcube(n, (x - aw / 2, lh + th - ah, -aw / 2), (aw, ah, aw), "arm", r=1)
         arms.append(n)
     m.features["arms"] = arms
     hw, hh, hd = head
     m.bone("head", "body", (0, lh + th, 0))
-    m.cube("head", (-hw / 2, lh + th, -hd / 2 - 1), (hw, hh, hd), "head")
+    m.rcube("head", (-hw / 2, lh + th, -hd / 2 - 1), (hw, hh, hd), "head")
     top = lh + th + hh
     if snout:
         sw, sh, sd = snout

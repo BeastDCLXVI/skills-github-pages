@@ -34,6 +34,14 @@ const ELEMENT_COLORS = {
 /** @param {string} element */
 export const elementColor = (element) => rgb(ELEMENT_COLORS[element] ?? '#ffffff');
 
+/** The particle shape each element leaves where it lands. */
+export const IMPACT = {
+  fire: PARTICLE.flame, lava: PARTICLE.flame, boil: PARTICLE.wisp, water: PARTICLE.splash, wind: PARTICLE.gust,
+  rasenshuriken: PARTICLE.gust, lightning: PARTICLE.arc, earth: PARTICLE.debris, sand: PARTICLE.grains, ink: PARTICLE.ink,
+  wood: PARTICLE.leaves, ice: PARTICLE.shards, bone: PARTICLE.shards, ash_bone: PARTICLE.shards, amaterasu: PARTICLE.blackFlame,
+  rasengan: PARTICLE.sphere, karma: PARTICLE.sphere, truth: PARTICLE.ring, bijuu_bomb: PARTICLE.ring,
+};
+
 /**
  * Launch a scripted jutsu projectile.
  * @param {Entity} caster @param {OrbOptions} opts
@@ -99,10 +107,10 @@ function resolve(meta, loc, hit) {
     for (const e of enemiesAround(caster, loc, radius)) if (e.id !== hit?.id) strike(e, dmg * 0.7);
   }
   fx(dim, PARTICLE.burst, loc, color);
+  const impact = IMPACT[opts.element];
+  if (impact) fx(dim, impact, loc, color);
   if (opts.element === 'lightning') fx(dim, PARTICLE.sparks, loc, color);
-  if (opts.element === 'ice') fx(dim, PARTICLE.shards, loc, color);
-  if (opts.element === 'wood') fx(dim, PARTICLE.leaves, loc, color);
-  if (opts.element === 'amaterasu') fx(dim, PARTICLE.blackFlame, loc, color);
+  if (radius >= 3 || opts.explode) fx(dim, PARTICLE.ring, loc, color);
   if (opts.explode) {
     fx(dim, PARTICLE.explosion, loc);
     sound(dim, SOUND.explode, loc, 1.1, 1.2);
@@ -157,7 +165,11 @@ function tick() {
     }
     const { opts } = meta;
     if (age % 2 === 0) fx(e.dimension, PARTICLE.trail, loc, opts.color ? rgb(opts.color) : elementColor(opts.element));
-    if (opts.element === 'rasengan' || opts.element === 'rasenshuriken') fx(e.dimension, PARTICLE.spiral, loc, elementColor('rasengan'));
+    if (opts.element === 'rasengan' || opts.element === 'rasenshuriken') {
+      if (age % 3 === 0) fx(e.dimension, PARTICLE.sphere, loc, elementColor('rasengan'));
+    } else if (age % 4 === 0 && (opts.element === 'fire' || opts.element === 'lightning')) {
+      fx(e.dimension, opts.element === 'fire' ? PARTICLE.flame : PARTICLE.arc, loc, elementColor(opts.element));
+    }
     if (opts.hidden) {
       const hide = age >= opts.hidden[0] && age < opts.hidden[1];
       try {
@@ -177,7 +189,7 @@ function tick() {
       else {
         meta.done = true;
         orbs.delete(id);
-        fx(e.dimension, PARTICLE.smoke, loc);
+        fx(e.dimension, PARTICLE.burst, loc, opts.color ? rgb(opts.color) : elementColor(opts.element));
         try {
           e.remove();
         } catch {}

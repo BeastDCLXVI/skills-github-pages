@@ -69,7 +69,7 @@ register([
         effect(c.p, FX.speed, 2, 1, false);
         effect(c.p, FX.resistance, 2, 0, false);
         strain(c, 1);
-        fx(c.dim, PARTICLE.smoke, add(c.p.location, v3(0, 1, 0)), STEAM);
+        fx(c.dim, PARTICLE.wisp, add(c.p.location, v3(0, 1, 0)), STEAM);
       },
     },
   },
@@ -103,7 +103,7 @@ register([
         effect(c.p, FX.jumpBoost, 2, 1, false);
         strain(c, 2);
         fx(c.dim, PARTICLE.aura, c.p.location, BLOOD);
-        fx(c.dim, PARTICLE.smoke, add(c.p.location, v3(0, 1.2, 0)), BLOOD);
+        fx(c.dim, PARTICLE.wisp, add(c.p.location, v3(0, 1.2, 0)), BLOOD);
       },
       onEnd(p) {
         effect(p, FX.weakness, 60, 2);

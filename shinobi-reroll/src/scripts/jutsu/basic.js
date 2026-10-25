@@ -46,7 +46,7 @@ register([
     seals: ['Dog', 'Boar', 'Ram'],
     desc: 'Vanish from sight for 15 seconds.',
     cast(c) {
-      fx(c.dim, PARTICLE.smoke, add(c.p.location, v3(0, 1, 0)));
+      fx(c.dim, PARTICLE.leaves, add(c.p.location, v3(0, 1, 0)));
       sound(c.dim, SOUND.poof, c.p.location);
       effect(c.p, FX.invisibility, 15, 0, false);
       effect(c.p, FX.speed, 15, 0, false);
@@ -131,7 +131,7 @@ register([
       hurt(c.p, 1);
       const at = add(ahead(c, 3), v3(0, 0.5, 0));
       summon(c, ENTITY.toad, at, (rt(c.p).toggles.has('sage_mode') ? 120 : 75) * 20);
-      for (let i = 0; i < 4; i++) fx(c.dim, PARTICLE.smoke, add(at, v3(Math.random() * 2 - 1, i * 0.6, Math.random() * 2 - 1)));
+      for (let i = 0; i < 2; i++) fx(c.dim, PARTICLE.smoke, add(at, v3(Math.random() * 2 - 1, i * 0.9, Math.random() * 2 - 1)));
       sound(c.dim, SOUND.summon, at, 0.8);
       title(c.p, '', '§6Kuchiyose no Jutsu!', 25);
     },
@@ -170,7 +170,8 @@ function charge(c, kind, ticks, hits) {
   repeat(Math.floor(ticks / 4), 4, () => {
     if (!r.charged || r.charged.kind !== kind) return false;
     const hand = add(eyes(c.p), add(mul(c.p.getViewDirection(), 0.8), v3(0, -0.45, 0)));
-    fx(c.dim, PARTICLE.spiral, hand, SPIRAL);
+    // the chakra takes shape in your palm: a spinning sphere for the Rasengan family, a swirl otherwise
+    fx(c.dim, kind === 'rasengan' || kind === 'oodama' ? PARTICLE.sphere : PARTICLE.spiral, hand, SPIRAL);
   });
 }
 

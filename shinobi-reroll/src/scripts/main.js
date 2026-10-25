@@ -8,6 +8,7 @@ import { startCombat } from './combat.js';
 import { CLANS, NATURES, RARITY_COLOR } from './data.js';
 import { startDojutsu } from './dojutsu.js';
 import { ENTITY, ITEM } from './ids.js';
+import { startExtensions } from './extend.js';
 import { startInnerPath } from './innerpath.js';
 import { startItems } from './items.js';
 import { dismissAll } from './jutsu/core.js';
@@ -60,6 +61,7 @@ startNpc();
 startBosses();
 startAdmin();
 startInnerPath();
+startExtensions();
 
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   if (initialSpawn) welcome(player);

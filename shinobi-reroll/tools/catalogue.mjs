@@ -6,12 +6,13 @@ const { RANKS, NATURES, KEKKEI, CLANS, DOJUTSU } = await import('../src/scripts/
 const req = (j) => {
   const out = [];
   if (j.nature) out.push(`${NATURES[j.nature].name} nature`);
+  if (j.natures) out.push(`${j.natures.map((n) => NATURES[n].name).join(' + ')} natures`);
   if (j.kekkei) out.push(KEKKEI[j.kekkei].name);
   if (j.clan) out.push(`${CLANS[j.clan].name} clan`);
   if (j.eyes) out.push(j.eyes.map((e) => DOJUTSU[e].name).join(' / '));
   if (j.flag) {
     out.push({ jinchuriki: 'Jinchuriki', karma: 'Karma', ascended: 'Otsutsuki ascension', clay: 'Explosive Clay',
-      puppet: 'Puppet Scroll', curse: 'Cursed Seal', code: 'White Karma Seal' }[j.flag]);
+      puppet: 'Puppet Scroll', curse: 'Cursed Seal', code: 'White Karma Seal', sand: 'Sand Gourd or Shukaku' }[j.flag]);
   }
   if (j.contract) out.push(`${j.contract[0].toUpperCase()}${j.contract.slice(1)} contract`);
   if (j.beast) out.push(`${j.beast[0].toUpperCase()}${j.beast.slice(1)} sealed`);

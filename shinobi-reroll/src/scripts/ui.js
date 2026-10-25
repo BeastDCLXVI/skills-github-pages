@@ -105,7 +105,7 @@ async function profile(p) {
     `§lTailed Beast:§r ${d.bijuu ? `${bijuuByKey(d.bijuu)?.name} (sync ${Math.floor(d.sync)}%)` : 'None'}`,
     `§lKarma:§r ${d.karma ? `Yes (energy ${Math.floor(d.karmaEnergy)})` : 'No'}  ·  §lOtsutsuki:§r ${d.ascended ? 'Ascended' : 'No'}`,
     `§lContracts:§r ${d.contracts.length ? d.contracts.join(', ') : 'none'}${d.contracts.includes('toad') ? ` · natural energy ${Math.floor(d.sageEnergy)}%` : ''}`,
-    d.unlocks.length ? `§lArts:§r ${d.unlocks.map((u) => ({ clay: 'Explosion Release', puppet: 'Puppetry', curse: 'Cursed Seal', code: 'White Karma' })[u] ?? u).join(', ')}` : '',
+    d.unlocks.length ? `§lArts:§r ${d.unlocks.map((u) => ({ clay: 'Explosion Release', puppet: 'Puppetry', curse: 'Cursed Seal', code: 'White Karma', sand: 'Sand' })[u] ?? u).join(', ')}` : '',
     `§lNindo:§r ${d.nindo ? `${NINDO[d.nindo].color}${NINDO[d.nindo].name}§r · Resolve ${Math.floor(d.resolve)}/${RESOLVE_MAX}` : 'not chosen'}${d.innerPeace ? ' · §fInner Peace' : ''}`,
     '',
     `§7Jutsu learned: ${d.learned.length} · casts: ${d.casts} · defeated: ${d.kills} · missions: ${d.missionsDone} · rerolls: ${d.rerolls}`,
@@ -501,6 +501,14 @@ const CODEX = [
     'Wild Claw Grime roam at night and devour the chakra of anyone they claw.',
     'New for everyone: Wind Style: Gale Palm (Boruto, Genin) and Lightning Style: Purple Lightning (Kakashi, Jonin).',
     'Two Boruto-era Nindo: Protect the Village from the Shadows (Boruto) and I Will Become Hokage (Sarada).',
+  ]],
+  ['The Great Catalogue', [
+    'Over two hundred jutsu: open Learn Jutsu to see which ones you qualify for. Locked ones say exactly what they need.',
+    'Several natures at once unlock advanced releases: Storm (Lightning + Water), Scorch (Fire + Wind), Dust (Earth + Wind + Fire).',
+    'Craft a §6Sand Gourd§r (Sand, Leather, Chakra Crystal Block) for the Sand arts; Shukaku\'s jinchuriki needs none.',
+    'Flying Thunder God: cast once to place a mark, cast again to flash to it, cutting everything on the way.',
+    'Sage Art techniques need Sage Mode active; Susanoo techniques need Susanoo; Six Paths techniques need Six Paths Sage Mode.',
+    'Other add-ons can add their own jutsu: they show up here like any other.',
   ]],
   ['Commands (operators)', [
     '/scriptevent shinobi:admin help — list admin commands.',

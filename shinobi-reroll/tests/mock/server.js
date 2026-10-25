@@ -57,7 +57,10 @@ export const system = {
   waitTicks(n) {
     return new Promise((res) => this.runTimeout(res, n));
   },
-  sendScriptEvent() {},
+  sendScriptEvent(id, message) {
+    // like the engine: delivered to every pack's scriptEventReceive subscribers
+    this.afterEvents.scriptEventReceive.fire({ id, message, sourceType: 'Server' });
+  },
 };
 
 /** Advance the simulated clock, running due timers. Exceptions propagate. */

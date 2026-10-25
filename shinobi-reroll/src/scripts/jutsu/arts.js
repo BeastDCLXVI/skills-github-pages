@@ -45,7 +45,7 @@ register([
       sound(c.dim, SOUND.fizz, at, 0.5, 1.5);
       repeat(8, 10, () => {
         if (!valid(c.p)) return false;
-        for (let i = 0; i < 4; i++) fx(c.dim, PARTICLE.smoke, add(at, v3(Math.random() * 8 - 4, Math.random() * 2, Math.random() * 8 - 4)), rgb('#d0d0d8'));
+        for (let i = 0; i < 2; i++) fx(c.dim, PARTICLE.smoke, add(at, v3(Math.random() * 8 - 4, Math.random() * 2, Math.random() * 8 - 4)), rgb('#d0d0d8'));
         for (const e of enemiesAround(c.p, at, 6)) {
           hurt(e, 3 * c.pow, c.p);
           effect(e, FX.wither, 3, 0);

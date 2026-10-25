@@ -61,6 +61,7 @@ export const ITEM = Object.freeze({
   journal: 'shinobi:shinobi_journal',
   karaInnerMark: 'shinobi:kara_inner_mark',
   whiteKarmaSeal: 'shinobi:white_karma_seal',
+  sandGourd: 'shinobi:sand_gourd',
 });
 
 export const ENTITY = Object.freeze({
@@ -103,6 +104,8 @@ export const BLOCK = Object.freeze({
   earthWall: 'shinobi:earth_wall',
   wood: 'shinobi:hashirama_wood',
   ice: 'shinobi:crystal_ice',
+  sand: 'shinobi:sand_wall',
+  barrier: 'shinobi:chakra_barrier',
 });
 
 export const PARTICLE = Object.freeze({
@@ -118,6 +121,20 @@ export const PARTICLE = Object.freeze({
   spiral: 'shinobi:spiral',
   tomoe: 'shinobi:tomoe',
   shards: 'shinobi:shards',
+  // v2.0: refined chakra shapes and element impacts
+  sphere: 'shinobi:sphere',
+  helix: 'shinobi:helix',
+  ring: 'shinobi:ring',
+  sparkle: 'shinobi:sparkle',
+  wisp: 'shinobi:wisp',
+  flame: 'shinobi:flame',
+  splash: 'shinobi:splash',
+  gust: 'shinobi:gust',
+  arc: 'shinobi:arc',
+  debris: 'shinobi:debris',
+  grains: 'shinobi:grains',
+  ink: 'shinobi:ink',
+  petals: 'shinobi:petals',
   explosion: 'minecraft:huge_explosion_emitter',
 });
 

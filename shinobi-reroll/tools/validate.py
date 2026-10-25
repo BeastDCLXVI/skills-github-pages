@@ -28,7 +28,7 @@ REF = json.loads((Path(__file__).parent / "reference" / "vanilla.json").read_tex
 # components introduced after the 1.20.50 item schema but available at format 1.21.90
 ITEM_COMPONENTS_EXTRA = {"minecraft:rarity"}
 # runtime-only identifiers the scripts use (script events typed by players/admins)
-SCRIPT_EVENT_IDS = {"shinobi:admin"}
+SCRIPT_EVENT_IDS = {"shinobi:admin", "shinobi:jutsu", "shinobi:jutsu_remove"}
 VANILLA_TEXTURES = {"textures/misc/enchanted_actor_glint"}
 
 

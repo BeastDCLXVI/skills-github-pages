@@ -3,6 +3,7 @@ import { CLANS, DOJUTSU, RANKS } from './data.js';
 import { ITEM, PARTICLE, SOUND } from './ids.js';
 import { deed, onRankUp, xpMult } from './innerpath.js';
 import { JUTSU, learnCost, meets } from './jutsu/index.js';
+import { TOGGLE_POWER } from './jutsu/forge.js';
 import { rt } from './state.js';
 import { getData, loadoutSize, maxChakra, natureSlots, setChakra, touch } from './store.js';
 import { fx, ping, settings, tell, title, worn } from './util.js';
@@ -22,6 +23,7 @@ export function power(p) {
   if (r.toggles.has('lightning_armor')) m += 0.15;
   if (r.toggles.has('tenseigan_mode')) m += 0.4;
   if (r.toggles.has('white_karma')) m += 0.35;
+  for (const t of r.toggles) m += TOGGLE_POWER.get(t) ?? 0;
   if (d.ascended) m += 0.4;
   if (worn(p, EquipmentSlot.Head) === ITEM.rogueHeadband) m += 0.1;
   return m;

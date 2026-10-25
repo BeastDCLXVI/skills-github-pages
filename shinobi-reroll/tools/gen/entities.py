@@ -146,7 +146,7 @@ def emit_projectiles(b: Build) -> None:
     textures = {}
     for i, key in enumerate(ORB_ELEMENTS):
         path = f"textures/entity/jutsu/{key}"
-        b.rp.png(path + ".png", hd_icon(S.jutsu_sprite(key)))
+        b.rp.png(path + ".png", S.jutsu_sprite_hd(key))
         textures[key] = path
     b.rp.json("entity/jutsu_orb.entity.json",
               sprite_client(ident("jutsu_orb"), textures, "controller.render.shinobi.jutsu_orb",
@@ -448,7 +448,8 @@ def model_client(key: str, model: Model, egg: tuple[str, str] | None, anims: dic
 
 def emit_model(b: Build, key: str, model: Model, egg) -> None:
     b.rp.json(f"models/entity/{model.key}.geo.json", model.geometry())
-    b.rp.png(f"textures/entity/{key}.png", model.texture_hd(seed=len(key)))
+    # big creatures (bosses) get 4x textures: their fur is seen from close up at several blocks tall
+    b.rp.png(f"textures/entity/{key}.png", model.texture_hd(seed=len(key), scale=4 if model.scale >= 1.8 else 2))
     anim = model.animations()
     if anim["animations"]:
         b.rp.json(f"animations/{model.key}.animation.json", anim)

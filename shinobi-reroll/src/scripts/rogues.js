@@ -19,7 +19,7 @@ const OTSUTSUKI = rgb('#9a7ad8');
 /** Step behind the target. @param {Entity} boss @param {Player} t */
 function behind(boss, t, distance = 2) {
   const to = add(t.location, mul(flatDir(v3(0, 0, 0), t.getViewDirection()), -distance));
-  fx(boss.dimension, PARTICLE.smoke, boss.location);
+  fx(boss.dimension, PARTICLE.wisp, boss.location);
   boss.tryTeleport(to, { checkForBlocks: true, facingLocation: t.location });
 }
 
@@ -154,7 +154,7 @@ function orochimaru(boss) {
   if (!mem.shed && healthFraction(boss) < 0.5) {
     mem.shed = 1;
     heal(boss, 100);
-    fx(dim, PARTICLE.smoke, boss.location);
+    fx(dim, PARTICLE.wisp, boss.location);
     title(t, '§5Orochimaru', '§7sheds his skin...', 30);
     const away = add(boss.location, mul(flatDir(t.location, boss.location), 8));
     boss.tryTeleport(away, { checkForBlocks: true, facingLocation: t.location });
@@ -169,7 +169,7 @@ function orochimaru(boss) {
           dim.spawnEntity(ENTITY.snake, add(p, v3(0, 0.5, 0)));
         } catch {}
       }
-      fx(dim, PARTICLE.smoke, boss.location);
+      fx(dim, PARTICLE.wisp, boss.location);
       sound(dim, SOUND.hiss, boss.location, 0.6, 1.5);
       return;
     }

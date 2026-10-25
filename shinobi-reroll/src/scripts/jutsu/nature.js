@@ -318,7 +318,7 @@ register([
       sound(c.dim, SOUND.fizz, at, 0.6, 1.5);
       repeat(12, 10, () => {
         if (!valid(c.p)) return false;
-        for (let i = 0; i < 3; i++) fx(c.dim, PARTICLE.smoke, add(at, v3(Math.random() * 6 - 3, Math.random() * 2, Math.random() * 6 - 3)), BOIL);
+        for (let i = 0; i < 3; i++) fx(c.dim, PARTICLE.wisp, add(at, v3(Math.random() * 6 - 3, Math.random() * 2, Math.random() * 6 - 3)), BOIL);
         for (const e of enemiesAround(c.p, at, 5)) {
           hurt(e, 2 * c.pow, c.p);
           effect(e, FX.weakness, 3);

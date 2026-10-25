@@ -27,6 +27,8 @@ import { system } from '@minecraft/server';
  *   meditateSecs: number,
  *   hinted: boolean,
  *   clawMark: { loc: Vector3, dim: string, until: number } | null,
+ *   marks: Map<string, { loc: Vector3, dim: string, until: number }>,
+ *   izanagiUntil: number,
  * }} Runtime
  */
 
@@ -41,7 +43,7 @@ export function rt(p) {
       cooldowns: new Map(), weavingUntil: 0, toggles: new Set(), charged: null, absorbUntil: 0, intangibleUntil: 0,
       gatherTicks: 0, lastPos: null, lastTrain: 0, lastThrow: 0, lastGunbai: 0, koteMode: 0, bladeCharge: 0, seals: '',
       sealsUntil: 0, allyNear: false, bondTier: 0, stillAt: null, stillSecs: 0, meditateSecs: 0, hinted: false,
-      clawMark: null,
+      clawMark: null, marks: new Map(), izanagiUntil: 0,
     };
     runtime.set(p.id, r);
   }

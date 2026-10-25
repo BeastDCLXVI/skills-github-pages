@@ -18,6 +18,7 @@
   },
   "include": [
     "src/scripts/**/*.js",
+    "examples/**/*.js",
     "types/*.d.ts"
   ]
 }
