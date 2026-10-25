@@ -9,7 +9,7 @@ import { addXp, syncAutoJutsu } from './progression.js';
 import { liveOrbs, paperBomb, reflectOrb, spawnOrb, throwTool } from './projectiles.js';
 import { cooldownLeft, rt, setCooldown } from './state.js';
 import { addChakra, getData, maxChakra, setChakra, touch } from './store.js';
-import { bijuuSummonMenu, jutsuWheel, mainMenu, rerollClan } from './ui.js';
+import { bijuuSummonMenu, journalMenu, jutsuWheel, mainMenu, rerollClan } from './ui.js';
 import {
   add, consumeHeld, countItem, dist, effect, enemiesAround, eyes, fx, hurt, isCreative, knock, later,
   lookBlock, ping, rgb, sound, takeItem, tell, title, v3, valid,
@@ -289,6 +289,8 @@ function onUse(p, item) {
       return void (p.isSneaking ? jutsuWheel(p) : mainMenu(p));
     case ITEM.reroll:
       return rerollClan(p);
+    case ITEM.journal:
+      return void journalMenu(p);
     case ITEM.bijuuScroll:
       return void bijuuSummonMenu(p);
     case ITEM.sealingScroll:
@@ -442,6 +444,7 @@ const USABLE = new Set([
   ITEM.toadContract, ITEM.forbiddenScroll, ITEM.sigil, ITEM.gedoCore, ITEM.karmaSeal, ITEM.hashiramaCells, ITEM.kote,
   ITEM.explosiveTag, ITEM.gunbai, ITEM.karaRing, ITEM.clay, ITEM.uchihaEye, ITEM.curseSeal, ITEM.snakeContract,
   ITEM.slugContract, ITEM.puppetScroll, ITEM.blueprintGate, ITEM.blueprintRamen, ITEM.blueprintTraining, ITEM.hiramekarei,
+  ITEM.journal,
 ]);
 
 /** @type {Map<string, number>} */

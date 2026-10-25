@@ -1,9 +1,14 @@
-import { system } from '@minecraft/server';
+import { system, world } from '@minecraft/server';
 import { ActionFormData, FormCancelationReason, MessageFormData, ModalFormData } from '@minecraft/server-ui';
-import { BIJUU, CLANS, DOJUTSU, KEKKEI, NATURES, RANKS, RARITY_COLOR, bijuuByKey } from './data.js';
+import {
+  BIJUU, BOND_TIERS, CLANS, DOJUTSU, FOCI, KEKKEI, MOODS, NATURES, NINDO, RANKS, RARITY_COLOR, bijuuByKey, bondTier,
+} from './data.js';
 import { ITEM, PARTICLE, SOUND } from './ids.js';
 import { JUTSU, learnCost, meets } from './jutsu/index.js';
 import { costOf, dropToggles } from './casting.js';
+import {
+  RESOLVE_MAX, bondList, checkIn, chooseNindo, focusLabel, mixedThought, nindoLockedFor,
+} from './innerpath.js';
 import { GRADE_COLOR, abandon, accept, board, progressOf, turnIn } from './missions.js';
 import { BUYBACK, OFFERS, buy, sell, wallet } from './shop.js';
 import { summonBoss } from './bosses.js';
@@ -44,6 +49,7 @@ const ICON = {
   codex: 'textures/items/toad_contract',
   missions: 'textures/items/blueprint_leaf_gate',
   shop: 'textures/items/ryo',
+  inner: 'textures/items/shinobi_journal',
 };
 
 /** @param {Player} p */
@@ -70,6 +76,7 @@ export async function mainMenu(p) {
     [`Nature Transformation §8(${d.natures.length}/${natureSlots(d)})`, ICON.nature, () => natureMenu(p)],
     [`Missions${d.mission ? ` §8(${progressOf(p).have}/${progressOf(p).need})` : ''}`, ICON.missions, () => missionsMenu(p)],
     [`Ninja Shop §8(${wallet(p)} Ryo)`, ICON.shop, () => shopMenu(p)],
+    [`Inner Path${d.nindo ? ` §8(${Math.floor(d.resolve)} Resolve)` : ' §8(choose your Nindo)'}`, ICON.inner, () => innerPathMenu(p)],
   ];
   if (d.eye) entries.push([`${DOJUTSU[d.eye].color}${DOJUTSU[d.eye].name}`, ICON.eye, () => eyeMenu(p)]);
   if (d.bijuu) entries.push([`§6${bijuuByKey(d.bijuu)?.name}`, ICON.beast, () => beastMenu(p)]);
@@ -99,6 +106,7 @@ async function profile(p) {
     `§lKarma:§r ${d.karma ? `Yes (energy ${Math.floor(d.karmaEnergy)})` : 'No'}  ·  §lOtsutsuki:§r ${d.ascended ? 'Ascended' : 'No'}`,
     `§lContracts:§r ${d.contracts.length ? d.contracts.join(', ') : 'none'}${d.contracts.includes('toad') ? ` · natural energy ${Math.floor(d.sageEnergy)}%` : ''}`,
     d.unlocks.length ? `§lArts:§r ${d.unlocks.map((u) => ({ clay: 'Explosion Release', puppet: 'Puppetry', curse: 'Cursed Seal' })[u] ?? u).join(', ')}` : '',
+    `§lNindo:§r ${d.nindo ? `${NINDO[d.nindo].color}${NINDO[d.nindo].name}§r · Resolve ${Math.floor(d.resolve)}/${RESOLVE_MAX}` : 'not chosen'}${d.innerPeace ? ' · §fInner Peace' : ''}`,
     '',
     `§7Jutsu learned: ${d.learned.length} · casts: ${d.casts} · defeated: ${d.kills} · missions: ${d.missionsDone} · rerolls: ${d.rerolls}`,
   ].filter((l) => l !== '');
@@ -289,6 +297,130 @@ async function shopMenu(p) {
   await shopMenu(p);
 }
 
+// ----------------------------------------------------------------- the Inner Path
+
+/** @param {number} v @param {number} max */
+const meter = (v, max, color = '§6') => {
+  const n = Math.round((Math.max(0, Math.min(max, v)) / max) * 20);
+  return `${color}${'|'.repeat(n)}§8${'|'.repeat(20 - n)}`;
+};
+
+/** @param {Player} p */
+export async function innerPathMenu(p) {
+  const d = getData(p);
+  const n = d.nindo ? NINDO[d.nindo] : undefined;
+  const best = bondList(d).find((b) => !b.gone);
+  const today = d.journalDay === world.getDay();
+  const combo = mixedThought(d);
+  const body = [
+    n ? `§lNindo:§r ${n.color}${n.name}§r §7(${n.who})` : '§lNindo:§r §7not chosen. A shinobi without a way is only half a shinobi.',
+    d.motto ? `§o§7"${d.motto}"§r` : '',
+    n ? `§aBoon:§r ${n.boon}` : '',
+    n ? `§lResolve§r ${meter(d.resolve, RESOLVE_MAX)} §f${Math.floor(d.resolve)}/${RESOLVE_MAX}` : '',
+    n ? `§7Grows when you: ${n.way}` : '',
+    '',
+    `§lBonds:§r ${Object.keys(d.bonds).length}${best ? ` · closest: ${best.name} (${BOND_TIERS[bondTier(best.pts)].color}${BOND_TIERS[bondTier(best.pts)].name}§r)` : ' · fight beside others to forge them'}`,
+    `§lJournal:§r ${d.journalDays} day${d.journalDays === 1 ? '' : 's'} reflected${today ? ` · today: ${focusLabel(d)}${combo ? ` §d(${combo})§r` : ''}` : ' · §etoday\'s page is empty'}`,
+    `§lInner Peace:§r ${d.innerPeace ? '§fyes§r (Waterfall of Truth)' : '§7not yet. Somewhere, a waterfall waits for a shinobi who sits still before it.'}`,
+  ].filter((l) => l !== '').join('\n');
+  const form = new ActionFormData().title('§l§3Inner Path').body(body)
+    .button(d.nindo ? 'Your Nindo' : '§6Choose your Nindo', ICON.inner)
+    .button(`Shinobi Journal${today ? '' : ' §e(new page)'}`, ICON.inner)
+    .button('Bonds', ICON.missions)
+    .button('§lBack');
+  const res = await show(form, p);
+  if (!res || res.canceled) return;
+  if (res.selection === 0) await nindoMenu(p);
+  else if (res.selection === 1) await journalMenu(p);
+  else if (res.selection === 2) await bondsMenu(p);
+  else await mainMenu(p);
+}
+
+const NINDO_KEYS = Object.keys(NINDO);
+
+/** @param {Player} p */
+async function nindoMenu(p) {
+  const d = getData(p);
+  const wait = nindoLockedFor(d);
+  const form = new ActionFormData().title('Choose your Nindo')
+    .body([
+      'Your nindo is your ninja way: the promise you live by. It grants a boon and grows your Resolve when you keep it.',
+      d.nindo && wait ? `§7You swore your current way recently; you may choose a different one in ${wait} day${wait > 1 ? 's' : ''}.` : '',
+      d.nindo ? '§7Choosing a different way resets your Resolve.' : '',
+    ].filter(Boolean).join('\n'))
+    .button('§lBack');
+  for (const k of NINDO_KEYS) form.button(`${d.nindo === k ? '§6» ' : NINDO[k].color}${NINDO[k].name}\n§8${NINDO[k].who}`);
+  const res = await show(form, p);
+  if (!res || res.canceled) return;
+  if (!res.selection) return innerPathMenu(p);
+  const key = NINDO_KEYS[res.selection - 1];
+  const n = NINDO[key];
+  const modal = new ModalFormData().title(n.name)
+    .textField(`${n.color}§l${n.name}§r §7(${n.who})\n§aBoon:§r ${n.boon}\n§7Resolve: ${n.way}\n\nYour own words (optional, private):`, 'e.g. I will never abandon a teammate', { defaultValue: d.nindo === key ? d.motto : '' })
+    .toggle('I swear to live by this way', { defaultValue: false })
+    .submitButton('Swear');
+  const res2 = await show(modal, p);
+  if (!res2 || res2.canceled || !res2.formValues) return;
+  if (!res2.formValues[1]) {
+    tell(p, '§7You need to mean it. Toggle the oath to swear your nindo.');
+    return;
+  }
+  const err = chooseNindo(p, key, String(res2.formValues[0] ?? ''));
+  if (err) {
+    tell(p, `§c${err}`);
+    ping(p, SOUND.deny, 0.6);
+    return;
+  }
+  title(p, `${n.color}${n.name}`, '§7This is my ninja way!', 60);
+  ping(p, SOUND.chime, 1.0);
+  fx(p.dimension, PARTICLE.leaves, p.location);
+}
+
+const FOCUS_KEYS = Object.keys(FOCI);
+
+/** The Shinobi Journal: a private daily check-in. @param {Player} p */
+export async function journalMenu(p) {
+  const d = getData(p);
+  const day = world.getDay();
+  const first = d.journalDay !== day;
+  const focusNames = FOCUS_KEYS.map((k) => `${FOCI[k].name}: ${FOCI[k].art}`);
+  const form = new ModalFormData().title(`Shinobi Journal · Day ${day + 1}`)
+    .dropdown(`§7A quiet page, just for you. Nothing written here is shown to anyone else.${first ? '' : '\n§8(Today\'s page is written; you may still change your focus.)'}\n\n§fHow is your chakra today?`,
+      MOODS.map((m) => `${m.color}${m.name}`), { defaultValueIndex: d.mood })
+    .dropdown('Today I train my...', focusNames, { defaultValueIndex: Math.max(0, FOCUS_KEYS.indexOf(d.focus ?? 'body')) })
+    .dropdown('...mixed with a second thought', ['Nothing else', ...focusNames], { defaultValueIndex: d.focus2 ? FOCUS_KEYS.indexOf(d.focus2) + 1 : 0 })
+    .textField('One small intention for today (optional)', 'e.g. help a friend, finish my mission', { defaultValue: first ? '' : d.intention })
+    .submitButton(first ? 'Write today\'s page' : 'Update');
+  const res = await show(form, p);
+  if (!res || res.canceled || !res.formValues) return;
+  const [mood, focus, focus2, intention] = res.formValues;
+  checkIn(p, {
+    mood: Number(mood) || 0,
+    focus: FOCUS_KEYS[Number(focus) || 0],
+    focus2: Number(focus2) ? FOCUS_KEYS[Number(focus2) - 1] : null,
+    intention: String(intention ?? ''),
+  });
+}
+
+/** @param {Player} p */
+async function bondsMenu(p) {
+  const d = getData(p);
+  const list = bondList(d);
+  const lines = list.length
+    ? list.map((b) => {
+      const t = BOND_TIERS[bondTier(b.pts)];
+      return `${b.gone ? '§8' : t.color}${b.name}§r §7· ${t.name} (${b.pts})${b.gone ? ' §8· remembered' : ''}`;
+    })
+    : ['§7No bonds yet. Defeat enemies alongside friends and companions to forge them.'];
+  const body = [
+    ...lines,
+    '',
+    '§8Comrades nearby: +10% chakra regeneration. A Precious Person beside you: Resistance.',
+  ].join('\n');
+  const res = await show(new ActionFormData().title('Bonds').body(body).button('Back'), p);
+  if (res && !res.canceled) await innerPathMenu(p);
+}
+
 const CODEX = [
   ['Getting Started', [
     'Hold the §bChakra Focus§r: use it to cast your selected jutsu, sneak + use to cycle your loadout.',
@@ -353,6 +485,14 @@ const CODEX = [
     'The Otsutsuki Sigil now brings Kinshiki too: Momoshiki will absorb him if he falls low. Craft a Kara Ring to face Jigen.',
     'Explosive Clay teaches Explosion Release; the Puppet Scroll teaches Puppetry; the Slug Contract summons Katsuyu, who heals you.',
     'Baryon Mode (Kurama, Kage, 100% sync) and Six Paths Sage Mode (ascended toad sage) are the final forms.',
+  ]],
+  ['The Inner Path', [
+    'Shinobi Scroll › Inner Path: swear a §6Nindo§r (ninja way). Each grants a boon, and keeping it builds §6Resolve§r.',
+    'At 100 Resolve your will is unbreakable: the next time you are about to fall, you rise again (costs 50 Resolve).',
+    'Bonds form with players and companions you fight beside: Comrades speed chakra, a Precious Person shields you.',
+    'The §3Shinobi Journal§r is a private daily page: how your chakra feels, what you train today, and one small intention. Two focuses together make a mixed thought.',
+    'The Waterfall of Truth: sneak and be still beside a tall waterfall. Your dark reflection cannot be beaten by force. Stay calm, and do not strike.',
+    'Shinobi carry heavy things; so do people. If something outside the game feels too heavy, talk to someone you trust. If you might be in danger, contact your local emergency number or a crisis line.',
   ]],
   ['Commands (operators)', [
     '/scriptevent shinobi:admin help — list admin commands.',

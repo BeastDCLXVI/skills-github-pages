@@ -142,6 +142,7 @@ def build_items() -> list[Item]:
         Item("puppet_scroll", "Puppet Technique Scroll", lambda: S.scroll("#4a3a5e", paper="#e8dcc8", ink="#5a3a2a"),
              stack=1, use_label="Study", rarity="rare"),
         Item("kara_ring", "Kara Ring", S.kara_ring, stack=1, use_label="Summon", glint=True, rarity="epic"),
+        Item("shinobi_journal", "Shinobi Journal", S.journal, stack=1, use_label="Reflect", rarity="uncommon"),
         Item("blueprint_leaf_gate", "Blueprint: Leaf Village Gate", lambda: S.blueprint("#3a7a3a"), stack=16,
              use_label="Build"),
         Item("blueprint_ramen_stand", "Blueprint: Ichiraku Ramen Stand", lambda: S.blueprint("#c0262b"), stack=16,

@@ -1,5 +1,5 @@
 import { Player, system } from '@minecraft/server';
-import { BIJUU, CLANS, DOJUTSU, NATURES, RANKS } from './data.js';
+import { BIJUU, CLANS, DOJUTSU, NATURES, NINDO, RANKS } from './data.js';
 import { becomeJinchuriki, releaseBijuu } from './bosses.js';
 import { dropToggles } from './casting.js';
 import { awaken } from './dojutsu.js';
@@ -11,6 +11,7 @@ import { clearTemp } from './terrain.js';
 import { give, saveSettings, settings, tell } from './util.js';
 import { ITEM } from './ids.js';
 import { forceComplete, rerollBoard } from './missions.js';
+import { RESOLVE_MAX, beginTrial, chooseNindo } from './innerpath.js';
 
 // Operator commands: /scriptevent shinobi:admin <command> [args]
 // (scriptevent already requires operator permissions / cheats.)
@@ -22,6 +23,7 @@ const HELP = [
   `  nature <${Object.keys(NATURES).join('|')}> · eye <${Object.keys(DOJUTSU).join('|')}|none>`,
   `  bijuu <${BIJUU.map((b) => b.key).join('|')}|none> · karma · ascend · wood · eternal`,
   '  contract <toad|snake|slug> · unlock <clay|puppet|curse> · ryo <n> · mission <reroll|complete>',
+  `  nindo <${Object.keys(NINDO).join('|')}|none> · resolve <0-100> · peace · journal · trial`,
   '  learn <jutsu_id|all> · reset · cleanup',
   '  griefing <on|off> · pvp <on|off> · npcjutsu <on|off> · xprate <0.1-10> · hud <on|off>',
 ];
@@ -104,6 +106,28 @@ function run(p, args) {
       break;
     case 'wood':
       d.wood = true;
+      break;
+    case 'nindo':
+      if (a1 === 'none') {
+        d.nindo = null;
+        d.resolve = 0;
+      } else if (a1 && NINDO[a1]) {
+        d.nindoDay = -99; // operators may switch freely
+        chooseNindo(p, a1, d.motto);
+      } else return tell(p, '§cUnknown nindo.');
+      break;
+    case 'resolve':
+      d.resolve = Math.max(0, Math.min(RESOLVE_MAX, Number(a1) || 0));
+      break;
+    case 'peace':
+      d.innerPeace = true;
+      break;
+    case 'journal':
+      d.journalDay = -1;
+      break;
+    case 'trial':
+      d.trialDay = -1;
+      if (!beginTrial(p)) return tell(p, '§cA trial is already in progress.');
       break;
     case 'learn':
       for (const j of JUTSU.values()) {

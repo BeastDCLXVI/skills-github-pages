@@ -2,6 +2,7 @@ import { EquipmentSlot, system, world } from '@minecraft/server';
 import { CLANS, DOJUTSU, RANKS } from './data.js';
 import { FX, ITEM, PARTICLE, SOUND } from './ids.js';
 import { JUTSU, meets } from './jutsu/index.js';
+import { innerCostMult, innerRegenMult, meditateMult, onCast, RESOLVE_MAX } from './innerpath.js';
 import { advance } from './missions.js';
 import { addXp, power } from './progression.js';
 import { cooldownLeft, rt, setCooldown } from './state.js';
@@ -36,6 +37,7 @@ export function costOf(p, j) {
   let m = CLANS[d.clan]?.costMult ?? 1;
   if (rt(p).toggles.has('sage_mode')) m *= 0.8;
   if (d.ascended) m *= 0.9;
+  m *= innerCostMult(d, j);
   return Math.round(j.cost * m);
 }
 
@@ -133,6 +135,7 @@ function execute(p, j, cost) {
   if (j.strain) d.strain = Math.min(120, d.strain + j.strain);
   d.casts++;
   if (d.casts % 4 === 0) addXp(p, 1 + j.rank);
+  onCast(p, j);
   sound(p.dimension, SOUND.cast, p.location, 1.2, 0.4);
   flash(p, `§6${j.name}!`);
   touch(p);
@@ -202,7 +205,7 @@ export function regenRate(p) {
   if (worn(p, EquipmentSlot.Head) === ITEM.leafHeadband) rate *= 1.1;
   if (worn(p, EquipmentSlot.Chest) === ITEM.akatsukiCloak) rate *= 1.2;
   if (worn(p, EquipmentSlot.Head) === ITEM.kageHat) rate *= 1.15;
-  return rate;
+  return rate * innerRegenMult(p, d);
 }
 
 function upkeep() {
@@ -262,7 +265,7 @@ function fast() {
           }
         }
       } else {
-        rate *= 3;
+        rate *= 3 * meditateMult(d);
         if (now % 10 === 0) fx(p.dimension, PARTICLE.aura, pos);
         status = '§bCharging chakra...';
       }
@@ -295,6 +298,7 @@ function hud(p, status) {
   if (d.eyeOn && d.eye) tags.push(`${DOJUTSU[d.eye]?.color ?? '§c'}${DOJUTSU[d.eye]?.name ?? d.eye}`);
   for (const t of r.toggles) tags.push(`§d${JUTSU.get(t)?.name.split(' ')[0] ?? t}`);
   if (d.karma && d.karmaEnergy > 0) tags.push(`§5Karma ${Math.floor(d.karmaEnergy)}`);
+  if (d.resolve >= RESOLVE_MAX) tags.push('§6Will');
   let line2 = status;
   if (now < r.sealsUntil) line2 = `§f${r.seals}`;
   const top = `§bChakra ${bar} §f${cur}/${max}  ${rank.color}${rank.name}  ${jutsu}${tags.length ? '  ' + tags.join(' ') : ''}`;

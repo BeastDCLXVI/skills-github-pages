@@ -10,6 +10,7 @@ export const OFFERS = [
   { item: ITEM.explosiveTag, count: 4, price: 3, name: 'Explosive Tag ×4' },
   { item: ITEM.smokeBomb, count: 2, price: 2, name: 'Smoke Bomb ×2' },
   { item: ITEM.ramen, count: 1, price: 2, name: 'Ichiraku Ramen' },
+  { item: ITEM.journal, count: 1, price: 3, name: 'Shinobi Journal' },
   { item: ITEM.soldierPill, count: 2, price: 3, name: 'Soldier Pill ×2' },
   { item: ITEM.cartridge, count: 8, price: 4, name: 'Jutsu Scroll Cartridge ×8' },
   { item: ITEM.leafHeadband, count: 1, price: 8, name: 'Leaf Forehead Protector' },

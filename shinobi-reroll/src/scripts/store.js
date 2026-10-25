@@ -1,5 +1,5 @@
 import { system, world } from '@minecraft/server';
-import { CLANS, NATURES, NATURE_SLOTS, RANKS } from './data.js';
+import { CLANS, FOCI, NATURES, NATURE_SLOTS, NINDO, RANKS } from './data.js';
 import { clamp, pick, settings, weighted } from './util.js';
 
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -15,8 +15,14 @@ import { clamp, pick, settings, weighted } from './util.js';
  *   karma: boolean, karmaEnergy: number, contracts: string[], unlocks: string[], wood: boolean, ascended: boolean,
  *   eternal: boolean, sageEnergy: number, rerolls: number, pity: number, kills: number, casts: number,
  *   mission: Mission | null, board: Mission[], boardDay: number, missionsDone: number,
+ *   nindo: string | null, motto: string, nindoDay: number, resolve: number, bonds: Record<string, Bond>,
+ *   journalDay: number, journalDays: number, focus: string | null, focus2: string | null, mood: number,
+ *   intention: string, innerPeace: boolean, trialDay: number, trials: number,
  *   hud: boolean, joined: number
  * }} ShinobiData
+ *
+ * A bond with another player (`p:<id>`) or one of your companions (`c:<id>`).
+ * @typedef {{ name: string, pts: number, gone?: boolean }} Bond
  *
  * @typedef {{
  *   id: string, grade: string, kind: 'hunt' | 'gather' | 'cast' | 'train', target: string, label: string,
@@ -24,7 +30,7 @@ import { clamp, pick, settings, weighted } from './util.js';
  * }} Mission
  */
 
-const VERSION = 2;
+const VERSION = 3;
 const KEY = 'sr:data';
 const CHAKRA_KEY = 'sr:chakra';
 
@@ -59,6 +65,9 @@ function fresh() {
     karma: false, karmaEnergy: 0, contracts: [], unlocks: [], wood: false, ascended: false, eternal: false,
     sageEnergy: 0, rerolls: 0, pity: 0, kills: 0, casts: 0,
     mission: null, board: [], boardDay: -1, missionsDone: 0,
+    nindo: null, motto: '', nindoDay: -1, resolve: 0, bonds: {},
+    journalDay: -1, journalDays: 0, focus: null, focus2: null, mood: 1, intention: '',
+    innerPeace: false, trialDay: -1, trials: 0,
     hud: settings().hudDefault, joined: Date.now(),
   };
 }
@@ -75,6 +84,12 @@ function migrate(raw) {
   if (!d.natures.length) d.natures = [rollNature(d.clan)];
   d.rank = clamp(d.rank | 0, 0, RANKS.length - 1);
   d.sel = clamp(d.sel | 0, 0, Math.max(0, d.slots.length - 1));
+  // v3: The Inner Path
+  if (d.nindo && !NINDO[d.nindo]) d.nindo = null;
+  if (d.focus && !FOCI[d.focus]) d.focus = null;
+  if (d.focus2 && !FOCI[d.focus2]) d.focus2 = null;
+  d.resolve = clamp(Number(d.resolve) || 0, 0, 100);
+  if (!d.bonds || typeof d.bonds !== 'object' || Array.isArray(d.bonds)) d.bonds = {};
   return d;
 }
 

@@ -678,6 +678,43 @@ def spawn_rule(key: str, spec: dict) -> dict:
         "conditions": [cond]}}
 
 
+# --- v1.2: The Inner Path ---------------------------------------------------------
+
+def dark_reflection() -> dict:
+    """The Waterfall of Truth trial. Nothing can damage it: every strike fires shinobi:struck instead,
+    which the trial script counts. Calm, it only watches and whispers; struck, it fights back
+    (shinobi:enraged) until the script calms it again."""
+    c = _base(60, ["shinobi_npc", "inner_darkness", "mob"], speed=0.32)
+    c["minecraft:navigation.walk"] = {"can_path_over_water": True, "can_swim": True, "avoid_damage_blocks": True}
+    c["minecraft:breathable"] = {"breathes_water": True, "breathes_air": True}
+    c["minecraft:behavior.look_at_player"] = {"priority": 1, "look_distance": 16, "probability": 1.0}
+    c.update({
+        "minecraft:damage_sensor": {"triggers": [{
+            "on_damage": {"event": "shinobi:struck",
+                          "filters": {"test": "is_family", "subject": "other", "value": "player"}},
+            "cause": "all", "deals_damage": "no"}]},
+        "minecraft:knockback_resistance": {"value": 1.0},
+        "minecraft:fire_immune": {},
+        "minecraft:timer": {"looping": False, "time": 150, "time_down_event": {"event": "shinobi:despawn"}},
+    })
+    groups = {
+        **copy.deepcopy(DESPAWN_GROUP),
+        "shinobi:enraged": {
+            "minecraft:movement": {"value": 0.38},
+            "minecraft:attack": {"damage": 5},
+            "minecraft:behavior.melee_attack": {"priority": 2, "speed_multiplier": 1.2, "track_target": True},
+            "minecraft:behavior.nearest_attackable_target": {
+                "priority": 1, "must_see": False, "reselect_targets": True, "within_radius": 24,
+                "entity_types": [{"filters": {"test": "is_family", "subject": "other", "value": "player"},
+                                  "max_dist": 24}]},
+        },
+    }
+    events = {**copy.deepcopy(DESPAWN_EVENT),
+              "shinobi:struck": {"add": {"component_groups": ["shinobi:enraged"]}},
+              "shinobi:calm": {"remove": {"component_groups": ["shinobi:enraged"]}}}
+    return _entity(ident("dark_reflection"), c, spawnable=False, groups=groups, events=events)
+
+
 # --- emit everything -------------------------------------------------------------
 
 BEAST_EGGS = {
@@ -698,7 +735,7 @@ NPC_EGGS = {
 NPC_NAMES = {
     "shadow_clone": "Shadow Clone", "leaf_shinobi": "Leaf Shinobi", "rogue_ninja": "Rogue Ninja",
     "akatsuki_rogue": "Akatsuki Rogue", "white_zetsu": "White Zetsu", "momoshiki": "Momoshiki Otsutsuki",
-    "puppet_karasu": "Puppet: Karasu", **{k: v[0] for k, v in MINI_BOSSES.items()},
+    "puppet_karasu": "Puppet: Karasu", "dark_reflection": "Dark Reflection", **{k: v[0] for k, v in MINI_BOSSES.items()},
 }
 
 
@@ -707,7 +744,8 @@ def emit_entities(b: Build) -> None:
 
     npc_defs = {"shadow_clone": shadow_clone(), "leaf_shinobi": leaf_shinobi(), "rogue_ninja": rogue_ninja(),
                 "akatsuki_rogue": akatsuki_rogue(), "white_zetsu": white_zetsu(), "momoshiki": momoshiki(),
-                "puppet_karasu": puppet_entity(), **{k: mini_boss(k) for k in MINI_BOSSES}}
+                "puppet_karasu": puppet_entity(), "dark_reflection": dark_reflection(),
+                **{k: mini_boss(k) for k in MINI_BOSSES}}
     scales = {"momoshiki": "1.05", **{k: v[5] for k, v in MINI_BOSSES.items()}}
     for key, ent in npc_defs.items():
         b.bp.json(f"entities/{key}.json", ent)

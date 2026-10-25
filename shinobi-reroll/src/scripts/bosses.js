@@ -2,6 +2,7 @@ import { system, world } from '@minecraft/server';
 import { BIJUU, bijuuByKey } from './data.js';
 import { BLOCK, ENTITY, FX, PARTICLE, SOUND } from './ids.js';
 import { dropToggles } from './casting.js';
+import { deed, sealThreshold } from './innerpath.js';
 import { syncAutoJutsu } from './progression.js';
 import { spawnOrb } from './projectiles.js';
 import { absorbing, aim, prey, ready, timers } from './ai.js';
@@ -62,11 +63,12 @@ export function trySeal(p) {
   } catch {}
   const beast = hits.find((h) => valid(h.entity))?.entity;
   if (!beast) {
-    tell(p, '§7Look at a tailed beast to seal it (it must be below 30% health).');
+    tell(p, `§7Look at a tailed beast to seal it (it must be below ${Math.round(sealThreshold(getData(p)) * 100)}% health).`);
     return false;
   }
-  if (healthFraction(beast) > 0.3) {
-    tell(p, '§cIt is still too strong. Weaken it below 30% health first.');
+  const threshold = sealThreshold(getData(p));
+  if (healthFraction(beast) > threshold) {
+    tell(p, `§cIt is still too strong. Weaken it below ${Math.round(threshold * 100)}% health first.`);
     return false;
   }
   const key = beast.typeId.split(':')[1];
@@ -78,6 +80,7 @@ export function trySeal(p) {
   } catch {}
   give(p, `shinobi:${key}_chakra`, 1);
   world.sendMessage(`§e${p.name} sealed ${bijuuByKey(key)?.name ?? 'a tailed beast'}!`);
+  deed(p, 'seal');
   return true;
 }
 

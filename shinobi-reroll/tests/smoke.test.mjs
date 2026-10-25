@@ -239,8 +239,9 @@ test('Shinobi Scroll menus render and navigate', async () => {
   await open(4, 1);             // missions -> accept first offer
   await open(4, 2);             // current mission -> abandon
   await open(5, 1);             // shop -> try to buy (no ryo)
-  await open(6, [false]);       // settings (hud off)
-  await open(7, 1, 0);          // codex -> first page -> back
+  await open(6, 2, 0);          // inner path -> bonds -> back
+  await open(7, [false]);       // settings (hud off)
+  await open(8, 1, 0);          // codex -> first page -> back
   hold(p, 'shinobi:shinobi_scroll');
   p.isSneaking = true;
   ui.answers.push(0);
@@ -473,4 +474,176 @@ test('profiles persist through dynamic properties', () => {
   const parsed = JSON.parse(raw);
   assert.equal(parsed.clan, store.getData(hero).clan);
   assert.ok(raw.length < 32767);
+});
+
+// ------------------------------------------------------------------ v1.2: The Inner Path
+
+test('Inner Path data: every jutsu school has a focus, mixed thoughts are well-formed', async () => {
+  const { FOCI, MIXED } = await import('../src/scripts/data.js');
+  const schools = new Set([...JUTSU.values()].map((j) => j.school));
+  for (const school of schools) {
+    const owners = Object.keys(FOCI).filter((k) => FOCI[k].schools.includes(school));
+    assert.equal(owners.length, 1, `school ${school} belongs to ${owners.length} focuses`);
+  }
+  for (const key of Object.keys(MIXED)) {
+    const parts = key.split('+');
+    assert.equal(parts.length, 2, key);
+    assert.deepEqual([...parts].sort(), parts, `${key} must be sorted`);
+    for (const f of parts) assert.ok(FOCI[f], `${key}: unknown focus ${f}`);
+  }
+});
+
+test('Inner Path: nindo oath, private journal, resolve, missions, bonds and the Unbreakable Will', async () => {
+  const inner = await import('../src/scripts/innerpath.js');
+  const missions = await import('../src/scripts/missions.js');
+  const p = makePlayer('Seeker');
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
+  tick(60);
+  const d = store.getData(p);
+  const open = async (...answers) => {
+    ui.answers.length = 0;
+    ui.answers.push(...answers);
+    hold(p, 'shinobi:shinobi_scroll');
+    use(p);
+    await flush(12);
+  };
+  // swear "Never Go Back on My Word" (first nindo) with a motto
+  await open(6, 0, 1, ['§cI keep\nmy promises', true]);
+  assert.equal(d.nindo, 'word');
+  assert.equal(d.motto, 'I keep my promises', 'motto sanitised');
+  assert.match(inner.chooseNindo(p, 'fire') ?? '', /not changed lightly/, 'nindo locked for a few days');
+  // an oath needs the toggle
+  await open(6, 0, 2, ['', false]);
+  assert.equal(d.nindo, 'word');
+
+  // the journal: Drained, Self + Nature (Sage's Insight), an intention
+  const xp = d.xp;
+  await open(6, 1, [3, 6, 8, 'help a friend']);
+  assert.equal(d.journalDays, 1);
+  assert.equal(d.focus, 'self');
+  assert.equal(d.focus2, 'nature');
+  assert.equal(inner.mixedThought(d), "Sage's Insight");
+  assert.equal(d.intention, 'help a friend');
+  assert.equal(d.resolve, 15, 'mixed thought: +10 Resolve, x1.5 for the Self focus');
+  assert.ok(d.xp > xp, 'reflection grants XP');
+  assert.ok(p.effects.has('minecraft:regeneration'), 'a drained shinobi is cared for');
+  // the journal item opens the same page; a second page today updates but is not rewarded again
+  ui.answers.length = 0;
+  ui.answers.push([1, 0, 0, '']);
+  hold(p, 'shinobi:shinobi_journal');
+  use(p);
+  await flush(12);
+  assert.equal(d.journalDays, 1);
+  assert.equal(d.focus, 'body');
+  assert.equal(d.focus2, null);
+  assert.equal(d.resolve, 15);
+
+  // focus discounts: Body covers Taijutsu
+  const tai = [...JUTSU.values()].find((j) => j.school === 'Taijutsu' && j.cost > 0);
+  if (tai) assert.ok(casting.costOf(p, tai) < tai.cost * (CLANS[d.clan].costMult ?? 1), 'focused school costs less');
+
+  // keeping your word: +25% mission rewards and +20 Resolve
+  d.mission = { id: 'w', grade: 'D', kind: 'cast', target: 'any', label: 'oath', need: 1, have: 1, ryo: 4, xp: 20, jp: 0 };
+  assert.ok(missions.turnIn(p));
+  const ryo = p.inventory.slots.filter(Boolean).filter((s) => s.typeId === 'shinobi:ryo').reduce((n, s) => n + s.amount, 0);
+  assert.equal(ryo, 5, 'Never Go Back on My Word pays 25% more');
+  assert.equal(d.resolve, 35);
+  d.mission = { id: 'w2', grade: 'D', kind: 'cast', target: 'any', label: 'oath', need: 9, have: 0, ryo: 4, xp: 20, jp: 0 };
+  missions.abandon(p);
+  assert.equal(d.resolve, 20, 'abandoning a mission shakes your resolve');
+
+  // bonds with a friend and a companion
+  const friend = makePlayer('Friend');
+  world.afterEvents.playerSpawn.fire({ player: friend, initialSpawn: true });
+  tick(60);
+  const wolf = overworld.spawnEntity('minecraft:wolf', { x: 1, y: 64, z: 1 });
+  wolf.tamedTo = p.id;
+  for (let i = 0; i < 5; i++) {
+    const z = dummy('minecraft:zombie', { x: 0, y: 64, z: 3 });
+    world.afterEvents.entityDie.fire({ deadEntity: z, damageSource: { cause: 'entityAttack', damagingEntity: p } });
+  }
+  assert.equal(d.bonds[`p:${friend.id}`]?.pts, 10, 'two points per shared victory');
+  assert.equal(store.getData(friend).bonds[`p:${p.id}`]?.pts, 10, 'bonds are mutual');
+  assert.equal(d.bonds[`c:${wolf.id}`]?.pts, 5, 'companions bond too');
+  assert.ok(p.chat.some((m) => m.includes('Bond deepened') && m.includes('Friend')), 'Comrade announced');
+  tick(41);
+  assert.ok(state.rt(p).allyNear, 'allies detected');
+  assert.ok(state.rt(p).bondTier >= 1, 'a Comrade is near');
+  world.afterEvents.entityDie.fire({ deadEntity: wolf, damageSource: { cause: 'entityAttack' } });
+  assert.equal(d.bonds[`c:${wolf.id}`]?.gone, true, 'a fallen companion is remembered');
+  await open(6, 2, 0);
+  assert.ok(ui.shown.some((f) => f.text.includes('remembered')), 'bonds page lists memories');
+
+  // Unbreakable Will at full Resolve
+  d.resolve = 100;
+  p.hp = 3;
+  world.afterEvents.entityHurt.fire({ hurtEntity: p, damage: 5, damageSource: { cause: 'entityAttack' } });
+  assert.ok(p.hp >= 12, `rose again (${p.hp} hp)`);
+  assert.equal(d.resolve, 50, 'the will costs 50 Resolve');
+  assert.ok(p.titles.some((t) => t.includes("won't give up")));
+
+  // nothing private leaks into world chat
+  assert.ok(!log.messages.some((m) => m.includes('help a friend') && !p.chat.includes(m)), 'intention stays private');
+  noWarnings('inner path');
+});
+
+test('Waterfall of Truth: strikes feed the reflection, calm ends the trial', async () => {
+  const { ENTITY } = await import('../src/scripts/ids.js');
+  const inner = await import('../src/scripts/innerpath.js');
+  const p = makePlayer('Calm');
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
+  tick(60);
+  p.location = { x: 40, y: 64, z: 40 };
+  const d = store.getData(p);
+  d.rank = 1;
+  admin(p, 'nindo peace');
+  // a waterfall: three blocks of falling water beside the player, above head height
+  const fall = [65, 66, 67].map((y) => `42,${y},40`);
+  for (const k of fall) log.blocks.set(k, 'minecraft:flowing_water');
+  assert.ok(inner.nearWaterfall(p));
+  const jp = d.jp;
+  p.isSneaking = true;
+  tick(100);
+  const t = inner.trialOf(p.id);
+  assert.ok(t, 'sitting still beside a waterfall begins the trial');
+  const e = world.getEntity(t.id);
+  assert.equal(e?.typeId, ENTITY.darkReflection);
+  // one strike: the reflection grows stronger and calm resets
+  world.afterEvents.dataDrivenEntityTrigger.fire({ entity: e, eventId: 'shinobi:struck', getModifiers: () => [] });
+  assert.equal(inner.trialOf(p.id)?.struck, 1);
+  assert.ok(e.effects.has('minecraft:strength'), 'hatred feeds it');
+  tick(20 * 26);
+  assert.equal(inner.trialOf(p.id), undefined, 'the trial ended');
+  assert.ok(d.innerPeace, 'calm brings Inner Peace');
+  assert.equal(d.jp, jp + 3);
+  assert.ok(!e.isValid, 'the reflection returns to the water');
+  assert.ok(d.resolve >= 40);
+  // the waterfall is quiet for the rest of the day
+  p.isSneaking = false;
+  tick(20);
+  p.isSneaking = true;
+  tick(100);
+  assert.equal(inner.trialOf(p.id), undefined, 'one trial per day');
+  p.isSneaking = false;
+
+  // striking five times: hatred wins, no reward
+  const q = makePlayer('Angry');
+  world.afterEvents.playerSpawn.fire({ player: q, initialSpawn: true });
+  tick(60);
+  q.location = { x: -40, y: 64, z: -40 };
+  admin(q, 'trial');
+  const tq = inner.trialOf(q.id);
+  assert.ok(tq, 'admin can start a trial');
+  const eq = world.getEntity(tq.id);
+  for (let i = 0; i < 5; i++) {
+    if (i % 2) world.afterEvents.entityHitEntity.fire({ damagingEntity: q, hitEntity: eq });
+    else world.afterEvents.dataDrivenEntityTrigger.fire({ entity: eq, eventId: 'shinobi:struck', getModifiers: () => [] });
+    tick(11);
+  }
+  assert.equal(inner.trialOf(q.id), undefined, 'the trial failed');
+  assert.equal(store.getData(q).innerPeace, false);
+  assert.ok(!eq.isValid);
+  assert.ok(q.chat.some((m) => m.includes('hatred feeds it')));
+  for (const k of fall) log.blocks.delete(k);
+  noWarnings('waterfall');
 });

@@ -1,6 +1,7 @@
 import { EquipmentSlot } from '@minecraft/server';
 import { CLANS, DOJUTSU, RANKS } from './data.js';
 import { ITEM, PARTICLE, SOUND } from './ids.js';
+import { deed } from './innerpath.js';
 import { JUTSU, learnCost, meets } from './jutsu/index.js';
 import { rt } from './state.js';
 import { getData, loadoutSize, maxChakra, natureSlots, setChakra, touch } from './store.js';
@@ -105,6 +106,7 @@ export function learn(p, id) {
   d.learned.push(id);
   if (d.slots.length < loadoutSize(d)) d.slots.push(id);
   touch(p);
+  deed(p, 'learn');
   return null;
 }
 

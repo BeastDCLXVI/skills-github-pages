@@ -31,7 +31,7 @@ class SkinSpec:
     hair: str = "#2b2118"
     hair_style: str = "short"  # short | spiky | long | bald | topknot
     eyes: str = "#2b3a66"
-    eye_style: str = "normal"  # normal | sharingan | byakugan | rinnegan | blank | slit
+    eye_style: str = "normal"  # normal | sharingan | byakugan | rinnegan | blank | slit | void
     top: str = "#2b3550"
     top_style: str = "jumpsuit"  # jumpsuit | vest | cloak | robe | wraps
     top_accent: str | None = None
@@ -127,6 +127,9 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
         elif spec.eye_style == "sharingan":
             _put(img, outer, eye_y, white)
             _put(img, inner, eye_y, hexc("#c0101a"))
+        elif spec.eye_style == "void":
+            _put(img, outer, eye_y, hexc("#ff5a6e"))
+            _put(img, inner, eye_y, hexc("#c0102a"))
         elif spec.eye_style == "slit":
             _put(img, outer, eye_y, hexc("#e8c13a"))
             _put(img, inner, eye_y, hexc("#1a1a1a"))
@@ -330,6 +333,10 @@ NPC_SKINS: dict[str, SkinSpec] = {
                       seed=31),
     "puppet_karasu": SkinSpec(skin="#9c6b3a", hair="#1a1a1a", hair_style="spiky", eyes="#f2d24a", top="#4a3a5e",
                               top_style="wraps", pants="#3a2e48", shoes="#2a2030", marks=["third_eye"], seed=33),
+    # v1.2: the inner darkness met at the Waterfall of Truth
+    "dark_reflection": SkinSpec(skin="#4a3f58", hair="#120e18", hair_style="spiky", eye_style="void", top="#1a1622",
+                                top_accent="#4a2a5a", pants="#1a1622", shoes="#0e0c12", headband="#1a1622",
+                                headband_scratched=True, marks=["whiskers"], seed=37),
     "momoshiki": SkinSpec(skin="#f2eee8", hair="#f4f2ee", hair_style="long", eye_style="byakugan",
                           top="#f1ede4", top_style="robe", top_accent="#6b4a8f", pants="#e8e3d8",
                           shoes="#3a2f45", marks=["horns"], seed=13),

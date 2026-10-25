@@ -4,6 +4,7 @@ import { dropToggles, flash } from './casting.js';
 import { sharinganXp, tryMangekyo } from './dojutsu.js';
 import { ENTITY, FX, ITEM, PARTICLE, SOUND } from './ids.js';
 import { releaseCharged } from './jutsu/index.js';
+import { deed, onCompanionDeath, onHurt, onKill, onPlayerDeath, trainingRank } from './innerpath.js';
 import { advance } from './missions.js';
 import { zetsuSplit } from './npc.js';
 import { paperBomb } from './projectiles.js';
@@ -135,10 +136,12 @@ function trainingHit(p, post) {
   if (cooldownLeft(p, 'training') > 0) return;
   setCooldown(p, 'training', 20);
   const d = getData(p);
-  if (d.rank < 3) addXp(p, 1);
+  const learning = d.rank < trainingRank(d);
+  if (learning) addXp(p, 1);
   advance(p, 'train');
+  deed(p, 'train');
   sound(post.dimension, SOUND.wood, post.location, 1.4, 0.4);
-  flash(p, `§6Training... §7(${d.xp} XP${d.rank >= 3 ? ', you have outgrown the post' : ''})`);
+  flash(p, `§6Training... §7(${d.xp} XP${learning ? '' : ', you have outgrown the post'})`);
 }
 
 // ------------------------------------------------------------------ damage taken
@@ -179,6 +182,7 @@ function onPlayerHurt(p, damage, src) {
     tell(p, `§6${b?.name ?? 'Your tailed beast'} lends you its chakra!`);
     fx(p.dimension, PARTICLE.aura, p.location, rgb(b?.hex ?? '#e2701f'));
   }
+  onHurt(p);
   touch(p);
 }
 
@@ -189,6 +193,7 @@ function onDeath(dead, src) {
   const typeId = dead.typeId;
   if (dead instanceof Player) {
     dropToggles(dead);
+    onPlayerDeath(dead);
     const d = getData(dead);
     d.eyeOn = false;
     touch(dead);
@@ -197,10 +202,11 @@ function onDeath(dead, src) {
   const killer = responsiblePlayer(src.damagingEntity) ?? responsiblePlayer(src.damagingProjectile);
   // Mangekyo: an Uchiha whose companion dies before their eyes
   const owner = ownerId(dead);
-  if (owner && (dead.typeId === 'minecraft:wolf' || dead.typeId === ENTITY.leaf)) {
-    const p = world.getAllPlayers().find((x) => x.id === owner);
+  const ownerPlayer = owner ? world.getAllPlayers().find((x) => x.id === owner) : undefined;
+  if (ownerPlayer) onCompanionDeath(ownerPlayer, dead);
+  if (ownerPlayer && (dead.typeId === 'minecraft:wolf' || dead.typeId === ENTITY.leaf)) {
     try {
-      if (p && p.dimension.id === dead.dimension.id && dist(p.location, dead.location) < 32) tryMangekyo(p);
+      if (ownerPlayer.dimension.id === dead.dimension.id && dist(ownerPlayer.location, dead.location) < 32) tryMangekyo(ownerPlayer);
     } catch {}
   }
   const bijuu = bijuuByKey(typeId.split(':')[1] ?? '');
@@ -211,6 +217,7 @@ function onDeath(dead, src) {
   if (!killer) return;
   const d = getData(killer);
   d.kills++;
+  onKill(killer, dead);
   let xp = XP_BY_TYPE[typeId];
   if (bijuu) xp = 150 + bijuu.tails * 40;
   if (xp === undefined) {

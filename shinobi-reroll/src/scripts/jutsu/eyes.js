@@ -1,6 +1,7 @@
 import { system, world } from '@minecraft/server';
 import { bijuuByKey } from '../data.js';
 import { BLOCK, FX, PARTICLE, SOUND } from '../ids.js';
+import { syncMult } from '../innerpath.js';
 import { spawnOrb } from '../projectiles.js';
 import { rt } from '../state.js';
 import { placeTemp } from '../terrain.js';
@@ -244,7 +245,7 @@ register([
       onSecond(c) {
         const b = bijuuByKey(c.d.bijuu ?? '');
         if (!b) return;
-        c.d.sync = Math.min(100, c.d.sync + 0.25);
+        c.d.sync = Math.min(100, c.d.sync + 0.25 * syncMult(c.d));
         const full = c.d.sync >= 100;
         const tier = Math.min(3, Math.floor(b.tails / 3));
         effect(c.p, FX.strength, 2, tier + (full ? 1 : 0), false);

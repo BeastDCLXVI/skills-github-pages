@@ -27,6 +27,7 @@ any mod's source code. Each Java-side technique maps onto a native Bedrock mecha
 | Biome modifiers / placed features (ore gen) | `features/` + `feature_rules/` (chakra ore in stone and deepslate) | `tools/gen/blocks.py` |
 | Global loot modifiers | Entity and block loot tables | `entities.py`, `blocks.py` |
 | Entity AI goals (`Goal`, `Brain`) | Behavior components (melee/ranged/tame/follow-owner) plus scripted "brains" that cast jutsu | `entities.py`, `bosses.js`, `npc.js` |
+| Invulnerable "trial" entities via cancelled damage events | `minecraft:damage_sensor` with `deals_damage: "no"` firing an entity event, read through `dataDrivenEntityTrigger` | `entities.py` (`dark_reflection`), `innerpath.js` |
 | Config files (ForgeConfigSpec, Cloth Config) | World settings stored in a dynamic property; HUD toggle per player | `util.js`, `ui.js` |
 | Brigadier commands | `/scriptevent shinobi:admin …` (operators only) | `admin.js` |
 | Armor models / layers | Attachables on vanilla armor geometry + generated 64×32 layers | `tools/gen/extras.py` |
@@ -50,7 +51,7 @@ what the previous one cannot:
 1. **Type-check**: `tsc --checkJs` against the official `@minecraft/server` 2.0.0 / `server-ui` 2.0.0 typings.
 2. **Smoke tests**: the real scripts run in Node against an in-memory mock of the Script API. They cover
    spawn, admin commands, **every one of the 96 jutsu**, all items, menus, missions, the shop, blueprints, bosses,
-   mini-bosses, NPCs, terrain and persistence.
+   mini-bosses, NPCs, terrain, persistence and the Inner Path (Nindo, journal, bonds, Waterfall trial).
 3. **Cross-reference validation**: every icon, texture, geometry, animation, render controller, loot table,
    recipe ingredient, lang key, component name and script identifier must resolve
    (vanilla ids come from `@minecraft/vanilla-data`).

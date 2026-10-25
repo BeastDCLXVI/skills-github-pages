@@ -1,5 +1,6 @@
 import { world } from '@minecraft/server';
 import { ENTITY, ITEM, SOUND } from './ids.js';
+import { deed, missionMult } from './innerpath.js';
 import { addXp } from './progression.js';
 import { getData, touch } from './store.js';
 import { countItem, give, ping, pick, takeItem, tell, title } from './util.js';
@@ -89,6 +90,7 @@ export function abandon(p) {
   tell(p, `§7Mission abandoned: ${d.mission.label}`);
   d.mission = null;
   touch(p);
+  deed(p, 'abandon');
 }
 
 /** @param {Mission} m @param {Entity} e */
@@ -137,12 +139,16 @@ export function turnIn(p) {
   if (m.kind === 'gather' && !takeItem(p, m.target, need)) return false;
   d.mission = null;
   d.missionsDone++;
-  give(p, ITEM.ryo, m.ryo);
+  const mult = missionMult(d);
+  const ryo = Math.round(m.ryo * mult);
+  const xp = Math.round(m.xp * mult);
+  give(p, ITEM.ryo, ryo);
   if (m.jp) d.jp += m.jp;
-  addXp(p, m.xp);
+  addXp(p, xp);
   touch(p);
-  title(p, `${GRADE_COLOR[m.grade]}${m.grade}-rank complete`, `§e+${m.ryo} Ryo · +${m.xp} XP${m.jp ? ` · +${m.jp} JP` : ''}`, 60);
+  title(p, `${GRADE_COLOR[m.grade]}${m.grade}-rank complete`, `§e+${ryo} Ryo · +${xp} XP${m.jp ? ` · +${m.jp} JP` : ''}`, 60);
   ping(p, SOUND.coins, 1.0);
+  deed(p, 'mission');
   return true;
 }
 

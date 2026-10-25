@@ -4,13 +4,14 @@ A full-scale **Bedrock add-on (`.mcaddon`)** that rebuilds the Java-edition Naru
 experience (Forge / NeoForge / Fabric / LiteLoader, Mixin-based) natively on the Bedrock Script API.
 It includes chakra, ranks, **clan rerolls**, nature releases and kekkei genkai, **96 jutsu**, dojutsu
 evolution, all nine tailed beasts plus the Ten-Tails, Akatsuki and Otsutsuki bosses, the Karma, a
-**mission board with a Ryo economy**, village blueprints, ninja tools, legendary swords and pills.
+**mission board with a Ryo economy**, village blueprints, ninja tools, legendary swords and pills, and
+**the Inner Path**: your Nindo, Resolve, bonds, a private journal and the Waterfall of Truth.
 
 > Unofficial fan work. *Naruto* and *Boruto* belong to Masashi Kishimoto / Shueisha / Studio Pierrot.
 > This project is not affiliated with them, Mojang or Microsoft. All code and every texture and model
 > here is original: generated procedurally by `tools/gen`. No code or assets from existing mods are used.
 
-**Download:** [`dist/ShinobiReroll-v1.1.0.mcaddon`](dist/ShinobiReroll-v1.1.0.mcaddon), with separate
+**Download:** [`dist/ShinobiReroll-v1.2.0.mcaddon`](dist/ShinobiReroll-v1.2.0.mcaddon), with separate
 `.mcpack` files alongside it.
 **Requires:** Minecraft Bedrock **1.21.90 or newer** (Script API `@minecraft/server` 2.0.0, stable).
 No experimental toggles.
@@ -119,6 +120,39 @@ guaranteed Rare or better. Clan-only techniques you lose are refunded as Jutsu P
 * **Final forms:** **Baryon Mode** (Kurama Jinchuriki at Kage rank, 100% sync, cloak active) burns enemies'
   life with every hit; **Six Paths Sage Mode** (ascended toad sage) adds Truth-Seeking Balls that fight on their own.
 
+## The Inner Path (v1.2)
+
+Naruto is a story about loneliness, bonds and the promises people live by. v1.2 builds that into play
+(Shinobi Scroll › **Inner Path**):
+
+* **Nindo (ninja way).** Swear one of six vows, in your own words if you like. Each grants a boon and
+  builds **Resolve** when you live by it. You can change it every three in-game days, but that resets Resolve.
+
+  | Nindo | Boon | Resolve grows when you… |
+  |---|---|---|
+  | Never Go Back on My Word (Naruto) | +25% mission XP and Ryo | complete missions (abandoning costs Resolve) |
+  | Protect Those Precious to Me (Haku) | +25% chakra regen with an ally near | defeat enemies with allies near |
+  | The Will of Fire (Hiruzen) | Strength + Resistance near defeat | defeat hostile creatures and great foes |
+  | Forge My Own Path (Neji) | double casting XP, Training Post until Sannin | practise and learn jutsu |
+  | Break the Cycle of Hatred (Jiraiya) | seal beasts below 40%, faster meditation | meditate, seal tailed beasts |
+  | Surpass My Limits (Rock Lee) | Eight Gates −25% health cost, taijutsu −15% chakra | train, use taijutsu |
+
+* **Unbreakable Will.** At 100 Resolve, the next blow that drops you below 20% health lifts you back to 60%
+  ("I won't give up!") and costs 50 Resolve.
+* **Bonds.** Defeating enemies beside other players or your companions forges bonds:
+  Acquaintance › Comrade › Trusted Comrade › Precious Person. A Comrade nearby speeds chakra; a Precious
+  Person beside you grants Resistance. Fallen companions are remembered.
+* **Shinobi Journal** (Book + Chakra Crystal, or 3 Ryo). This is a private daily page, never shown to other
+  players: how your chakra feels, what you train today and one small intention. Each focus is one kind of
+  smarts mapped to a shinobi art (Body: taijutsu, Mind: sealing, Space: ninjutsu, Rhythm: eye arts, Words:
+  missions, Others: teamwork, Self: sage arts, Nature: elements). Your focused arts cost less chakra.
+  Two focuses form a *mixed thought* (Self + Nature = Sage's Insight). Every answer gets a kind reply,
+  and "Drained" is met with rest, not a penalty.
+* **Waterfall of Truth.** At Genin rank or above, with a Nindo sworn, sneak and stay still beside a tall
+  waterfall. Your **Dark Reflection** steps out. It cannot be harmed, and every strike makes it stronger
+  and angrier. Stay calm for 20 seconds while it whispers, and you gain **Inner Peace**: +3 JP, faster
+  chakra and doubled tailed-beast sync.
+
 ## Tools, weapons, food
 
 Kunai, explosive kunai, shuriken, fuma shuriken, senbon, smoke bombs, explosive tags.
@@ -151,14 +185,16 @@ NPCs: **Leaf Shinobi** (tame with ramen; they fight and throw shuriken for you),
 | Slug Contract / Puppet Scroll | Paper + Slimeball + Chakra Crystal + Honey / Paper + String + Planks + Chakra Crystal |
 | Explosive Clay ×4 | Clay Ball + Gunpowder + Chakra Crystal |
 | Kiba · Nuibari · Shibuki · Hiramekarei | Iron sword(s) + Lightning Rod / String / Explosive Tags / Prismarine Crystals + Chakra Crystal Block |
+| Shinobi Journal | Book + Chakra Crystal |
 
-All 46 recipes appear in the recipe book once you hold an ingredient.
+All 47 recipes appear in the recipe book once you hold an ingredient.
 
 ## Operator commands
 
 `/scriptevent shinobi:admin help`. Examples: `xp 500`, `rank 3`, `clan uchiha`, `eye mangekyo`,
 `bijuu kurama`, `karma`, `ascend`, `eternal`, `contract snake`, `unlock clay`, `ryo 50`, `mission complete`,
-`learn all`, `reset`, `cleanup`. World rules: `griefing on|off`
+`learn all`, `nindo word`, `resolve 100`, `peace`, `journal` (new page today), `trial` (start the
+Waterfall trial here), `reset`, `cleanup`. World rules: `griefing on|off`
 (jutsu explosions break blocks, off by default), `pvp on|off`, `npcjutsu on|off`, `xprate 2`.
 
 ---
@@ -173,6 +209,7 @@ shinobi-reroll/
 │  ├─ casting.js       cast pipeline, hand seals, toggles, chakra regen, HUD
 │  ├─ store.js         persistent shinobi profiles (dynamic properties)
 │  ├─ missions.js      daily mission board, progress hooks, rewards
+│  ├─ innerpath.js     Nindo, Resolve, bonds, journal, Waterfall of Truth
 │  ├─ shop.js          Ryo shop and buy-back
 │  ├─ builder.js       village blueprints
 │  ├─ rogues.js        Akatsuki / Sannin / Otsutsuki mini-boss AI
@@ -202,11 +239,21 @@ See [docs/TRANSFORMATION.md](docs/TRANSFORMATION.md) for how each Java mod-loade
 layers do and don't prove.
 
 **Testing status:** the add-on is type-checked against the official API typings, smoke-tested
-(18 scenarios; every jutsu, item, menu, mission, shop, blueprint and AI loop runs without errors against a mock API),
+(21 scenarios; every jutsu, item, menu, mission, shop, blueprint, AI loop and the Inner Path runs without errors against a mock API),
 cross-reference validated, and checked against Mojang's JSON schemas. It has **not** been play-tested in a live
 Minecraft client from the build environment, so please report anything that behaves differently in game.
 
 ## Changelog
+
+**1.2.0: The Inner Path**
+* Nindo: six ninja ways with boons, optional private mottos and a three-day oath lock.
+* Resolve meter and the Unbreakable Will; a HUD tag when your will is full.
+* Bonds with players and companions (four tiers, regen and Resistance auras, remembered companions).
+* Shinobi Journal: a private daily check-in (mood, focus, mixed thoughts, intention). Each focus discounts
+  its jutsu schools; every one of the 33 schools belongs to exactly one focus.
+* Waterfall of Truth trial and the Dark Reflection, an invulnerable entity that only fights if you strike it.
+* Codex page "The Inner Path", including a short real-world note on reaching out for support.
+* Profiles migrate to v3 automatically.
 
 **1.1.0: Akatsuki & Boruto update**
 * Mission board (D–S rank, daily offers, Leaf Shinobi mission desk), Ryo currency, Ninja Shop with buy-back.

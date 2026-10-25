@@ -102,6 +102,8 @@ def all_recipes() -> list[dict]:
                   "slug_contract", unlock=CC),
         shapeless("puppet_scroll", ["minecraft:paper", "minecraft:string", "minecraft:oak_planks", CC], "puppet_scroll",
                   unlock=CC),
+        # v1.2: The Inner Path
+        shapeless("shinobi_journal", ["minecraft:book", CC], "shinobi_journal", unlock="minecraft:book"),
         shapeless("explosive_clay", ["minecraft:clay_ball", "minecraft:gunpowder", CC], "explosive_clay", 4, unlock=CC),
         shapeless("kiba", ["minecraft:iron_sword", "minecraft:iron_sword", "minecraft:lightning_rod", CCB], "kiba",
                   unlock=CCB),

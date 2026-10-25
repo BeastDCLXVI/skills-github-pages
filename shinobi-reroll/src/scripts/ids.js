@@ -58,6 +58,7 @@ export const ITEM = Object.freeze({
   blueprintRamen: 'shinobi:blueprint_ramen_stand',
   blueprintTraining: 'shinobi:blueprint_training_ground',
   flakVest: 'shinobi:flak_vest',
+  journal: 'shinobi:shinobi_journal',
 });
 
 export const ENTITY = Object.freeze({
@@ -88,6 +89,7 @@ export const ENTITY = Object.freeze({
   puppet: 'shinobi:puppet_karasu',
   snake: 'shinobi:summoned_snake',
   slug: 'shinobi:summoned_slug',
+  darkReflection: 'shinobi:dark_reflection',
   ironGolem: 'minecraft:iron_golem',
   wolf: 'minecraft:wolf',
   lightning: 'minecraft:lightning_bolt',
@@ -123,6 +125,8 @@ export const PROP = Object.freeze({
 
 export const EVENT = Object.freeze({
   despawn: 'shinobi:despawn',
+  struck: 'shinobi:struck',
+  calm: 'shinobi:calm',
 });
 
 /** Must match ORB_ELEMENTS in tools/gen/entities.py (validated at build time). */
@@ -180,6 +184,10 @@ export const SOUND = Object.freeze({
   build: 'dig.wood',
   heal: 'random.potion.brewed',
   gate: 'mob.warden.heartbeat',
+  page: 'item.book.page_turn',
+  chime: 'note.chime',
+  flute: 'note.flute',
+  whisper: 'mob.warden.listening',
 });
 
 /** Vanilla status effects (ids from @minecraft/vanilla-data). */
@@ -207,4 +215,5 @@ export const FX = Object.freeze({
   levitation: 'minecraft:levitation',
   slowFalling: 'minecraft:slow_falling',
   darkness: 'minecraft:darkness',
+  saturation: 'minecraft:saturation',
 });

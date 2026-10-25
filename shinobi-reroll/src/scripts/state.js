@@ -20,6 +20,12 @@ import { system } from '@minecraft/server';
  *   bladeCharge: number,
  *   seals: string,
  *   sealsUntil: number,
+ *   allyNear: boolean,
+ *   bondTier: number,
+ *   stillAt: Vector3 | null,
+ *   stillSecs: number,
+ *   meditateSecs: number,
+ *   hinted: boolean,
  * }} Runtime
  */
 
@@ -33,7 +39,7 @@ export function rt(p) {
     r = {
       cooldowns: new Map(), weavingUntil: 0, toggles: new Set(), charged: null, absorbUntil: 0, intangibleUntil: 0,
       gatherTicks: 0, lastPos: null, lastTrain: 0, lastThrow: 0, lastGunbai: 0, koteMode: 0, bladeCharge: 0, seals: '',
-      sealsUntil: 0,
+      sealsUntil: 0, allyNear: false, bondTier: 0, stillAt: null, stillSecs: 0, meditateSecs: 0, hinted: false,
     };
     runtime.set(p.id, r);
   }

@@ -139,3 +139,117 @@ export const BIJUU = [
 export const bijuuByKey = (key) => BIJUU.find((b) => b.key === key);
 
 export const SEALS = ['Rat', 'Ox', 'Tiger', 'Hare', 'Dragon', 'Snake', 'Horse', 'Ram', 'Monkey', 'Bird', 'Dog', 'Boar'];
+
+// ------------------------------------------------------------------ v1.2: The Inner Path
+
+/**
+ * A shinobi's Nindo (ninja way): a vow chosen once, with a boon and the deeds that build Resolve.
+ * @typedef {{ name: string, who: string, color: string, boon: string, way: string }} Nindo
+ */
+/** @type {Record<string, Nindo>} */
+export const NINDO = {
+  word: {
+    name: 'Never Go Back on My Word', who: 'Naruto Uzumaki', color: '§6',
+    boon: 'Missions reward 25% more XP and Ryo.',
+    way: 'Complete missions (+20 Resolve). Abandoning one costs 15.',
+  },
+  bonds: {
+    name: 'Protect Those Precious to Me', who: 'Haku', color: '§b',
+    boon: 'Chakra regenerates 25% faster while an ally fights beside you.',
+    way: 'Defeat enemies with an ally nearby (+3 Resolve).',
+  },
+  fire: {
+    name: 'The Will of Fire', who: 'Hiruzen Sarutobi', color: '§c',
+    boon: 'When you are close to defeat, your will flares: Strength and Resistance (once a minute).',
+    way: 'Defeat hostile creatures (+1) and great foes (+15 Resolve).',
+  },
+  path: {
+    name: 'Forge My Own Path', who: 'Neji Hyuga', color: '§a',
+    boon: 'Casting jutsu earns double XP, and the Training Post teaches you until Sannin.',
+    way: 'Practise jutsu (+1 every 5 casts) and learn new ones (+5 Resolve).',
+  },
+  peace: {
+    name: 'Break the Cycle of Hatred', who: 'Jiraiya', color: '§d',
+    boon: 'Seal tailed beasts below 40% health, and meditation charges chakra faster.',
+    way: 'Meditate with the Chakra Focus (+1 every 5 s) and seal tailed beasts (+30 Resolve).',
+  },
+  limits: {
+    name: 'Surpass My Limits', who: 'Rock Lee', color: '§2',
+    boon: 'The Eight Gates cost 25% less health; taijutsu costs 15% less chakra.',
+    way: 'Train at the Training Post (+1) and use taijutsu (+2 Resolve).',
+  },
+};
+
+/** Schools that count as taijutsu for the Surpass My Limits nindo. */
+export const TAIJUTSU_SCHOOLS = ['Taijutsu', 'Eight Gates'];
+
+/**
+ * Shinobi Journal focuses: one way of being clever per shinobi art (after the theory of
+ * multiple intelligences). Every jutsu school belongs to exactly one focus.
+ * @typedef {{ name: string, art: string, mind: string, schools: string[], perk: string }} Focus
+ */
+/** @type {Record<string, Focus>} */
+export const FOCI = {
+  body: {
+    name: 'Body', art: 'Taijutsu', mind: 'body smarts', perk: '',
+    schools: ['Taijutsu', 'Eight Gates', 'Hyuga', 'Akimichi', 'Inuzuka'],
+  },
+  logic: {
+    name: 'Mind', art: 'Strategy & sealing', mind: 'logic smarts', perk: '',
+    schools: ['Nara', 'Uzumaki', 'Puppetry', 'Cursed Seal'],
+  },
+  space: {
+    name: 'Space', art: 'Ninjutsu shaping', mind: 'picture smarts', perk: '',
+    schools: ['Ninjutsu', 'Explosion', 'Otsutsuki'],
+  },
+  rhythm: {
+    name: 'Rhythm', art: 'Eyes & illusions', mind: 'music smarts', perk: '',
+    schools: ['Mangekyo', 'Rinnegan', 'Rinne-Sharingan', 'Tenseigan', 'Yamanaka'],
+  },
+  words: {
+    name: 'Words', art: 'Missions & diplomacy', mind: 'word smarts', schools: [],
+    perk: 'Missions pay 15% more today.',
+  },
+  others: {
+    name: 'Others', art: 'Teamwork, medicine & beasts', mind: 'people smarts',
+    schools: ['Medical', 'Aburame', 'Jinchuriki'], perk: 'Bonds grow twice as fast today.',
+  },
+  self: {
+    name: 'Self', art: 'Meditation & sage arts', mind: 'self smarts',
+    schools: ['Senjutsu', 'Six Paths', 'Karma'], perk: 'Resolve grows 50% faster today.',
+  },
+  nature: {
+    name: 'Nature', art: 'Elemental releases', mind: 'nature smarts', perk: '',
+    schools: ['Fire', 'Wind', 'Lightning', 'Earth', 'Water', 'Wood', 'Ice', 'Lava', 'Bone', 'Hozuki'],
+  },
+};
+
+/** Two focuses held together ("mixed thoughts"): key is both ids sorted and joined by '+'. */
+export const MIXED = {
+  'body+self': "Lee's Discipline",
+  'nature+self': "Sage's Insight",
+  'logic+others': "Shikamaru's Strategy",
+  'logic+space': "Minato's Formula",
+  'others+words': "Hokage's Voice",
+  'rhythm+self': "Itachi's Calm",
+  'body+nature': 'Springtime of Youth',
+  'others+rhythm': 'Mind Link',
+};
+
+/** Journal moods, each answered kindly. */
+export const MOODS = [
+  { name: 'Overflowing', color: '§e', reply: 'Channel it well, and share it with your team.' },
+  { name: 'Steady', color: '§a', reply: 'Steady chakra is the strongest kind.' },
+  { name: 'Flickering', color: '§6', reply: 'Even a flicker can light the Will of Fire.' },
+  { name: 'Drained', color: '§9', reply: 'Rest is training too. Be gentle with yourself today.' },
+];
+
+export const BOND_TIERS = [
+  { min: 0, name: 'Acquaintance', color: '§7' },
+  { min: 10, name: 'Comrade', color: '§a' },
+  { min: 40, name: 'Trusted Comrade', color: '§b' },
+  { min: 100, name: 'Precious Person', color: '§6' },
+];
+
+/** @param {number} pts */
+export const bondTier = (pts) => BOND_TIERS.reduce((t, b, i) => (pts >= b.min ? i : t), 0);

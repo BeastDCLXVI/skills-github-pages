@@ -204,6 +204,12 @@ def validate(bp: Path, rp: Path, scripts: Path, schemas: Path | None = None):
                     for t in ([ti] if isinstance(ti, str) else ti):
                         if not item_ok(t if ":" in t else f"minecraft:{t}"):
                             P(f"{k}: tame item {t} unknown")
+                if c == "minecraft:damage_sensor":
+                    trig = val.get("triggers", [])
+                    for t in ([trig] if isinstance(trig, dict) else trig):
+                        ev = t.get("on_damage", {}).get("event")
+                        if ev and ev not in evs:
+                            P(f"{k}: damage sensor fires unknown event {ev}")
                 if c == "minecraft:healable":
                     for h in val["items"]:
                         if not item_ok(h["item"]):

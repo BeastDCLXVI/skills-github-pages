@@ -769,3 +769,28 @@ def kara_ring() -> Image.Image:
 
 def blueprint(cap: str) -> Image.Image:
     return scroll(cap, paper="#cfe0f4", ink="#1f4f9a")
+
+
+def journal() -> Image.Image:
+    """Shinobi Journal: a bound notebook with a gold Leaf crest and a red ribbon (v1.2)."""
+    rows = [
+        "................",
+        "..oooooooooooo..",
+        ".osbbbbbbbbbbbo.",
+        ".oslllllllllllo.",
+        ".oslbbbbyybbblo.",
+        ".oslbbbyyyybblo.",
+        ".oslbbyyddyyblo.",
+        ".oslbbyydyyyblo.",
+        ".oslbbbyyyybblo.",
+        ".oslbbbbybbbblo.",
+        ".oslbbbbbybbblo.",
+        ".oslllllllllllo.",
+        ".osppppppppppro.",
+        "..oooooooooooro.",
+        "............ro..",
+        "................",
+    ]
+    pal = {"o": OUT, "s": hexc("#2a4a2a"), "b": hexc("#3f6f3a"), "l": hexc("#5a8f4a"), "y": hexc("#e8c65a"),
+           "d": hexc("#a8862a"), "p": hexc("#efe3c2"), "r": hexc("#c0262b")}
+    return sprite(rows, pal)

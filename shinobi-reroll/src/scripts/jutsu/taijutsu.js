@@ -1,5 +1,6 @@
 import { EntityDamageCause } from '@minecraft/server';
 import { FX, PARTICLE, SOUND } from '../ids.js';
+import { gateMult } from '../innerpath.js';
 import { spawnOrb } from '../projectiles.js';
 import { rt } from '../state.js';
 import {
@@ -13,7 +14,7 @@ const BLOOD = rgb('#d02020');
 
 /** The Gates tear the body: health instead of chakra (Clanless taijutsu specialists pay half). */
 function strain(c, amount) {
-  const cost = c.d.clan === 'none' ? amount / 2 : amount;
+  const cost = (c.d.clan === 'none' ? amount / 2 : amount) * gateMult(c.d);
   hurt(c.p, cost, undefined, EntityDamageCause.magic);
 }
 

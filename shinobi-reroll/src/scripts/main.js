@@ -8,6 +8,7 @@ import { startCombat } from './combat.js';
 import { CLANS, NATURES, RARITY_COLOR } from './data.js';
 import { startDojutsu } from './dojutsu.js';
 import { ENTITY, ITEM } from './ids.js';
+import { startInnerPath } from './innerpath.js';
 import { startItems } from './items.js';
 import { dismissAll } from './jutsu/core.js';
 import { JUTSU } from './jutsu/index.js';
@@ -41,6 +42,7 @@ function welcome(p) {
         '§bChakra Focus§r: use = cast jutsu, sneak + use = next jutsu, sneak still = charge chakra.',
         '§6Shinobi Scroll§r: learn jutsu, build your loadout, read the Codex.',
         'Sneak + jump toggles your dojutsu once you awaken one.',
+        '§3Inner Path§r (in the scroll): swear your Nindo, keep a private journal, forge bonds.',
       ].join('\n'));
     });
     touch(p);
@@ -57,6 +59,7 @@ startItems();
 startNpc();
 startBosses();
 startAdmin();
+startInnerPath();
 
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   if (initialSpawn) welcome(player);
