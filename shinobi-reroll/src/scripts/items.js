@@ -2,6 +2,7 @@ import { EquipmentSlot, Player, system, world } from '@minecraft/server';
 import { BIJUU } from './data.js';
 import { ENTITY, FX, ITEM, PARTICLE, SOUND } from './ids.js';
 import { becomeJinchuriki, releaseBijuu, summonBoss, trySeal } from './bosses.js';
+import { build } from './builder.js';
 import { castSelected, cycle } from './casting.js';
 import { awaken } from './dojutsu.js';
 import { addXp, syncAutoJutsu } from './progression.js';
@@ -189,6 +190,88 @@ function eatFruit(p) {
   touch(p);
 }
 
+/** Explosion Release: the first lump teaches the art, later lumps become bombs. @param {Player} p */
+function moldClay(p) {
+  const d = getData(p);
+  if (!d.unlocks.includes('clay')) {
+    d.unlocks.push('clay');
+    consumeHeld(p);
+    syncAutoJutsu(p);
+    touch(p);
+    title(p, '§fExplosion Release', '§7Your palms learn to mold explosive clay. Art is an explosion!', 70);
+    return ping(p, SOUND.levelup, 1.3);
+  }
+  const foe = enemiesAround(p, p.location, 24)[0];
+  spawnOrb(p, { element: 'earth', color: '#f4efe0', size: 1, speed: 1.1, damage: 7, radius: 2.5, explode: 1, homing: foe,
+    life: 80, fizzleBoom: true, sound: SOUND.crow });
+  consumeHeld(p);
+}
+
+/** Itachi's eyes: Eternal Mangekyo for an Uchiha, a borrowed Sharingan for anyone else. @param {Player} p */
+function transplantEyes(p) {
+  const d = getData(p);
+  if (d.eye === 'mangekyo') {
+    if (d.eternal) return tell(p, '§7Your Mangekyo is already eternal.');
+    d.eternal = true;
+    consumeHeld(p);
+    touch(p);
+    title(p, '§4Eternal Mangekyo Sharingan', '§7Your eyes will never go blind again.', 80);
+    return ping(p, SOUND.totem, 0.9);
+  }
+  if (!d.eye) {
+    consumeHeld(p);
+    awaken(p, 'sharingan', 3);
+    return tell(p, '§cItachi\'s Sharingan now lives in your eyes (fully matured: 3 tomoe).');
+  }
+  tell(p, '§7You already have a dojutsu. An Uchiha with the Mangekyo could make these eternal.');
+}
+
+/** @param {Player} p */
+function acceptCurse(p) {
+  const d = getData(p);
+  if (d.unlocks.includes('curse')) return tell(p, '§7The Cursed Seal already marks your neck.');
+  consumeHeld(p);
+  if (Math.random() < 0.25) {
+    effect(p, FX.wither, 10, 1);
+    effect(p, FX.weakness, 30, 1);
+    effect(p, FX.nausea, 15, 0);
+    return title(p, '§8Rejection', '§7Your body fights the seal... and wins, barely.', 60);
+  }
+  d.unlocks.push('curse');
+  syncAutoJutsu(p);
+  touch(p);
+  title(p, '§8Cursed Seal of Heaven', '§7Orochimaru\'s power is now yours to unleash.', 70);
+  ping(p, SOUND.curse, 0.8);
+}
+
+/** @param {Player} p @param {string} kind */
+function signContract(p, kind) {
+  const d = getData(p);
+  if (d.contracts.includes(kind)) return tell(p, `§7You already signed the ${kind} contract.`);
+  d.contracts.push(kind);
+  consumeHeld(p);
+  touch(p);
+  title(p, `§6${kind[0].toUpperCase()}${kind.slice(1)} Contract`, `§7Summoning Jutsu: ${kind} can now be learned (Chunin).`, 60);
+  ping(p, SOUND.levelup, 1.2);
+}
+
+/** Hiramekarei releases the chakra it stored from your hits. @param {Player} p */
+function releaseBlade(p) {
+  const r = rt(p);
+  if (!r.bladeCharge) return tell(p, '§7Hiramekarei has no stored chakra. Strike enemies to charge it.');
+  const charge = r.bladeCharge;
+  r.bladeCharge = 0;
+  const dir = p.getViewDirection();
+  for (let i = 1; i <= 8; i++) fx(p.dimension, PARTICLE.shockwave, add(eyes(p), v3(dir.x * i, dir.y * i - 1, dir.z * i)), rgb('#8ea6bd'));
+  sound(p.dimension, SOUND.wind, p.location, 0.8, 1.4);
+  for (const e of enemiesAround(p, p.location, 9)) {
+    const to = v3(e.location.x - p.location.x, 0, e.location.z - p.location.z);
+    if (to.x * dir.x + to.z * dir.z <= 0) continue;
+    hurt(e, 4 * charge, p);
+    knock(e, p.location, 1.5 + charge * 0.3, 0.4);
+  }
+}
+
 /** @param {Player} p @param {ItemStack} item */
 function onUse(p, item) {
   const id = item.typeId;
@@ -217,8 +300,8 @@ function onUse(p, item) {
       return;
     case ITEM.toadContract: {
       const d = getData(p);
-      if (d.contract) return tell(p, '§7You already signed the toad contract.');
-      d.contract = true;
+      if (d.contracts.includes('toad')) return tell(p, '§7You already signed the toad contract.');
+      d.contracts.push('toad');
       consumeHeld(p);
       touch(p);
       title(p, '§6Toad Contract', '§7Summoning Jutsu: Toad and Sage Mode can now be learned (Chunin / Jonin).', 70);
@@ -235,9 +318,46 @@ function onUse(p, item) {
     case ITEM.sigil:
       if (summonBoss(p, ENTITY.momoshiki, 10)) {
         consumeHeld(p);
-        world.sendMessage('§5An Otsutsuki descends from the sky...');
+        const momo = p.dimension.getEntities({ location: p.location, maxDistance: 20, type: ENTITY.momoshiki })[0];
+        if (momo) {
+          try {
+            p.dimension.spawnEntity(ENTITY.kinshiki, add(momo.location, v3(3, 0, 0)));
+          } catch {}
+        }
+        world.sendMessage('§5Momoshiki and Kinshiki Otsutsuki descend from the sky...');
       }
       return;
+    case ITEM.karaRing:
+      if (summonBoss(p, ENTITY.jigen, 12)) {
+        consumeHeld(p);
+        world.sendMessage('§5The Kara ring answers. Jigen, vessel of Isshiki Otsutsuki, has arrived.');
+      }
+      return;
+    case ITEM.clay:
+      return moldClay(p);
+    case ITEM.uchihaEye:
+      return transplantEyes(p);
+    case ITEM.curseSeal:
+      return acceptCurse(p);
+    case ITEM.snakeContract:
+      return signContract(p, 'snake');
+    case ITEM.slugContract:
+      return signContract(p, 'slug');
+    case ITEM.puppetScroll: {
+      const d = getData(p);
+      if (d.unlocks.includes('puppet')) return tell(p, '§7You already know the Puppet Technique.');
+      d.unlocks.push('puppet');
+      consumeHeld(p);
+      syncAutoJutsu(p);
+      touch(p);
+      return title(p, '§5Puppet Technique', '§7Chakra threads now answer your fingertips.', 60);
+    }
+    case ITEM.blueprintGate:
+    case ITEM.blueprintRamen:
+    case ITEM.blueprintTraining:
+      return void build(p, id);
+    case ITEM.hiramekarei:
+      return releaseBlade(p);
     case ITEM.gedoCore:
       if (summonBoss(p, ENTITY.juubi, 20)) {
         consumeHeld(p);
@@ -320,7 +440,8 @@ function onEat(p, item) {
 const USABLE = new Set([
   ...Object.keys(THROWABLE), ...ORBS.keys(), ITEM.focus, ITEM.scroll, ITEM.reroll, ITEM.bijuuScroll, ITEM.sealingScroll,
   ITEM.toadContract, ITEM.forbiddenScroll, ITEM.sigil, ITEM.gedoCore, ITEM.karmaSeal, ITEM.hashiramaCells, ITEM.kote,
-  ITEM.explosiveTag, ITEM.gunbai,
+  ITEM.explosiveTag, ITEM.gunbai, ITEM.karaRing, ITEM.clay, ITEM.uchihaEye, ITEM.curseSeal, ITEM.snakeContract,
+  ITEM.slugContract, ITEM.puppetScroll, ITEM.blueprintGate, ITEM.blueprintRamen, ITEM.blueprintTraining, ITEM.hiramekarei,
 ]);
 
 /** @type {Map<string, number>} */

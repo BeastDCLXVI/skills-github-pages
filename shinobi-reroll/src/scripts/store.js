@@ -12,13 +12,19 @@ import { clamp, pick, settings, weighted } from './util.js';
  *   learned: string[], slots: string[], sel: number,
  *   eye: string | null, eyeStage: number, eyeXp: number, eyeOn: boolean, strain: number,
  *   bijuu: string | null, sync: number,
- *   karma: boolean, karmaEnergy: number, contract: boolean, wood: boolean, ascended: boolean,
- *   sageEnergy: number, rerolls: number, pity: number, kills: number, casts: number,
+ *   karma: boolean, karmaEnergy: number, contracts: string[], unlocks: string[], wood: boolean, ascended: boolean,
+ *   eternal: boolean, sageEnergy: number, rerolls: number, pity: number, kills: number, casts: number,
+ *   mission: Mission | null, board: Mission[], boardDay: number, missionsDone: number,
  *   hud: boolean, joined: number
  * }} ShinobiData
+ *
+ * @typedef {{
+ *   id: string, grade: string, kind: 'hunt' | 'gather' | 'cast' | 'train', target: string, label: string,
+ *   need: number, have: number, ryo: number, xp: number, jp: number
+ * }} Mission
  */
 
-const VERSION = 1;
+const VERSION = 2;
 const KEY = 'sr:data';
 const CHAKRA_KEY = 'sr:chakra';
 
@@ -50,16 +56,20 @@ function fresh() {
     slots: ['substitution', 'body_flicker', 'transformation'], sel: 0,
     eye: null, eyeStage: 0, eyeXp: 0, eyeOn: false, strain: 0,
     bijuu: null, sync: 0,
-    karma: false, karmaEnergy: 0, contract: false, wood: false, ascended: false,
+    karma: false, karmaEnergy: 0, contracts: [], unlocks: [], wood: false, ascended: false, eternal: false,
     sageEnergy: 0, rerolls: 0, pity: 0, kills: 0, casts: 0,
+    mission: null, board: [], boardDay: -1, missionsDone: 0,
     hud: settings().hudDefault, joined: Date.now(),
   };
 }
 
-/** @param {Partial<ShinobiData>} raw @returns {ShinobiData} */
+/** @param {Partial<ShinobiData> & { contract?: boolean }} raw @returns {ShinobiData} */
 function migrate(raw) {
   const base = fresh();
-  const d = /** @type {ShinobiData} */ ({ ...base, ...raw, v: VERSION });
+  const { contract, ...rest } = raw;
+  const d = /** @type {ShinobiData} */ ({ ...base, ...rest, v: VERSION });
+  // v1 stored a single toad contract flag
+  if (contract && !d.contracts.includes('toad')) d.contracts = [...d.contracts, 'toad'];
   if (!CLANS[d.clan]) d.clan = base.clan;
   d.natures = (d.natures ?? []).filter((n) => NATURES[n]);
   if (!d.natures.length) d.natures = [rollNature(d.clan)];

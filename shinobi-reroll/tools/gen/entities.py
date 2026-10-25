@@ -5,7 +5,7 @@ import copy
 
 from . import sprites as S
 from .core import (FMT_ANIMATION, FMT_CLIENT_ENTITY, FMT_ENTITY, FMT_RENDER_CONTROLLER, FMT_SPAWN, Build, ident)
-from .models import BIJUU, JUUBI, Model, build_beast, decoy_log, toad, training_post
+from .models import BIJUU, JUUBI, Model, build_beast, decoy_log, serpent, slug, toad, training_post
 from .skins import NPC_SKINS, paint_skin
 
 # Jutsu orb element index -> sprite key. Scripts mirror this table in ELEMENT_INDEX.
@@ -454,6 +454,95 @@ def emit_model(b: Build, key: str, model: Model, egg) -> None:
     b.rp.json(f"entity/{key}.entity.json", model_client(key, model, egg, anim["animations"]))
 
 
+# --- v1.1: legendary rogues, Otsutsuki and new summons -----------------------------
+
+# key: (display name, health, attack, speed, extra families, client scale, xp, spawns naturally)
+MINI_BOSSES = {
+    "itachi": ("Itachi Uchiha", 220, 9, 0.33, ["akatsuki_boss", "akatsuki"], "0.9375", 300, True),
+    "kisame": ("Kisame Hoshigaki", 280, 12, 0.31, ["akatsuki_boss", "akatsuki"], "1.05", 300, True),
+    "deidara": ("Deidara", 180, 7, 0.33, ["akatsuki_boss", "akatsuki"], "0.9375", 300, True),
+    "orochimaru": ("Orochimaru", 240, 9, 0.33, ["akatsuki_boss", "sannin"], "0.9375", 320, True),
+    "kinshiki": ("Kinshiki Otsutsuki", 360, 14, 0.3, ["otsutsuki"], "1.3", 350, False),
+    "jigen": ("Jigen", 520, 14, 0.33, ["otsutsuki", "kara"], "1.0", 800, False),
+}
+
+
+def mini_boss(key: str) -> dict:
+    name, health, attack, speed, fams, _scale, xp, natural = MINI_BOSSES[key]
+    c = boss_components(name, health, attack, (0.7, 2.0 if key != "kinshiki" else 2.5), speed, fams,
+                        f"loot_tables/entities/{key}.json", xp)
+    if natural:
+        c.pop("minecraft:persistent")
+        c["minecraft:despawn"] = {"despawn_from_distance": {"min_distance": 64, "max_distance": 128}}
+        c["minecraft:boss"]["hud_range"] = 40
+    return _entity(ident(key), c)
+
+
+def puppet_entity() -> dict:
+    c = _base(40, ["shinobi_ally", "puppet", "mob"], speed=0.32)
+    c.update({
+        "minecraft:attack": {"damage": 6},
+        "minecraft:behavior.melee_attack": {"priority": 3, "speed_multiplier": 1.3, "track_target": True},
+        "minecraft:behavior.nearest_attackable_target": {"priority": 4, "must_see": True, "reselect_targets": True,
+                                                         "entity_types": ATTACK_MONSTERS},
+        "minecraft:behavior.random_stroll": {"priority": 7, "speed_multiplier": 0.8},
+        "minecraft:tameable": {"probability": 0.0, "tame_items": "minecraft:barrier",
+                               "tame_event": {"event": "minecraft:on_tame", "target": "self"}},
+        "minecraft:timer": {"looping": False, "time": 150, "time_down_event": {"event": "shinobi:despawn"}},
+        "minecraft:fire_immune": {},
+        "minecraft:damage_sensor": {"triggers": [{"cause": "fall", "deals_damage": "no"},
+                                                 {"cause": "drowning", "deals_damage": "no"}]},
+    })
+    return _entity(ident("puppet_karasu"), c, spawnable=False, groups=_ally_groups(1.3), events=_ally_events(),
+                   category="creature")
+
+
+def snake_entity() -> dict:
+    c = _base(70, ["snake", "summon", "mob"], box=(1.6, 1.4), speed=0.3)
+    c.pop("minecraft:can_climb")
+    c.update({
+        "minecraft:attack": {"damage": 10},
+        "minecraft:behavior.melee_attack": {"priority": 3, "speed_multiplier": 1.3, "track_target": True},
+        "minecraft:behavior.random_stroll": {"priority": 7, "speed_multiplier": 0.8},
+        "minecraft:tameable": {"probability": 0.0, "tame_items": "minecraft:barrier",
+                               "tame_event": {"event": "minecraft:on_tame", "target": "self"}},
+        "minecraft:knockback_resistance": {"value": 0.6},
+        "minecraft:damage_sensor": {"triggers": {"cause": "fall", "deals_damage": "no"}},
+    })
+    groups = _ally_groups(1.3)
+    groups["shinobi:tamed"]["minecraft:type_family"] = {"family": ["snake", "shinobi_ally", "summon", "mob"]}
+    groups["shinobi:tamed"]["minecraft:behavior.nearest_attackable_target"] = {
+        "priority": 4, "must_see": True, "reselect_targets": True, "entity_types": ATTACK_MONSTERS}
+    groups["shinobi:tamed"]["minecraft:timer"] = {"looping": False, "time": 150,
+                                                  "time_down_event": {"event": "shinobi:despawn"}}
+    groups["shinobi:wild"] = {
+        "minecraft:type_family": {"family": ["snake", "monster", "mob"]},
+        "minecraft:behavior.hurt_by_target": {"priority": 1},
+        "minecraft:behavior.nearest_attackable_target": {"priority": 2, "must_see": True, "reselect_targets": True,
+                                                         "within_radius": 24, "entity_types": ATTACK_PLAYERS_AND_ALLIES},
+        "minecraft:timer": {"looping": False, "time": 90, "time_down_event": {"event": "shinobi:despawn"}},
+    }
+    events = _ally_events()
+    events["minecraft:entity_spawned"] = {"add": {"component_groups": ["shinobi:wild"]}}
+    events["minecraft:on_tame"] = {"remove": {"component_groups": ["shinobi:wild"]},
+                                   "add": {"component_groups": ["shinobi:tamed"]}}
+    return _entity(ident("summoned_snake"), c, spawnable=False, groups=groups, events=events, category="creature")
+
+
+def slug_entity() -> dict:
+    c = _base(60, ["shinobi_ally", "summon", "slug", "mob"], box=(1.6, 1.2), speed=0.2)
+    c.pop("minecraft:can_climb")
+    c.update({
+        "minecraft:behavior.random_stroll": {"priority": 7, "speed_multiplier": 0.8},
+        "minecraft:tameable": {"probability": 0.0, "tame_items": "minecraft:barrier",
+                               "tame_event": {"event": "minecraft:on_tame", "target": "self"}},
+        "minecraft:timer": {"looping": False, "time": 150, "time_down_event": {"event": "shinobi:despawn"}},
+        "minecraft:damage_sensor": {"triggers": {"cause": "fall", "deals_damage": "no"}},
+    })
+    return _entity(ident("summoned_slug"), c, spawnable=False, groups=_ally_groups(1.0), events=_ally_events(),
+                   category="creature")
+
+
 # --- loot / spawns ---------------------------------------------------------------
 
 def _entry(item: str, weight=1, count=None, chance=None) -> dict:
@@ -478,6 +567,7 @@ def _pool(entries, rolls=1, chance=None, player_only=False) -> dict:
 LOOT = {
     "rogue_ninja": [
         _pool([_entry(ident("shuriken"), count=(1, 4)), _entry(ident("kunai"), count=(0, 2))]),
+        _pool([_entry(ident("ryo"), count=(0, 2))], player_only=True),
         _pool([_entry(ident("explosive_tag"))], chance=0.15),
         _pool([_entry(ident("chakra_crystal"))], chance=0.12, player_only=True),
         _pool([_entry(ident("rogue_headband"))], chance=0.05, player_only=True),
@@ -485,6 +575,7 @@ LOOT = {
     ],
     "akatsuki_rogue": [
         _pool([_entry(ident("chakra_crystal"), count=(1, 4))]),
+        _pool([_entry(ident("ryo"), count=(2, 6))], player_only=True),
         _pool([_entry(ident("explosive_kunai"), count=(1, 3))], chance=0.5),
         _pool([_entry(ident("soldier_pill"), count=(1, 2))], chance=0.4),
         _pool([_entry(ident("akatsuki_cloak"))], chance=0.15, player_only=True),
@@ -493,6 +584,7 @@ LOOT = {
     ],
     "white_zetsu": [
         _pool([_entry(ident("zetsu_spore"), count=(0, 2))]),
+        _pool([_entry(ident("ryo"))], chance=0.3, player_only=True),
     ],
     "leaf_shinobi": [
         _pool([_entry(ident("kunai"), count=(0, 2))]),
@@ -501,16 +593,55 @@ LOOT = {
     ],
     "momoshiki": [
         _pool([_entry(ident("karma_seal"))]),
+        _pool([_entry(ident("ryo"), count=(20, 40))]),
         _pool([_entry(ident("chakra_crystal_block"), count=(2, 5))]),
         _pool([_entry(ident("chakra_fruit"))], chance=0.25),
         _pool([_entry(ident("clan_reroll_scroll"), count=(1, 2))]),
     ],
     "juubi": [
         _pool([_entry(ident("chakra_fruit"), count=(2, 2))]),
+        _pool([_entry(ident("ryo"), count=(40, 64))]),
         _pool([_entry(ident("chakra_crystal_block"), count=(4, 8))]),
         _pool([_entry(ident("otsutsuki_sigil"))], chance=0.2),
     ],
 }
+
+LOOT.update({
+    "itachi": [
+        _pool([_entry(ident("ryo"), count=(8, 16))]),
+        _pool([_entry(ident("uchiha_eye"))], chance=0.3, player_only=True),
+        _pool([_entry(ident("akatsuki_cloak"))], chance=0.4, player_only=True),
+        _pool([_entry(ident("forbidden_scroll"))], chance=0.5, player_only=True),
+    ],
+    "kisame": [
+        _pool([_entry(ident("ryo"), count=(8, 16))]),
+        _pool([_entry(ident("samehada"))], chance=0.25, player_only=True),
+        _pool([_entry(ident("akatsuki_cloak"))], chance=0.4, player_only=True),
+        _pool([_entry(ident("chakra_crystal_block"), count=(1, 2))]),
+    ],
+    "deidara": [
+        _pool([_entry(ident("ryo"), count=(8, 16))]),
+        _pool([_entry(ident("explosive_clay"), count=(3, 6))]),
+        _pool([_entry(ident("akatsuki_cloak"))], chance=0.4, player_only=True),
+    ],
+    "orochimaru": [
+        _pool([_entry(ident("ryo"), count=(8, 16))]),
+        _pool([_entry(ident("curse_seal"))], chance=0.35, player_only=True),
+        _pool([_entry(ident("snake_contract"))], chance=0.5, player_only=True),
+        _pool([_entry(ident("kusanagi"))], chance=0.2, player_only=True),
+    ],
+    "kinshiki": [
+        _pool([_entry(ident("ryo"), count=(10, 20))]),
+        _pool([_entry(ident("chakra_crystal_block"), count=(2, 4))]),
+        _pool([_entry(ident("chakra_fruit"))], chance=0.1),
+    ],
+    "jigen": [
+        _pool([_entry(ident("ryo"), count=(30, 64))]),
+        _pool([_entry(ident("karma_seal"))]),
+        _pool([_entry(ident("chakra_fruit"))], chance=0.5),
+        _pool([_entry(ident("clan_reroll_scroll"), count=(1, 3))]),
+    ],
+})
 
 SPAWNS = {
     "rogue_ninja": dict(population="monster", weight=6, herd=(1, 2), brightness=(0, 7), biomes=[
@@ -521,6 +652,10 @@ SPAWNS = {
     "akatsuki_rogue": dict(population="monster", weight=1, herd=(1, 1), brightness=(0, 7), biomes=[
         {"test": "has_biome_tag", "operator": "==", "value": "monster"},
         {"test": "has_biome_tag", "operator": "!=", "value": "mushroom_island"}], surface=True, difficulty="normal"),
+    **{key: dict(population="monster", weight=1, herd=(1, 1), brightness=(0, 7), biomes=[
+        {"test": "has_biome_tag", "operator": "==", "value": "monster"},
+        {"test": "has_biome_tag", "operator": "!=", "value": "mushroom_island"}], surface=True, difficulty="normal")
+       for key in ("itachi", "kisame", "deidara", "orochimaru")},
     "leaf_shinobi": dict(population="creature", weight=4, herd=(1, 2), brightness=(7, 15), biomes=[
         {"any_of": [{"test": "has_biome_tag", "operator": "==", "value": "forest"},
                     {"test": "has_biome_tag", "operator": "==", "value": "plains"}]}], surface=True),
@@ -555,12 +690,15 @@ BEAST_EGGS = {
 NPC_EGGS = {
     "leaf_shinobi": ("#5f7f3a", "#1f3f7a"), "rogue_ninja": ("#3b3f46", "#7a1418"),
     "akatsuki_rogue": ("#17151c", "#c0262b"), "white_zetsu": ("#eceee4", "#9ab88a"),
-    "momoshiki": ("#f1ede4", "#6b4a8f"),
+    "momoshiki": ("#f1ede4", "#6b4a8f"), "itachi": ("#17151c", "#d01020"), "kisame": ("#17151c", "#7f9cbc"),
+    "deidara": ("#17151c", "#f2cf3c"), "orochimaru": ("#e8e4d6", "#6b4a8f"), "kinshiki": ("#ece6d8", "#8a6a3a"),
+    "jigen": ("#2e2b33", "#9a7ad8"),
 }
 
 NPC_NAMES = {
     "shadow_clone": "Shadow Clone", "leaf_shinobi": "Leaf Shinobi", "rogue_ninja": "Rogue Ninja",
     "akatsuki_rogue": "Akatsuki Rogue", "white_zetsu": "White Zetsu", "momoshiki": "Momoshiki Otsutsuki",
+    "puppet_karasu": "Puppet: Karasu", **{k: v[0] for k, v in MINI_BOSSES.items()},
 }
 
 
@@ -568,12 +706,13 @@ def emit_entities(b: Build) -> None:
     emit_projectiles(b)
 
     npc_defs = {"shadow_clone": shadow_clone(), "leaf_shinobi": leaf_shinobi(), "rogue_ninja": rogue_ninja(),
-                "akatsuki_rogue": akatsuki_rogue(), "white_zetsu": white_zetsu(), "momoshiki": momoshiki()}
+                "akatsuki_rogue": akatsuki_rogue(), "white_zetsu": white_zetsu(), "momoshiki": momoshiki(),
+                "puppet_karasu": puppet_entity(), **{k: mini_boss(k) for k in MINI_BOSSES}}
+    scales = {"momoshiki": "1.05", **{k: v[5] for k, v in MINI_BOSSES.items()}}
     for key, ent in npc_defs.items():
         b.bp.json(f"entities/{key}.json", ent)
         b.rp.png(f"textures/entity/npc/{key}.png", paint_skin(NPC_SKINS[key]))
-        b.rp.json(f"entity/{key}.entity.json", humanoid_client(key, NPC_EGGS.get(key),
-                                                               "1.05" if key == "momoshiki" else "0.9375"))
+        b.rp.json(f"entity/{key}.entity.json", humanoid_client(key, NPC_EGGS.get(key), scales.get(key, "0.9375")))
         b.rp_lang.add(f"entity.{ident(key)}.name", NPC_NAMES[key])
         if NPC_EGGS.get(key):
             b.rp_lang.add(f"item.spawn_egg.entity.{ident(key)}.name", f"Spawn {NPC_NAMES[key]}")
@@ -609,6 +748,12 @@ def emit_entities(b: Build) -> None:
     b.bp.json("entities/summoned_toad.json", toad_entity())
     emit_model(b, "summoned_toad", toad(), None)
     b.rp_lang.add(f"entity.{ident('summoned_toad')}.name", "Summoned Toad")
+    b.bp.json("entities/summoned_snake.json", snake_entity())
+    emit_model(b, "summoned_snake", serpent(), None)
+    b.rp_lang.add(f"entity.{ident('summoned_snake')}.name", "Summoned Snake")
+    b.bp.json("entities/summoned_slug.json", slug_entity())
+    emit_model(b, "summoned_slug", slug(), None)
+    b.rp_lang.add(f"entity.{ident('summoned_slug')}.name", "Katsuyu")
     b.bp.json("entities/training_post.json", training_post_entity())
     emit_model(b, "training_post", training_post(), None)
     b.rp_lang.add(f"entity.{ident('training_post')}.name", "Training Post")

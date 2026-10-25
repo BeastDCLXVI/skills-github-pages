@@ -9,7 +9,7 @@
     "test": "node --import ./tests/register.mjs --test tests/smoke.test.mjs",
     "docs": "node --import ./tests/register.mjs tools/catalogue.mjs > docs/JUTSU.md",
     "build": "python3 tools/build.py",
-    "check": "npm run typecheck && npm test && python3 tools/build.py --check",
+    "check": "npm run typecheck && python3 tools/build.py --check && npm test",
     "preview": "python3 tools/preview.py build/model_preview.png"
   },
   "devDependencies": {

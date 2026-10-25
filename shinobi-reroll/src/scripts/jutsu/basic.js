@@ -4,7 +4,7 @@ import { spawnOrb, throwTool } from '../projectiles.js';
 import { rt } from '../state.js';
 import { getData } from '../store.js';
 import {
-  add, dash, effect, enemiesAround, eyes, fx, hurt, knock, mul, norm, repeat, rgb, sound, takeItem, title, v3,
+  add, dash, effect, enemiesAround, eyes, fx, heal, hurt, knock, mul, norm, repeat, rgb, sound, takeItem, title, v3,
 } from '../util.js';
 import { ahead, fail, fan, register, ring, summon, summonsOf } from './core.js';
 
@@ -125,7 +125,7 @@ register([
   },
   // ------------------------------------------------------------- summoning / senjutsu
   {
-    id: 'summoning_toad', name: 'Summoning Jutsu: Toad', school: 'Ninjutsu', rank: 2, cost: 70, cd: 90, flag: 'contract',
+    id: 'summoning_toad', name: 'Summoning Jutsu: Toad', school: 'Ninjutsu', rank: 2, cost: 70, cd: 90, contract: 'toad',
     seals: ['Boar', 'Dog', 'Bird', 'Monkey', 'Ram'], desc: 'Summon a giant battle toad from Mount Myoboku.',
     cast(c) {
       hurt(c.p, 1);
@@ -137,7 +137,7 @@ register([
     },
   },
   {
-    id: 'sage_mode', name: 'Sage Mode', school: 'Senjutsu', rank: 3, cost: 0, cd: 10, seals: [], flag: 'contract',
+    id: 'sage_mode', name: 'Sage Mode', school: 'Senjutsu', rank: 3, cost: 0, cd: 10, seals: [], contract: 'toad',
     requires: ['summoning_toad'],
     desc: 'Channel natural energy (sneak still with the Chakra Focus to gather it). Greatly empowers everything you do.',
     toggle: {
@@ -208,6 +208,19 @@ export function releaseCharged(p, target, pow) {
     effect(target, FX.weakness, 3, 1);
     fx(dim, PARTICLE.burst, at, rgb('#e8e0ff'));
     sound(dim, SOUND.shield, at, 1.6, 0.6);
+  } else if (ch.kind === 'sakura') {
+    for (const e of [target, ...enemiesAround(p, target.location, 3.5).filter((e) => e.id !== target.id)]) {
+      hurt(e, 18 * pow, p);
+      knock(e, target.location, 2.2, 0.9);
+    }
+    fx(dim, PARTICLE.shockwave, target.location, rgb('#ff8ad8'));
+    fx(dim, PARTICLE.burst, at, rgb('#ff8ad8'));
+    sound(dim, SOUND.stone, at, 0.5, 2);
+  } else if (ch.kind === 'karma_blade') {
+    hurt(target, 10 * pow, p);
+    heal(p, 2);
+    fx(dim, PARTICLE.burst, at, rgb('#9a4ad0'));
+    sound(dim, SOUND.fangs, at, 1.4, 0.6);
   } else {
     return false;
   }

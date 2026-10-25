@@ -18,7 +18,8 @@ import {
  *   id: string, name: string, desc: string, rank: number, cost: number, cd: number, seals: string[],
  *   school: string,
  *   nature?: string, clan?: string, kekkei?: string, eyes?: string[], requires?: string[],
- *   flag?: 'contract' | 'jinchuriki' | 'karma' | 'ascended',
+ *   flag?: 'jinchuriki' | 'karma' | 'ascended' | 'clay' | 'puppet' | 'curse',
+ *   contract?: 'toad' | 'snake' | 'slug', beast?: string, active?: string, minSync?: number,
  *   auto?: boolean, jp?: number, strain?: number,
  *   toggle?: { upkeep: number, onSecond?: (ctx: Ctx) => void, onStart?: (ctx: Ctx) => boolean | void, onEnd?: (p: Player) => void },
  *   cast?: (ctx: Ctx) => boolean | void,
@@ -38,6 +39,13 @@ export function register(list) {
 
 const KEKKEI_CLAN = { wood: 'senju', ice: 'yuki', lava: 'terumi', bone: 'kaguya' };
 
+/** Unlockable arts and the item that teaches them. */
+export const UNLOCKS = {
+  clay: 'Explosion Release (mold Explosive Clay)',
+  puppet: 'the Puppet Technique Scroll',
+  curse: 'the Cursed Seal',
+};
+
 /**
  * Whether a shinobi satisfies a jutsu's requirements.
  * @param {ShinobiData} d @param {Jutsu} j
@@ -52,7 +60,9 @@ export function meets(d, j) {
     if (!has) return { ok: false, why: `requires ${KEKKEI[j.kekkei].name}` };
   }
   if (j.eyes && !(d.eye && j.eyes.includes(d.eye))) return { ok: false, why: 'requires a stronger dojutsu' };
-  if (j.flag === 'contract' && !d.contract) return { ok: false, why: 'requires a summoning contract' };
+  if (j.contract && !d.contracts.includes(j.contract)) return { ok: false, why: `requires the ${j.contract} summoning contract` };
+  if (j.beast && d.bijuu !== j.beast) return { ok: false, why: `requires ${j.beast} sealed inside you` };
+  if (j.flag && UNLOCKS[j.flag] && !d.unlocks.includes(j.flag)) return { ok: false, why: `requires ${UNLOCKS[j.flag]}` };
   if (j.flag === 'jinchuriki' && !d.bijuu) return { ok: false, why: 'requires a tailed beast' };
   if (j.flag === 'karma' && !d.karma) return { ok: false, why: 'requires the Karma seal' };
   if (j.flag === 'ascended' && !d.ascended) return { ok: false, why: 'requires Otsutsuki ascension' };
@@ -229,6 +239,17 @@ export function target(c, range) {
     for (const hit of c.p.getEntitiesFromViewDirection({ maxDistance: range, excludeFamilies: ['inanimate'] })) {
       const e = hit.entity;
       if (valid(e) && !isFriendly(c.p, e) && e.typeId !== ENTITY.orb) return e;
+    }
+  } catch {}
+  return undefined;
+}
+
+/** Friendly entity the caster is looking at (a player or one of their summons). @param {Ctx} c @param {number} range */
+export function ally(c, range) {
+  try {
+    for (const hit of c.p.getEntitiesFromViewDirection({ maxDistance: range, excludeFamilies: ['inanimate', 'projectile'] })) {
+      const e = hit.entity;
+      if (valid(e) && e.id !== c.p.id && isFriendly(c.p, e)) return e;
     }
   } catch {}
   return undefined;

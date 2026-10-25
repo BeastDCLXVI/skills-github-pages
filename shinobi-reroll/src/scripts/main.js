@@ -7,7 +7,7 @@ import { dropToggles, startCasting } from './casting.js';
 import { startCombat } from './combat.js';
 import { CLANS, NATURES, RARITY_COLOR } from './data.js';
 import { startDojutsu } from './dojutsu.js';
-import { ITEM } from './ids.js';
+import { ENTITY, ITEM } from './ids.js';
 import { startItems } from './items.js';
 import { dismissAll } from './jutsu/core.js';
 import { JUTSU } from './jutsu/index.js';
@@ -17,6 +17,7 @@ import { startProjectiles } from './projectiles.js';
 import { dropRuntime } from './state.js';
 import { forget, getData, hasProfile, maxChakra, saveNow, setChakra, startAutosave, touch } from './store.js';
 import { startTerrain } from './terrain.js';
+import { missionsMenu } from './ui.js';
 import { give, later, tell, title } from './util.js';
 
 /** @param {import('@minecraft/server').Player} p */
@@ -72,6 +73,14 @@ world.beforeEvents.playerLeave.subscribe(({ player }) => {
   try {
     saveNow(player);
   } catch {}
+});
+
+// Talking to a Leaf Shinobi opens the mission desk (unless you are feeding or taming them).
+const FEED = new Set([ITEM.ramen, 'minecraft:bread']);
+world.beforeEvents.playerInteractWithEntity.subscribe((ev) => {
+  if (ev.target.typeId !== ENTITY.leaf || (ev.itemStack && FEED.has(ev.itemStack.typeId))) return;
+  const p = ev.player;
+  system.run(() => void missionsMenu(p));
 });
 
 world.afterEvents.worldLoad.subscribe(() => {

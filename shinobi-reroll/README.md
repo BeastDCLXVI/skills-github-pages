@@ -2,15 +2,15 @@
 
 A full-scale **Bedrock add-on (`.mcaddon`)** that rebuilds the Java-edition Naruto/Boruto mod
 experience (Forge / NeoForge / Fabric / LiteLoader, Mixin-based) natively on the Bedrock Script API.
-It includes chakra, ranks, **clan rerolls**, nature releases and kekkei genkai, **71 jutsu**, dojutsu
-evolution, all nine tailed beasts plus the Ten-Tails, Momoshiki Otsutsuki and the Karma, ninja tools,
-legendary swords and pills.
+It includes chakra, ranks, **clan rerolls**, nature releases and kekkei genkai, **96 jutsu**, dojutsu
+evolution, all nine tailed beasts plus the Ten-Tails, Akatsuki and Otsutsuki bosses, the Karma, a
+**mission board with a Ryo economy**, village blueprints, ninja tools, legendary swords and pills.
 
 > Unofficial fan work. *Naruto* and *Boruto* belong to Masashi Kishimoto / Shueisha / Studio Pierrot.
 > This project is not affiliated with them, Mojang or Microsoft. All code and every texture and model
 > here is original: generated procedurally by `tools/gen`. No code or assets from existing mods are used.
 
-**Download:** [`dist/ShinobiReroll-v1.0.0.mcaddon`](dist/ShinobiReroll-v1.0.0.mcaddon), with separate
+**Download:** [`dist/ShinobiReroll-v1.1.0.mcaddon`](dist/ShinobiReroll-v1.1.0.mcaddon), with separate
 `.mcpack` files alongside it.
 **Requires:** Minecraft Bedrock **1.21.90 or newer** (Script API `@minecraft/server` 2.0.0, stable).
 No experimental toggles.
@@ -30,7 +30,9 @@ No experimental toggles.
 | Cast the selected jutsu | Use the **Chakra Focus** |
 | Next jutsu in your loadout | Sneak + use the Chakra Focus |
 | Charge chakra (×3 regen) / gather natural energy for Sage Mode | Sneak and stand still holding the Chakra Focus |
-| Menus: profile, loadout, learn jutsu, natures, dojutsu, tailed beast, settings, codex | Use the **Shinobi Scroll** |
+| Menus: profile, loadout, learn jutsu, natures, **missions**, **shop**, dojutsu, tailed beast, settings, codex | Use the **Shinobi Scroll** |
+| Mission desk | Talk to a **Leaf Shinobi**, or Shinobi Scroll › Missions |
+| Build a village structure | Use a **Blueprint** scroll (builds only into empty space) |
 | Quick jutsu wheel | Sneak + use the Shinobi Scroll |
 | Toggle your dojutsu | **Sneak + jump** |
 | Throw kunai / shuriken / senbon / fuma / smoke bombs | Use them (sneak with shuriken at Genin+ = triple throw) |
@@ -46,6 +48,9 @@ Hand seals are woven automatically before each jutsu (shown on the HUD). The Sha
   Every 250 XP also gives a Jutsu Point.
 * **Jutsu Points** buy techniques in *Learn Jutsu*. The full list is in [docs/JUTSU.md](docs/JUTSU.md),
   which is generated from the code.
+* **Missions:** every in-game day the desk offers three D- to S-rank missions scaled to your rank: hunts,
+  deliveries, training and jutsu practice. They pay **Ryo**, XP and sometimes Jutsu Points. Spend Ryo in the
+  **Ninja Shop** (tools, pills, contracts, reroll scrolls, blueprints) and sell crystals and Zetsu spores back.
 
 ## Clans: the reroll
 
@@ -87,11 +92,40 @@ guaranteed Rare or better. Clan-only techniques you lose are refunded as Jutsu P
    jutsu while his palms glow. He drops the **Karma Seal**: Karma Activation and Absorbed Release, and
    Uzumaki or Hyuga players without an eye awaken the **Jogan**.
 
+## Akatsuki, Sannin and Kara (v1.1)
+
+* **Itachi Uchiha** casts genjutsu, Amaterasu and crow clones, and raises Susanoo when he is losing.
+  He can drop **Itachi's Eyes**: an Uchiha with the Mangekyo who uses them gets the **Eternal Mangekyo**
+  (no eye strain). Someone with no dojutsu gets a fully matured Sharingan instead.
+* **Kisame Hoshigaki** fires shark bombs and Water Prison, drains you with Samehada and fuses with it at
+  half health. He can drop Samehada.
+* **Deidara** sends homing C1 birds and C2 explosives, and at low health starts C0: *run*. He drops **Explosive Clay**.
+  The first lump you use teaches you **Explosion Release**; after that, each lump is a homing bomb.
+* **Orochimaru** summons snakes, lunges with Kusanagi and sheds his skin. He can drop the **Cursed Seal**
+  (Stage One / Stage Two; 25% rejection chance), the **Snake Contract** and Kusanagi.
+* These four roam at night on Normal difficulty and above.
+* **Kinshiki** now arrives with Momoshiki, and Momoshiki absorbs him when he weakens.
+  Craft a **Kara Ring** to face **Jigen** (Daikokuten, Sukunahikona, warping, jutsu absorption).
+
+## New arts (v1.1)
+
+* **Eight Gates:** Gate of Opening, Gate of View and Gate of Death cost *health* instead of chakra
+  (half for the Clanless). Front Lotus, Morning Peacock, Daytime Tiger, Evening Elephant and Night Guy
+  need their gate open.
+* **Medical ninjutsu:** Mystical Palm (heals the ally you look at), Cherry Blossom Impact, Strength of a Hundred Seal.
+* **Puppetry** (Puppet Technique Scroll): Karasu, a poison-blade puppet, and Iron Maiden.
+* **Summons:** Snake contract (giant serpent) and Slug contract (Katsuyu heals you and nearby allies), alongside the toads.
+* **Boruto era:** Rasengan Uzuhiko, Karma Shape Transformation (Kawaki's blade), Sukunahikona.
+* **Final forms:** **Baryon Mode** (Kurama Jinchuriki at Kage rank, 100% sync, cloak active) burns enemies'
+  life with every hit; **Six Paths Sage Mode** (ascended toad sage) adds Truth-Seeking Balls that fight on their own.
+
 ## Tools, weapons, food
 
 Kunai, explosive kunai, shuriken, fuma shuriken, senbon, smoke bombs, explosive tags.
 **Samehada** eats chakra, **Kubikiribocho** repairs itself, **Kusanagi** channels lightning,
-**Chakra Blades** cut with wind, and the **Uchiha Gunbai** reflects jutsu. **Scientific Ninja Tool: Kote** fires
+**Chakra Blades** cut with wind, and the **Uchiha Gunbai** reflects jutsu. The Seven Swordsmen's blades:
+**Kiba** chains lightning to nearby enemies, **Nuibari** stitches enemies in place, **Shibuki** detonates on hit,
+and **Hiramekarei** stores chakra from your hits and releases it as a wave. **Scientific Ninja Tool: Kote** fires
 elemental scroll cartridges without chakra. Wearables: Leaf/Rogue forehead protectors, ANBU mask, Kage hat,
 Chunin flak jacket, Akatsuki cloak. Food: Ichiraku Ramen, Soldier Pills, the three Akimichi pills
 (Chili Pill = Butterfly Mode, with a price), Tri-Color Dango.
@@ -113,13 +147,18 @@ NPCs: **Leaf Shinobi** (tame with ramen; they fight and throw shuriken for you),
 | Toad Contract | Paper + Slimeball + Chakra Crystal + Ink Sac |
 | Ichiraku Ramen | Bowl + Wheat + Egg + Cooked Porkchop |
 | Gedo Statue Core | All nine tailed-beast chakra orbs |
+| Kara Ring | Gold + Ender Pearls around a Chakra Crystal Block |
+| Slug Contract / Puppet Scroll | Paper + Slimeball + Chakra Crystal + Honey / Paper + String + Planks + Chakra Crystal |
+| Explosive Clay ×4 | Clay Ball + Gunpowder + Chakra Crystal |
+| Kiba · Nuibari · Shibuki · Hiramekarei | Iron sword(s) + Lightning Rod / String / Explosive Tags / Prismarine Crystals + Chakra Crystal Block |
 
-All 38 recipes appear in the recipe book once you hold an ingredient.
+All 46 recipes appear in the recipe book once you hold an ingredient.
 
 ## Operator commands
 
 `/scriptevent shinobi:admin help`. Examples: `xp 500`, `rank 3`, `clan uchiha`, `eye mangekyo`,
-`bijuu kurama`, `karma`, `ascend`, `learn all`, `reset`, `cleanup`. World rules: `griefing on|off`
+`bijuu kurama`, `karma`, `ascend`, `eternal`, `contract snake`, `unlock clay`, `ryo 50`, `mission complete`,
+`learn all`, `reset`, `cleanup`. World rules: `griefing on|off`
 (jutsu explosions break blocks, off by default), `pvp on|off`, `npcjutsu on|off`, `xprate 2`.
 
 ---
@@ -130,9 +169,13 @@ All 38 recipes appear in the recipe book once you hold an ingredient.
 shinobi-reroll/
 ├─ src/scripts/        Script API gameplay (ES modules, type-checked JS)
 │  ├─ main.js          entry: wires every system
-│  ├─ jutsu/           71 jutsu in 4 schools + registry/requirements
+│  ├─ jutsu/           96 jutsu in 7 files + registry/requirements
 │  ├─ casting.js       cast pipeline, hand seals, toggles, chakra regen, HUD
 │  ├─ store.js         persistent shinobi profiles (dynamic properties)
+│  ├─ missions.js      daily mission board, progress hooks, rewards
+│  ├─ shop.js          Ryo shop and buy-back
+│  ├─ builder.js       village blueprints
+│  ├─ rogues.js        Akatsuki / Sannin / Otsutsuki mini-boss AI
 │  └─ …                dojutsu, combat, bosses, npc, items, ui, terrain, admin
 ├─ tools/
 │  ├─ gen/             generator for every BP/RP file, model, texture, particle, recipe
@@ -147,7 +190,7 @@ shinobi-reroll/
 ```bash
 npm install            # Script API typings, vanilla-data ids, TypeScript
 pip install pillow     # texture generation (jsonschema is optional, for --schemas)
-npm run check          # tsc + smoke tests + generate & validate
+npm run check          # tsc + generate & validate + smoke tests
 npm run build          # writes build/ and dist/*.mcaddon
 # optional: validate against Mojang's official schemas
 git clone --depth 1 https://github.com/Mojang/bedrock-samples
@@ -159,6 +202,20 @@ See [docs/TRANSFORMATION.md](docs/TRANSFORMATION.md) for how each Java mod-loade
 layers do and don't prove.
 
 **Testing status:** the add-on is type-checked against the official API typings, smoke-tested
-(every jutsu, item, menu and AI loop runs without errors against a mock API), cross-reference
-validated, and checked against Mojang's JSON schemas. It has **not** been play-tested in a live
+(18 scenarios; every jutsu, item, menu, mission, shop, blueprint and AI loop runs without errors against a mock API),
+cross-reference validated, and checked against Mojang's JSON schemas. It has **not** been play-tested in a live
 Minecraft client from the build environment, so please report anything that behaves differently in game.
+
+## Changelog
+
+**1.1.0: Akatsuki & Boruto update**
+* Mission board (D–S rank, daily offers, Leaf Shinobi mission desk), Ryo currency, Ninja Shop with buy-back.
+* Village blueprints: Leaf Village Gate, Ichiraku Ramen Stand, Training Ground.
+* Mini-bosses: Itachi, Kisame, Deidara, Orochimaru (natural night spawns), Kinshiki (with Momoshiki), Jigen (Kara Ring).
+* 25 new jutsu (96 total): Eight Gates, Medical ninjutsu, Explosion Release, Puppetry, snake and slug summons,
+  Rasengan Uzuhiko, Karma blade, Sukunahikona, Baryon Mode, Six Paths Sage Mode, Cursed Seal stages.
+* Seven Swordsmen blades: Kiba, Nuibari, Shibuki, Hiramekarei. Eternal Mangekyo via Itachi's Eyes.
+* Summoning contracts are now a list (old saves with the toad contract migrate automatically).
+
+**1.0.0**: first release: chakra, ranks, 15 clans and rerolls, 71 jutsu, dojutsu, nine tailed beasts and the
+Ten-Tails, Momoshiki and the Karma, ninja tools, NPCs, ore generation.

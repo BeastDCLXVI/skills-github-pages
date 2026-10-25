@@ -49,7 +49,8 @@ what the previous one cannot:
 
 1. **Type-check**: `tsc --checkJs` against the official `@minecraft/server` 2.0.0 / `server-ui` 2.0.0 typings.
 2. **Smoke tests**: the real scripts run in Node against an in-memory mock of the Script API. They cover
-   spawn, admin commands, **every one of the 71 jutsu**, all items, menus, bosses, NPCs, terrain and persistence.
+   spawn, admin commands, **every one of the 96 jutsu**, all items, menus, missions, the shop, blueprints, bosses,
+   mini-bosses, NPCs, terrain and persistence.
 3. **Cross-reference validation**: every icon, texture, geometry, animation, render controller, loot table,
    recipe ingredient, lang key, component name and script identifier must resolve
    (vanilla ids come from `@minecraft/vanilla-data`).

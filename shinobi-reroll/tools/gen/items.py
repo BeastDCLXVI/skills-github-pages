@@ -124,6 +124,31 @@ def build_items() -> list[Item]:
         Item("chakra_fruit", "Chakra Fruit", S.chakra_fruit, stack=1, glint=True, rarity="epic",
              components=_food(20, 1.5, always=True, duration=3.0)),
     ]
+    # --- v1.1: Akatsuki & Boruto update ----------------------------------
+    items += [
+        Item("ryo", "Ryo", S.ryo),
+        Item("kiba", "Kiba Blades", S.kiba, category="equipment", stack=1, components=_weapon(7, 1200), rarity="epic"),
+        Item("nuibari", "Nuibari", S.nuibari, category="equipment", stack=1, components=_weapon(6, 1000), rarity="epic"),
+        Item("shibuki", "Shibuki", S.shibuki, category="equipment", stack=1, components=_weapon(9, 800), rarity="epic"),
+        Item("hiramekarei", "Hiramekarei", S.hiramekarei, category="equipment", stack=1, use_label="Release Chakra",
+             components=_weapon(8, 1100), rarity="epic"),
+        Item("explosive_clay", "Explosive Clay", S.explosive_clay, stack=16, use_label="Mold Clay", rarity="uncommon"),
+        Item("uchiha_eye", "Itachi's Eyes", S.uchiha_eye, stack=1, use_label="Transplant", glint=True, rarity="epic"),
+        Item("curse_seal", "Cursed Seal of Heaven", S.curse_seal, stack=1, use_label="Accept", rarity="rare"),
+        Item("snake_contract", "Snake Summoning Contract", lambda: S.scroll("#6a4a8e", paper="#e8e0f0", ink="#2a1a3a"),
+             stack=1, use_label="Sign Contract", rarity="rare"),
+        Item("slug_contract", "Slug Summoning Contract", lambda: S.scroll("#4a7ad8", paper="#e8f0ff", ink="#1a2a5a"),
+             stack=1, use_label="Sign Contract", rarity="rare"),
+        Item("puppet_scroll", "Puppet Technique Scroll", lambda: S.scroll("#4a3a5e", paper="#e8dcc8", ink="#5a3a2a"),
+             stack=1, use_label="Study", rarity="rare"),
+        Item("kara_ring", "Kara Ring", S.kara_ring, stack=1, use_label="Summon", glint=True, rarity="epic"),
+        Item("blueprint_leaf_gate", "Blueprint: Leaf Village Gate", lambda: S.blueprint("#3a7a3a"), stack=16,
+             use_label="Build"),
+        Item("blueprint_ramen_stand", "Blueprint: Ichiraku Ramen Stand", lambda: S.blueprint("#c0262b"), stack=16,
+             use_label="Build"),
+        Item("blueprint_training_ground", "Blueprint: Training Ground", lambda: S.blueprint("#9c6b3a"), stack=16,
+             use_label="Build"),
+    ]
     # --- tailed beast chakra orbs ------------------------------------------
     for key, name, tails, _ in BIJUU:
         items.append(Item(f"{key}_chakra", f"{name}'s Chakra", (lambda c=ORB_COLORS[key], t=tails:

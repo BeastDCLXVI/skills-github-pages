@@ -555,3 +555,30 @@ def build_beast(key, tails, kw) -> Model:
     if kind == "quad":
         return quadruped(key, palette, tails=tails, **kw)
     return upright(key, palette, tails=tails, **kw)
+
+
+def serpent(key: str = "summoned_snake") -> Model:
+    """Giant summoning snake: a head plus a swaying chain of tapering body segments."""
+    palette = {"body": "#6a4a8e", "belly": "#d8c890", "head": "#6a4a8e", "tail": "#6a4a8e", "snout": "#5a3a7e",
+               "eye": "#f2d24a", "pupil": "#141018", "accent": "#3a2a5e", "horn": "#efe8dc"}
+    m = Model(key, palette, scale=2.2)
+    m.features.update({"eyes": "slit", "pattern": "spots", "teeth": True})
+    m.bone("root")
+    m.bone("body", "root", (0, 4, 0))
+    m.cube("body", (-4, 0, -4), (8, 8, 8), "body")
+    m.bone("head", "body", (0, 6, -4))
+    m.cube("head", (-5, 2, -13), (10, 7, 9), "head")
+    m.cube("head", (-3.5, 2, -17), (7, 4, 4), "snout")
+    for sx in (-1, 1):
+        m.cube("head", (sx * 3.5 - 0.5, 8.5, -8), (1, 3, 1), "horn", pivot=(sx * 3.5, 9, -7.5), rotation=(-30, 0, 0))
+    _tails(m, 1, (0, 4, 3.5), 6, 7.0, 8.0, 0, 0, role="tail", taper=0.86)
+    m.pack()
+    return m
+
+
+def slug() -> Model:
+    return quadruped("summoned_slug", {"body": "#e8f0ff", "belly": "#c8d8f0", "head": "#e8f0ff", "ear": "#b8c8f0",
+                                        "eye": "#141018", "pupil": "#141018", "accent": "#4a7ad8", "leg": "#e8f0ff",
+                                        "snout": "#e8f0ff", "tail": "#e8f0ff"},
+                     body=(10, 7, 20), head=(8, 7, 6), snout=None, legs=False, tails=0, ears="stalks", scale=1.8,
+                     features={"pattern": "tribal", "eyes": "none", "mouth": True})

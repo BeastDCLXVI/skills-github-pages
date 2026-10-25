@@ -17,6 +17,7 @@ import { system } from '@minecraft/server';
  *   lastThrow: number,
  *   lastGunbai: number,
  *   koteMode: number,
+ *   bladeCharge: number,
  *   seals: string,
  *   sealsUntil: number,
  * }} Runtime
@@ -31,7 +32,8 @@ export function rt(p) {
   if (!r) {
     r = {
       cooldowns: new Map(), weavingUntil: 0, toggles: new Set(), charged: null, absorbUntil: 0, intangibleUntil: 0,
-      gatherTicks: 0, lastPos: null, lastTrain: 0, lastThrow: 0, lastGunbai: 0, koteMode: 0, seals: '', sealsUntil: 0,
+      gatherTicks: 0, lastPos: null, lastTrain: 0, lastThrow: 0, lastGunbai: 0, koteMode: 0, bladeCharge: 0, seals: '',
+      sealsUntil: 0,
     };
     runtime.set(p.id, r);
   }

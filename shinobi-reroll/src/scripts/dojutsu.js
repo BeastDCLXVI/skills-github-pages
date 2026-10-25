@@ -83,7 +83,7 @@ function tick() {
   for (const p of world.getAllPlayers()) {
     const d = getData(p);
     if (!d.eye) continue;
-    const eternal = d.rank >= 5;
+    const eternal = d.rank >= 5 || d.eternal;
     if (!d.eyeOn) {
       if (d.strain > 0) d.strain = Math.max(0, d.strain - 1);
       continue;

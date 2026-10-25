@@ -1,14 +1,16 @@
-import { GameMode, system, world } from '@minecraft/server';
+import { system, world } from '@minecraft/server';
 import { BIJUU, bijuuByKey } from './data.js';
 import { BLOCK, ENTITY, FX, PARTICLE, SOUND } from './ids.js';
 import { dropToggles } from './casting.js';
 import { syncAutoJutsu } from './progression.js';
 import { spawnOrb } from './projectiles.js';
+import { absorbing, aim, prey, ready, timers } from './ai.js';
+import { ROGUE_BRAINS } from './rogues.js';
 import { getData, touch } from './store.js';
 import { placeTemp } from './terrain.js';
 import {
-  add, dash, dist, effect, enemiesAround, eyes, flatDir, fx, give, healthFraction, hurt, knock, later, mul, norm,
-  rgb, sound, sub, tell, title, v3, valid,
+  add, dash, dist, effect, enemiesAround, eyes, flatDir, fx, give, healthFraction, hurt, knock, later, mul,
+  rgb, sound, tell, title, v3, valid,
 } from './util.js';
 import { fan, ground, ring } from './jutsu/core.js';
 
@@ -101,33 +103,7 @@ export function summonBoss(p, typeId, distance = 14) {
 
 // ------------------------------------------------------------------- boss AI
 
-/** @type {Map<string, Record<string, number>>} */
-const timers = new Map();
 
-/** @param {Entity} boss @param {string} key */
-function ready(boss, key, ticks) {
-  const t = timers.get(boss.id) ?? {};
-  timers.set(boss.id, t);
-  const now = system.currentTick;
-  if ((t[key] ?? 0) > now) return false;
-  t[key] = now + ticks;
-  return true;
-}
-
-/** Nearest valid player target. @param {Entity} boss @param {number} range */
-function prey(boss, range) {
-  try {
-    const list = boss.dimension.getPlayers({
-      location: boss.location, maxDistance: range, excludeGameModes: [GameMode.Creative, GameMode.Spectator], closest: 1,
-    });
-    return list[0];
-  } catch {
-    return undefined;
-  }
-}
-
-/** @param {Entity} from @param {Entity} to */
-const aim = (from, to) => norm(sub(eyes(to), eyes(from)));
 
 /** @param {Entity} boss @param {Entity} target @param {number} tails */
 function bomb(boss, target, tails, size = 5) {
@@ -286,13 +262,11 @@ function momoshikiBrain(boss) {
   }
   const dim = boss.dimension;
   const enraged = healthFraction(boss) < 0.5;
-  const mem = timers.get(boss.id) ?? {};
-  if (boss.hasTag('sr_absorbing') && (mem.absorbUntil ?? 0) <= system.currentTick) boss.removeTag('sr_absorbing');
+  absorbing(boss);
   if (!ready(boss, 'act', enraged ? 45 : 70)) return;
   const roll = Math.random();
   if (roll < 0.25) {
-    boss.addTag('sr_absorbing');
-    (timers.get(boss.id) ?? {}).absorbUntil = system.currentTick + 70;
+    absorbing(boss, 70);
     fx(dim, PARTICLE.aura, boss.location, rgb('#9a4ad0'));
     tell(t, '§5Momoshiki raises his palms: jutsu will be absorbed!');
   } else if (roll < 0.5) {
@@ -332,7 +306,9 @@ function tick() {
       if (seen.has(boss.id) || !valid(boss)) continue;
       seen.add(boss.id);
       try {
-        if (boss.typeId === ENTITY.juubi) juubiBrain(boss);
+        const rogue = ROGUE_BRAINS[boss.typeId];
+        if (rogue) rogue(boss);
+        else if (boss.typeId === ENTITY.juubi) juubiBrain(boss);
         else if (boss.typeId === ENTITY.momoshiki) momoshikiBrain(boss);
         else bijuuBrain(boss);
       } catch (err) {

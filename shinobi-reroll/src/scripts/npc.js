@@ -3,8 +3,8 @@ import { ENTITY, PARTICLE, SOUND } from './ids.js';
 import { notifyCast } from './casting.js';
 import { addXp } from './progression.js';
 import { spawnOrb, throwTool } from './projectiles.js';
-import { fan, tickSummons } from './jutsu/core.js';
-import { add, eyes, flatDir, fx, mul, norm, pick, settings, sub, v3, valid } from './util.js';
+import { fan, summonsOf, tickSummons } from './jutsu/core.js';
+import { add, eyes, flatDir, fx, heal, mul, norm, pick, rgb, settings, sub, v3, valid } from './util.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
 /** @typedef {import('@minecraft/server').Player} Player */
@@ -130,7 +130,23 @@ function onSummonExpire(ownerId, kind) {
   if (owner) addXp(owner, 1);
 }
 
+/** Katsuyu heals her summoner and nearby allies. */
+function katsuyu() {
+  for (const p of world.getAllPlayers()) {
+    for (const s of summonsOf(p.id, ENTITY.slug)) {
+      if (!valid(s.entity) || s.entity.dimension.id !== p.dimension.id) continue;
+      const near = s.entity.dimension.getEntities({ location: s.entity.location, maxDistance: 10, families: ['shinobi_ally'] });
+      for (const e of [p, ...near]) {
+        if (Math.hypot(e.location.x - s.entity.location.x, e.location.z - s.entity.location.z) > 12) continue;
+        heal(e, 2);
+        fx(e.dimension, PARTICLE.aura, e.location, rgb('#7fff9a'));
+      }
+    }
+  }
+}
+
 export function startNpc() {
   system.runInterval(think, 40);
+  system.runInterval(katsuyu, 40);
   system.runInterval(() => tickSummons(onSummonExpire), 20);
 }

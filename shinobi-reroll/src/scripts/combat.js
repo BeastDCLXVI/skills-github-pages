@@ -4,13 +4,15 @@ import { dropToggles, flash } from './casting.js';
 import { sharinganXp, tryMangekyo } from './dojutsu.js';
 import { ENTITY, FX, ITEM, PARTICLE, SOUND } from './ids.js';
 import { releaseCharged } from './jutsu/index.js';
+import { advance } from './missions.js';
 import { zetsuSplit } from './npc.js';
+import { paperBomb } from './projectiles.js';
 import { addXp, power } from './progression.js';
 import { cooldownLeft, rt, setCooldown } from './state.js';
 import { addChakra, getChakra, getData, setChakra, touch } from './store.js';
 import {
-  add, dist, effect, eyes, fx, give, heal, health, healthFraction, heldItem, hurt, isPlayer, ownerId, rgb, sound,
-  tell, title, v3, valid,
+  add, dist, effect, enemiesAround, eyes, fx, give, heal, health, healthFraction, heldItem, hurt, isPlayer, ownerId,
+  rgb, sound, tell, title, v3, valid,
 } from './util.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -66,8 +68,40 @@ function onPlayerHit(p, target) {
         fx(p.dimension, PARTICLE.shockwave, target.location, rgb('#c8ffe8'));
       }
       break;
+    case ITEM.kiba:
+      if (getChakra(p) >= 4) {
+        setChakra(p, getChakra(p) - 4);
+        hurt(target, 3 * power(p), p, EntityDamageCause.lightning);
+        for (const e of enemiesAround(p, target.location, 5).filter((e) => e.id !== target.id).slice(0, 2)) {
+          hurt(e, 4 * power(p), p, EntityDamageCause.lightning);
+          fx(p.dimension, PARTICLE.sparks, eyes(e), rgb('#9fc8ff'));
+        }
+        fx(p.dimension, PARTICLE.sparks, eyes(target), rgb('#9fc8ff'));
+      }
+      break;
+    case ITEM.nuibari:
+      effect(target, FX.slowness, 3, 2);
+      for (const e of enemiesAround(p, target.location, 3).filter((e) => e.id !== target.id)) {
+        effect(e, FX.slowness, 3, 2);
+        hurt(e, 2, p);
+      }
+      break;
+    case ITEM.shibuki:
+      if (Math.random() < 0.25) paperBomb(p, p.dimension, eyes(target), 8, 3);
+      break;
+    case ITEM.hiramekarei: {
+      const r = rt(p);
+      r.bladeCharge = Math.min(5, r.bladeCharge + 1);
+      flash(p, `§bHiramekarei stores chakra: ${r.bladeCharge}/5`);
+      break;
+    }
     default:
       break;
+  }
+  if (rt(p).toggles.has('baryon_mode')) {
+    hurt(target, 6 * power(p), p);
+    heal(p, 2);
+    fx(p.dimension, PARTICLE.burst, eyes(target), rgb('#ff6aa8'));
   }
   if (d.clan === 'aburame' && isPlayer(target)) {
     setChakra(target, getChakra(target) - 4);
@@ -102,6 +136,7 @@ function trainingHit(p, post) {
   setCooldown(p, 'training', 20);
   const d = getData(p);
   if (d.rank < 3) addXp(p, 1);
+  advance(p, 'train');
   sound(post.dimension, SOUND.wood, post.location, 1.4, 0.4);
   flash(p, `§6Training... §7(${d.xp} XP${d.rank >= 3 ? ', you have outgrown the post' : ''})`);
 }
@@ -179,17 +214,23 @@ function onDeath(dead, src) {
   let xp = XP_BY_TYPE[typeId];
   if (bijuu) xp = 150 + bijuu.tails * 40;
   if (xp === undefined) {
-    if (!dead.matches({ families: ['monster'] })) return touch(killer);
+    if (!dead.matches({ families: ['monster'] })) {
+      advance(killer, 'hunt', dead);
+      return touch(killer);
+    }
     const max = health(dead)?.effectiveMax ?? 20;
     xp = Math.max(2, Math.min(20, Math.round(max / 5)));
   }
+  advance(killer, 'hunt', dead);
   addXp(killer, xp);
   if (bijuu || typeId === ENTITY.juubi || typeId === ENTITY.momoshiki) title(killer, '§6Victory', `§e+${xp} XP`, 50);
 }
 
 export function startCombat() {
   world.afterEvents.entityHitEntity.subscribe((ev) => {
-    if (ev.damagingEntity instanceof Player && valid(ev.hitEntity)) onPlayerHit(ev.damagingEntity, ev.hitEntity);
+    if (!valid(ev.hitEntity)) return;
+    if (ev.damagingEntity instanceof Player) onPlayerHit(ev.damagingEntity, ev.hitEntity);
+    else if (ev.damagingEntity?.typeId === ENTITY.puppet) effect(ev.hitEntity, FX.poison, 3, 1);
   });
   world.afterEvents.entityHurt.subscribe((ev) => {
     const e = ev.hurtEntity;

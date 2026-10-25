@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+
 // Minimal in-memory stand-in for @minecraft/server, enough to load the add-on's
 // scripts in Node and drive them through a simulated game loop. It is not a
 // game simulation: it records calls and returns plausible values so every code
@@ -212,7 +214,8 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 // ------------------------------------------------------------------ entities
 let nextId = 1;
-const FAMILIES = {
+/** Families come from the generated behavior pack when it exists (npm run check builds it first). */
+const FAMILIES = loadFamilies() ?? {
   'shinobi:rogue_ninja': ['shinobi_npc', 'rogue', 'monster', 'mob'],
   'shinobi:akatsuki_rogue': ['shinobi_npc', 'monster', 'mob'],
   'shinobi:leaf_shinobi': ['shinobi_npc', 'mob'],
@@ -224,6 +227,20 @@ const FAMILIES = {
   'minecraft:zombie': ['monster', 'mob'],
   'minecraft:player': ['player'],
 };
+
+function loadFamilies() {
+  try {
+    const dir = new URL('../../build/ShinobiReroll_BP/entities/', import.meta.url);
+    const out = { 'minecraft:zombie': ['monster', 'mob', 'zombie'], 'minecraft:player': ['player'] };
+    for (const f of readdirSync(dir)) {
+      const e = JSON.parse(readFileSync(new URL(f, dir), 'utf8'))['minecraft:entity'];
+      out[e.description.identifier] = e.components['minecraft:type_family']?.family ?? ['mob'];
+    }
+    return out;
+  } catch {
+    return undefined;
+  }
+}
 
 export class Entity {
   constructor(typeId, dim, loc = { x: 0, y: 64, z: 0 }) {
@@ -516,6 +533,10 @@ export const world = {
   sendMessage(m) {
     guard('world.sendMessage');
     log.messages.push(String(m));
+  },
+  getDay() {
+    guard('world.getDay');
+    return Math.floor(system.currentTick / 24000);
   },
   getAbsoluteTime() {
     guard('world.getAbsoluteTime');

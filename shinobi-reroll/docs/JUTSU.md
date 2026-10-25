@@ -1,6 +1,6 @@
 # Jutsu catalogue
 
-_Generated from `src/scripts/jutsu/` by `tools/catalogue.mjs` — 71 techniques._
+_Generated from `src/scripts/jutsu/` by `tools/catalogue.mjs` — 96 techniques._
 
 Cost is chakra (before clan/Sage/Otsutsuki discounts). Toggles drain their upkeep every second while active.
 Techniques marked **auto** are granted automatically when you meet their requirements.
@@ -16,8 +16,11 @@ Techniques marked **auto** are granted automatically when you meet their require
 | Shadow Clone Jutsu | Genin | 40 | 25s | 2 JP | — | Create solid clones that fight beside you. When they vanish, their experience returns to you. |
 | Shuriken Shadow Clone Jutsu | Genin | 18 | 6s | 2 JP | — | Throw one shuriken and multiply it into a deadly fan. Consumes a shuriken. |
 | Big Ball Rasengan | Chunin | 50 | 10s | 3 JP | Rasengan | A Rasengan the size of a boulder; the hit explodes in an area. |
+| Summoning Jutsu: Katsuyu | Chunin | 60 | 120s | 3 JP | Slug contract | Summon Katsuyu, who heals you and your allies around her. |
+| Summoning Jutsu: Snake | Chunin | 60 | 90s | 3 JP | Snake contract | Summon a giant serpent that crushes your enemies. |
 | Summoning Jutsu: Toad | Chunin | 70 | 90s | 3 JP | Toad contract | Summon a giant battle toad from Mount Myoboku. |
 | Vanishing Rasengan | Chunin | 45 | 8s | 3 JP | Rasengan | Boruto's thrown Rasengan: it disappears mid-flight and reappears at the target. |
+| Rasengan Uzuhiko | Jonin | 70 | 18s | 4 JP | Wind nature, Vanishing Rasengan | Boruto's giant wind-wrapped Rasengan that keeps growing as it flies. |
 | Wind Style: Rasenshuriken | Jonin | 90 | 20s | 4 JP | Wind nature, Rasengan | A Rasengan laced with wind blades. On impact it becomes a sphere that shreds everything inside. |
 
 ## Taijutsu
@@ -31,6 +34,7 @@ Techniques marked **auto** are granted automatically when you meet their require
 | Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
 |---|---|---|---|---|---|---|
 | Sage Mode | Jonin | 0 + 0/s | 10s | 4 JP | Toad contract, Summoning Jutsu: Toad | Channel natural energy (sneak still with the Chakra Focus to gather it). Greatly empowers everything you do. |
+| Six Paths Sage Mode | Kage | 80 + 8/s | 60s | 6 JP | Otsutsuki ascension, Toad contract, Sage Mode | The Sage of Six Paths' power: Sage Mode without gathering, plus Truth-Seeking Balls that defend you. |
 
 ## Fire
 
@@ -165,6 +169,7 @@ Techniques marked **auto** are granted automatically when you meet their require
 | All-Killing Ash Bones | Chunin | 45 | 10s | 3 JP | Otsutsuki clan | Kaguya's bones turn whatever they pierce to ash. |
 | Yomotsu Hirasaka | Jonin | 50 | 12s | 4 JP | Otsutsuki clan | Open a portal and step to the block you are looking at (up to 48 blocks). |
 | Daikokuten | Sannin | 120 | 40s | 5 JP | Otsutsuki clan | Isshiki's time-frozen cube crashes down on the point you look at. |
+| Sukunahikona | Sannin | 60 | 20s | 5 JP | Karma, Karma: Absorbed Release | Isshiki's technique: shrunken rods that regain their true size inside the target. |
 
 ## Mangekyo
 
@@ -206,8 +211,9 @@ Techniques marked **auto** are granted automatically when you meet their require
 
 | Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
 |---|---|---|---|---|---|---|
-| Tailed Beast Bomb | Academy Student | 80 | 30s | auto | Jinchuriki | Compress black and white chakra into a world-shaking bomb. Requires the cloak and 50% sync. |
+| Tailed Beast Bomb | Academy Student | 80 | 30s | auto | Jinchuriki, while Tailed Beast Chakra Cloak is active, 50% sync | Compress black and white chakra into a world-shaking bomb. Requires the cloak and 50% sync. |
 | Tailed Beast Chakra Cloak | Academy Student | 20 + 3/s | 10s | auto | Jinchuriki | Wrap yourself in your tailed beast's chakra. Grows stronger as your sync rises. |
+| Baryon Mode | Kage | 60 + 12/s | 30s | 6 JP | Jinchuriki, Kurama sealed, while Tailed Beast Chakra Cloak is active, 100% sync | Fuse your chakra with Kurama's like nuclear fusion. Every hit burns the enemy's life. Ten minutes of rest afterwards. |
 
 ## Karma
 
@@ -215,4 +221,48 @@ Techniques marked **auto** are granted automatically when you meet their require
 |---|---|---|---|---|---|---|
 | Karma Activation | Academy Student | 25 + 2/s | 10s | auto | Karma | Let the Karma spread across your body: power, speed, and a chance to absorb hits into Karma energy. |
 | Karma: Absorbed Release | Academy Student | 40 | 15s | auto | Karma | Release every bit of Karma energy you absorbed as one blast. |
+| Karma: Shape Transformation | Chunin | 25 | 8s | 3 JP | Karma | Kawaki's Karma reshapes your arm into a blade: three empowered strikes that steal life. |
+
+## Medical
+
+| Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
+|---|---|---|---|---|---|---|
+| Mystical Palm Technique | Genin | 20 | 4s | 2 JP | — | Heal the ally you look at, or yourself if nobody is in front of you. |
+| Cherry Blossom Impact | Chunin | 35 | 10s | 3 JP | Mystical Palm Technique | Gather chakra in your fist with perfect control: your next hit craters the ground around the target. |
+| Strength of a Hundred Seal | Jonin | 40 + 6/s | 30s | 4 JP | Mystical Palm Technique | Release years of stored chakra: rapid regeneration that also purges poisons and curses. |
+
+## Eight Gates
+
+| Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
+|---|---|---|---|---|---|---|
+| Eight Gates: Gate of Opening | Genin | 0 + 0/s | 5s | 2 JP | — | Force open the first chakra gates: strength and speed, paid with your own body. |
+| Front Lotus | Genin | 10 | 10s | 2 JP | while Eight Gates: Gate of Opening is active | Kick a foe skyward, wrap it in bandages and piledrive it into the ground. |
+| Eight Gates: Gate of View | Jonin | 0 + 0/s | 10s | 4 JP | Eight Gates: Gate of Opening | Six gates open: your skin turns red and steam pours off you. |
+| Morning Peacock | Jonin | 20 | 12s | 4 JP | while Eight Gates: Gate of View is active | Punches so fast they ignite the air: a fan of fire fists. |
+| Daytime Tiger | Sannin | 30 | 18s | 5 JP | while Eight Gates: Gate of View is active | A single punch compresses the air into a tiger-shaped cannon. |
+| Eight Gates: Gate of Death | Kage | 0 + 0/s | 120s | 6 JP | Eight Gates: Gate of View | The eighth gate: godlike power that burns your life away. Leaves you crippled afterwards. |
+| Evening Elephant | Kage | 30 | 15s | 6 JP | while Eight Gates: Gate of Death is active | Five air-crushing kicks, each one a pillar of pressure. |
+| Night Guy | Kage | 50 | 120s | 6 JP | while Eight Gates: Gate of Death is active | The final kick of the Eight Gates. Bends space as you dash through your target. |
+
+## Explosion
+
+| Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
+|---|---|---|---|---|---|---|
+| Explosion Release: C1 Birds | Genin | 20 | 6s | 2 JP | Explosive Clay | Three clay birds hunt down the nearest enemies and detonate. Art is an explosion! |
+| Explosion Release: C2 Dragon | Chunin | 45 | 15s | 3 JP | Explosive Clay | A clay dragon spits a massive explosive into the battlefield. |
+| Explosion Release: C4 Karura | Jonin | 70 | 30s | 4 JP | Explosive Clay | Microscopic bombs drift into the area and destroy enemies from within. |
+
+## Puppetry
+
+| Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
+|---|---|---|---|---|---|---|
+| Puppet Technique: Karasu | Genin | 30 | 40s | 2 JP | Puppet Scroll | Unseal Karasu, a three-eyed battle puppet with poisoned blades, for one minute. |
+| Black Secret Technique: Iron Maiden | Chunin | 35 | 15s | 3 JP | Puppet Scroll | A puppet snaps shut around your target: heavy damage and deadly poison. |
+
+## Cursed Seal
+
+| Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
+|---|---|---|---|---|---|---|
+| Cursed Seal: Stage One | Genin | 15 + 2/s | 10s | 2 JP | Cursed Seal | Black flame marks spread over your body: strength and speed from Orochimaru's seal. |
+| Cursed Seal: Stage Two | Jonin | 25 + 4/s | 30s | 4 JP | Cursed Seal, while Cursed Seal: Stage One is active | Your body transforms and sprouts hand-shaped wings. Immense power, at a cost. |
 

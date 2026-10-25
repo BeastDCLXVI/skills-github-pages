@@ -9,8 +9,15 @@ const req = (j) => {
   if (j.kekkei) out.push(KEKKEI[j.kekkei].name);
   if (j.clan) out.push(`${CLANS[j.clan].name} clan`);
   if (j.eyes) out.push(j.eyes.map((e) => DOJUTSU[e].name).join(' / '));
-  if (j.flag) out.push({ contract: 'Toad contract', jinchuriki: 'Jinchuriki', karma: 'Karma', ascended: 'Otsutsuki' }[j.flag]);
+  if (j.flag) {
+    out.push({ jinchuriki: 'Jinchuriki', karma: 'Karma', ascended: 'Otsutsuki ascension', clay: 'Explosive Clay',
+      puppet: 'Puppet Scroll', curse: 'Cursed Seal' }[j.flag]);
+  }
+  if (j.contract) out.push(`${j.contract[0].toUpperCase()}${j.contract.slice(1)} contract`);
+  if (j.beast) out.push(`${j.beast[0].toUpperCase()}${j.beast.slice(1)} sealed`);
   for (const r of j.requires ?? []) out.push(JUTSU.get(r).name);
+  if (j.active) out.push(`while ${JUTSU.get(j.active).name} is active`);
+  if (j.minSync) out.push(`${j.minSync}% sync`);
   return out.join(', ') || '—';
 };
 

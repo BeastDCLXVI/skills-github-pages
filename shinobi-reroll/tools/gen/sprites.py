@@ -655,3 +655,117 @@ JUTSU_SPRITES = [
     "fire", "water", "wind", "lightning", "earth", "rasengan", "rasenshuriken", "ice", "lava", "bone",
     "ash_bone", "truth", "bijuu_bomb", "karma", "wood", "boil", "amaterasu", "sand", "ink",
 ]
+
+
+# --- v1.1: Akatsuki & Boruto update ----------------------------------------------
+
+def ryo() -> Image.Image:
+    img = outline(orb(16, "#e8b830", radius=6.2, rim="#9c6b12"), OUT)
+    px = img.load()
+    for x, y in ((7, 7), (8, 7), (7, 8), (8, 8)):
+        px[x, y] = (0, 0, 0, 0)
+    for x, y in ((6, 6), (9, 6), (6, 9), (9, 9)):
+        px[x, y] = hexc("#9c6b12")
+    return img
+
+
+def kiba() -> Image.Image:
+    blade = {"l": hexc("#f4fbff"), "m": hexc("#9fc8ff"), "d": hexc("#3a6fd0")}
+
+    def sparks(img):
+        px = img.load()
+        for x, y in ((12, 1), (10, 5), (14, 4), (8, 6)):
+            px[x, y] = hexc("#fff26a")
+    return diag_weapon([
+        (0.6, 5.0, 0.8, 0.8, "wrap", WRAP),
+        (5.0, 6.0, 1.8, 1.8, "solid", DARK_STEEL),
+        (6.0, 16.0, 1.6, 1.3, "blade", blade),
+        (16.0, 19.0, 1.3, 0.0, "blade", blade),
+    ], extra=sparks)
+
+
+def nuibari() -> Image.Image:
+    def thread(img):
+        d = ImageDraw.Draw(img)
+        d.arc((0, 9, 6, 15), 90, 300, fill=hexc("#c0262b"))
+    return diag_weapon([
+        (2.0, 6.0, 0.8, 0.8, "wrap", RED_WRAP),
+        (6.0, 6.8, 1.2, 1.2, "solid", DARK_STEEL),
+        (6.8, 20.5, 0.6, 0.15, "blade", STEEL),
+    ], extra=thread)
+
+
+def shibuki() -> Image.Image:
+    blade = {"l": hexc("#e8eef2"), "m": hexc("#a9b4bf"), "d": hexc("#66717d")}
+
+    def tags(img):
+        px = img.load()
+        for i in range(4):
+            for j in range(2):
+                x, y = 7 + i * 2 + j, 9 - i * 2 - j
+                if 0 <= x < 16 and 0 <= y < 16 and px[x, y][3]:
+                    px[x, y] = hexc("#efe3c2") if j == 0 else hexc("#c0262b")
+    return diag_weapon([
+        (0.4, 5.0, 0.8, 0.8, "wrap", WRAP),
+        (5.0, 6.0, 1.6, 1.6, "solid", DARK_STEEL),
+        (6.0, 17.0, 2.8, 2.8, "blade", blade),
+        (17.0, 19.5, 2.8, 0.6, "blade", blade),
+    ], extra=tags)
+
+
+def hiramekarei() -> Image.Image:
+    blade = {"l": hexc("#dfe9f2"), "m": hexc("#8ea6bd"), "d": hexc("#4d6680")}
+    return diag_weapon([
+        (0.2, 3.4, 0.8, 0.8, "wrap", WRAP),
+        (3.4, 4.2, 1.4, 1.4, "solid", DARK_STEEL),
+        (4.2, 6.4, 0.8, 0.8, "wrap", WRAP),
+        (6.4, 7.2, 2.4, 2.4, "solid", DARK_STEEL),
+        (7.2, 18.0, 3.0, 3.4, "blade", blade),
+        (18.0, 20.0, 3.4, 1.5, "blade", blade),
+    ])
+
+
+def explosive_clay() -> Image.Image:
+    rows = [
+        "................",
+        "................",
+        "................",
+        "..........oo....",
+        ".........owwo...",
+        "...oo...owwwbo..",
+        "..owwo.owwwwo...",
+        "..owwwowwwwwo...",
+        "...owwwwwwwwo...",
+        "....owwwwwwwo...",
+        "....owwwwwwo....",
+        ".....owwwwo.....",
+        "......owwo......",
+        ".......oo.......",
+        "................",
+        "................",
+    ]
+    return sprite(rows, {"o": hexc("#8a8478"), "w": hexc("#f2eee2"), "b": hexc("#1a1a1a")})
+
+
+def uchiha_eye() -> Image.Image:
+    glyph = [".o.o.", "o...o", ".....", "o...o", ".o.o."]
+    return chakra_orb("#d01020", glyph=glyph, glyph_color="#141018", rim="#5a0a0a")
+
+
+def curse_seal() -> Image.Image:
+    glyph = ["o...o", "oo.oo", ".....", "..o..", ".oo.."]
+    return chakra_orb("#e2b48a", glyph=glyph, glyph_color="#1a1a1a", rim="#7a5a3a")
+
+
+def kara_ring() -> Image.Image:
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.ellipse((2, 4, 13, 15), outline=hexc("#c9a548"))
+    d.ellipse((3, 5, 12, 14), outline=hexc("#8a6a22"))
+    d.polygon([(7, 0), (10, 3), (7, 6), (4, 3)], fill=hexc("#7a3fb0"))
+    img.putpixel((6, 2), hexc("#d8b8ff"))
+    return outline(img, OUT)
+
+
+def blueprint(cap: str) -> Image.Image:
+    return scroll(cap, paper="#cfe0f4", ink="#1f4f9a")

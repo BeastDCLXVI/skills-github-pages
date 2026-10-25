@@ -4,6 +4,8 @@ import { BIJUU, CLANS, DOJUTSU, KEKKEI, NATURES, RANKS, RARITY_COLOR, bijuuByKey
 import { ITEM, PARTICLE, SOUND } from './ids.js';
 import { JUTSU, learnCost, meets } from './jutsu/index.js';
 import { costOf, dropToggles } from './casting.js';
+import { GRADE_COLOR, abandon, accept, board, progressOf, turnIn } from './missions.js';
+import { BUYBACK, OFFERS, buy, sell, wallet } from './shop.js';
 import { summonBoss } from './bosses.js';
 import { toggleEye } from './dojutsu.js';
 import { changeClan, eyeName, learn } from './progression.js';
@@ -40,6 +42,8 @@ const ICON = {
   beast: 'textures/items/kurama_chakra',
   settings: 'textures/items/kote_gauntlet',
   codex: 'textures/items/toad_contract',
+  missions: 'textures/items/blueprint_leaf_gate',
+  shop: 'textures/items/ryo',
 };
 
 /** @param {Player} p */
@@ -64,6 +68,8 @@ export async function mainMenu(p) {
     [`Jutsu Loadout §8(${d.slots.length}/${loadoutSize(d)})`, ICON.loadout, () => loadout(p)],
     [`Learn Jutsu §8(${d.jp} JP)`, ICON.learn, () => learnMenu(p)],
     [`Nature Transformation §8(${d.natures.length}/${natureSlots(d)})`, ICON.nature, () => natureMenu(p)],
+    [`Missions${d.mission ? ` §8(${progressOf(p).have}/${progressOf(p).need})` : ''}`, ICON.missions, () => missionsMenu(p)],
+    [`Ninja Shop §8(${wallet(p)} Ryo)`, ICON.shop, () => shopMenu(p)],
   ];
   if (d.eye) entries.push([`${DOJUTSU[d.eye].color}${DOJUTSU[d.eye].name}`, ICON.eye, () => eyeMenu(p)]);
   if (d.bijuu) entries.push([`§6${bijuuByKey(d.bijuu)?.name}`, ICON.beast, () => beastMenu(p)]);
@@ -88,12 +94,13 @@ async function profile(p) {
     clan.kekkei ? `§dKekkei Genkai:§r ${KEKKEI[clan.kekkei].name}` : '',
     d.wood && d.clan !== 'senju' ? '§2Hashirama Cells:§r Wood Release unlocked' : '',
     '',
-    `§lDojutsu:§r ${eyeName(d.eye)}${d.eye === 'sharingan' ? ` (${d.eyeStage} tomoe, ${d.eyeXp} eye XP)` : ''}${d.eye ? ` · strain ${Math.floor(d.strain)}%` : ''}`,
+    `§lDojutsu:§r ${d.eternal && d.eye === 'mangekyo' ? 'Eternal ' : ''}${eyeName(d.eye)}${d.eye === 'sharingan' ? ` (${d.eyeStage} tomoe, ${d.eyeXp} eye XP)` : ''}${d.eye ? ` · strain ${Math.floor(d.strain)}%` : ''}`,
     `§lTailed Beast:§r ${d.bijuu ? `${bijuuByKey(d.bijuu)?.name} (sync ${Math.floor(d.sync)}%)` : 'None'}`,
     `§lKarma:§r ${d.karma ? `Yes (energy ${Math.floor(d.karmaEnergy)})` : 'No'}  ·  §lOtsutsuki:§r ${d.ascended ? 'Ascended' : 'No'}`,
-    `§lSage:§r ${d.contract ? `Toad contract · natural energy ${Math.floor(d.sageEnergy)}%` : 'No contract'}`,
+    `§lContracts:§r ${d.contracts.length ? d.contracts.join(', ') : 'none'}${d.contracts.includes('toad') ? ` · natural energy ${Math.floor(d.sageEnergy)}%` : ''}`,
+    d.unlocks.length ? `§lArts:§r ${d.unlocks.map((u) => ({ clay: 'Explosion Release', puppet: 'Puppetry', curse: 'Cursed Seal' })[u] ?? u).join(', ')}` : '',
     '',
-    `§7Jutsu learned: ${d.learned.length} · casts: ${d.casts} · defeated: ${d.kills} · rerolls: ${d.rerolls}`,
+    `§7Jutsu learned: ${d.learned.length} · casts: ${d.casts} · defeated: ${d.kills} · missions: ${d.missionsDone} · rerolls: ${d.rerolls}`,
   ].filter((l) => l !== '');
   const res = await show(new ActionFormData().title('Profile').body(lines.join('\n')).button('Back'), p);
   if (res && !res.canceled) await mainMenu(p);
@@ -199,7 +206,7 @@ async function eyeMenu(p) {
     `Chakra drain: ${info.drain}/s · Eye strain: ${Math.floor(d.strain)}%`,
     d.eye === 'sharingan' ? `Tomoe: ${d.eyeStage}/3 (${d.eyeXp} eye XP). Fight with it active to mature it.` : '',
     d.eye === 'sharingan' && d.eyeStage >= 3 ? '§4At Jonin rank, the loss of a companion you cherish awakens the Mangekyo.' : '',
-    d.eye === 'mangekyo' ? (d.rank >= 5 ? '§aEternal: no more strain.' : '§cEvery use strains your eyes. Reach Kage rank for the Eternal Mangekyo.') : '',
+    d.eye === 'mangekyo' ? (d.rank >= 5 || d.eternal ? '§aEternal: no more strain.' : '§cEvery use strains your eyes. Reach Kage rank or transplant Itachi\'s eyes for the Eternal Mangekyo.') : '',
     '§7Quick toggle: sneak + jump.',
   ].filter(Boolean).join('\n');
   const res = await show(new ActionFormData().title(info.name).body(body).button(d.eyeOn ? 'Deactivate' : 'Activate').button('Back'), p);
@@ -235,6 +242,51 @@ async function settingsMenu(p) {
   d.hud = !!res.formValues[0];
   if (!d.hud) p.onScreenDisplay.setActionBar(' ');
   touch(p);
+}
+
+/** @param {Player} p */
+export async function missionsMenu(p) {
+  const d = getData(p);
+  const m = d.mission;
+  if (m) {
+    const { have, need } = progressOf(p);
+    const done = have >= need;
+    const body = [
+      `${GRADE_COLOR[m.grade]}${m.grade}-rank§r · ${m.label}`,
+      `${m.kind === 'gather' ? 'Bring' : m.kind === 'hunt' ? 'Defeat' : m.kind === 'cast' ? 'Cast jutsu' : 'Training Post hits'}: ${have}/${need}${m.kind === 'gather' ? ` × ${m.target.split(':')[1].replace(/_/g, ' ')}` : m.kind === 'hunt' ? ` × ${m.target.replace('family:', '').split(':').pop()?.replace(/_/g, ' ')}` : ''}`,
+      `Reward: §e${m.ryo} Ryo§r, ${m.xp} XP${m.jp ? `, ${m.jp} JP` : ''}`,
+    ].join('\n');
+    const res = await show(new ActionFormData().title('Current Mission').body(body)
+      .button(done ? '§aReport & claim reward' : '§8Report (not done yet)').button('§cAbandon mission').button('Back'), p);
+    if (!res || res.canceled) return;
+    if (res.selection === 0) turnIn(p);
+    else if (res.selection === 1) abandon(p);
+    else await mainMenu(p);
+    return;
+  }
+  const offers = board(p);
+  const form = new ActionFormData().title('Mission Desk')
+    .body(`Pick a mission. New offers arrive every day.\nCompleted missions: ${d.missionsDone}`).button('§lBack');
+  for (const o of offers) form.button(`${GRADE_COLOR[o.grade]}${o.grade}§r ${o.label}\n§8${o.need}× · ${o.ryo} Ryo · ${o.xp} XP${o.jp ? ` · ${o.jp} JP` : ''}`);
+  const res = await show(form, p);
+  if (!res || res.canceled) return;
+  if (!res.selection) return mainMenu(p);
+  accept(p, res.selection - 1);
+}
+
+/** @param {Player} p */
+async function shopMenu(p) {
+  const form = new ActionFormData().title(`Ninja Shop · ${wallet(p)} Ryo`)
+    .body('Earn Ryo from missions and defeated enemies.').button('§lBack');
+  for (const o of OFFERS) form.button(`${o.name}\n§8${o.price} Ryo`, `textures/items/${o.item.split(':')[1]}`);
+  for (const b of BUYBACK) form.button(`§2Sell ${b.name}\n§8for ${b.pay} Ryo`, `textures/items/${b.item.split(':')[1]}`);
+  const res = await show(form, p);
+  if (!res || res.canceled) return;
+  if (!res.selection) return mainMenu(p);
+  const i = res.selection - 1;
+  if (i < OFFERS.length) buy(p, i);
+  else sell(p, i - OFFERS.length);
+  await shopMenu(p);
 }
 
 const CODEX = [
@@ -284,6 +336,23 @@ const CODEX = [
     'Smoke bombs blind enemies and hide you. The Kote fires elemental scrolls from Jutsu Cartridges without chakra (sneak + use to switch element).',
     'Samehada eats chakra, Kubikiribocho repairs itself on hits, Kusanagi channels Chidori for Lightning users, Chakra Blades cut with Wind.',
     'The Uchiha Gunbai sends jutsu back at their caster.',
+  ]],
+  ['Missions, Ryo & Building', [
+    'Shinobi Scroll › Missions (or talk to a Leaf Shinobi) shows three D- to S-rank missions every day, scaled to your rank.',
+    'Missions pay Ryo, XP and sometimes Jutsu Points. Spend Ryo in the Ninja Shop; sell crystals and Zetsu spores back.',
+    'Blueprint scrolls build a Leaf Village Gate, an Ichiraku Ramen Stand or a Training Ground in front of you (only into empty space).',
+  ]],
+  ['Eight Gates & Medical Ninjutsu', [
+    'The Eight Gates cost health instead of chakra (half for the Clanless). Front Lotus, Morning Peacock, Daytime Tiger, Evening Elephant and Night Guy need their gate open.',
+    'The Gate of Death is the strongest state in the game and leaves you crippled when it ends.',
+    'Medical ninjutsu heals the ally you look at; Strength of a Hundred purges poison and curses; Cherry Blossom Impact craters the ground.',
+  ]],
+  ['Akatsuki, Sannin & Kara', [
+    'Itachi, Kisame, Deidara and Orochimaru roam at night (normal difficulty and above).',
+    'Itachi\'s Eyes grant the Eternal Mangekyo to a Mangekyo user. Orochimaru carries the Cursed Seal and the Snake Contract. Deidara drops Explosive Clay.',
+    'The Otsutsuki Sigil now brings Kinshiki too: Momoshiki will absorb him if he falls low. Craft a Kara Ring to face Jigen.',
+    'Explosive Clay teaches Explosion Release; the Puppet Scroll teaches Puppetry; the Slug Contract summons Katsuyu, who heals you.',
+    'Baryon Mode (Kurama, Kage, 100% sync) and Six Paths Sage Mode (ascended toad sage) are the final forms.',
   ]],
   ['Commands (operators)', [
     '/scriptevent shinobi:admin help — list admin commands.',

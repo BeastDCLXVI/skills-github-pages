@@ -2,6 +2,7 @@ import { EquipmentSlot, system, world } from '@minecraft/server';
 import { CLANS, DOJUTSU, RANKS } from './data.js';
 import { FX, ITEM, PARTICLE, SOUND } from './ids.js';
 import { JUTSU, meets } from './jutsu/index.js';
+import { advance } from './missions.js';
 import { addXp, power } from './progression.js';
 import { cooldownLeft, rt, setCooldown } from './state.js';
 import { addChakra, getChakra, getData, maxChakra, spendChakra, touch } from './store.js';
@@ -75,6 +76,16 @@ export function cast(p, id) {
     ping(p, SOUND.deny, 0.6);
     return;
   }
+  if (j.active && !r.toggles.has(j.active)) {
+    tell(p, `§c${j.name} requires ${JUTSU.get(j.active)?.name ?? j.active} to be active.`);
+    ping(p, SOUND.deny, 0.6);
+    return;
+  }
+  if (j.minSync && d.sync < j.minSync) {
+    tell(p, `§c${j.name}: tailed beast sync too low (${Math.floor(d.sync)}% / ${j.minSync}%).`);
+    ping(p, SOUND.deny, 0.6);
+    return;
+  }
   if (j.eyes && !d.eyeOn) {
     tell(p, '§cActivate your dojutsu first (sneak + jump, or from the Shinobi Scroll).');
     ping(p, SOUND.deny, 0.6);
@@ -126,6 +137,7 @@ function execute(p, j, cost) {
   flash(p, `§6${j.name}!`);
   touch(p);
   notifyCast(p, j.id);
+  advance(p, 'cast');
 }
 
 /** Sharingan users near a caster may copy the technique. @param {import('@minecraft/server').Entity} caster @param {string} id */
@@ -204,10 +216,11 @@ function upkeep() {
         r.toggles.delete(id);
         continue;
       }
-      if (!meets(ctx.d, j).ok || (j.toggle.upkeep && !spendChakra(p, j.toggle.upkeep))) {
+      const lost = !meets(ctx.d, j).ok || (j.active && !r.toggles.has(j.active));
+      if (lost || (j.toggle.upkeep && !spendChakra(p, j.toggle.upkeep))) {
         r.toggles.delete(id);
         j.toggle.onEnd?.(p);
-        tell(p, `§7${j.name} faded (out of chakra).`);
+        tell(p, `§7${j.name} faded${lost ? '' : ' (out of chakra)'}.`);
         continue;
       }
       try {

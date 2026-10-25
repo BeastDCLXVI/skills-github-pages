@@ -258,10 +258,8 @@ register([
   },
   {
     id: 'tailed_beast_bomb', name: 'Tailed Beast Bomb', school: 'Jinchuriki', flag: 'jinchuriki', rank: 0, cost: 80, cd: 30,
-    seals: [], auto: true, desc: 'Compress black and white chakra into a world-shaking bomb. Requires the cloak and 50% sync.',
+    seals: [], auto: true, active: 'tailed_beast_cloak', minSync: 50, desc: 'Compress black and white chakra into a world-shaking bomb. Requires the cloak and 50% sync.',
     cast(c) {
-      if (!rt(c.p).toggles.has('tailed_beast_cloak')) return fail(c, 'Activate the Tailed Beast Cloak first.');
-      if (c.d.sync < 50) return fail(c, `Sync too low (${Math.floor(c.d.sync)}% / 50%).`);
       const b = bijuuByKey(c.d.bijuu ?? '');
       sound(c.dim, SOUND.charge, c.p.location, 0.5, 2);
       repeat(6, 4, (i) => {

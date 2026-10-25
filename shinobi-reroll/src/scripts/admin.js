@@ -8,7 +8,9 @@ import { dismissAll } from './jutsu/core.js';
 import { addXp, changeClan, checkAwakening, syncAutoJutsu } from './progression.js';
 import { getData, maxChakra, resetData, setChakra, touch } from './store.js';
 import { clearTemp } from './terrain.js';
-import { saveSettings, settings, tell } from './util.js';
+import { give, saveSettings, settings, tell } from './util.js';
+import { ITEM } from './ids.js';
+import { forceComplete, rerollBoard } from './missions.js';
 
 // Operator commands: /scriptevent shinobi:admin <command> [args]
 // (scriptevent already requires operator permissions / cheats.)
@@ -18,7 +20,8 @@ const HELP = [
   '  info · xp <n> · rank <0-5> · jp <n> · chakra',
   `  clan <${Object.keys(CLANS).join('|')}>`,
   `  nature <${Object.keys(NATURES).join('|')}> · eye <${Object.keys(DOJUTSU).join('|')}|none>`,
-  `  bijuu <${BIJUU.map((b) => b.key).join('|')}|none> · karma · ascend · contract · wood`,
+  `  bijuu <${BIJUU.map((b) => b.key).join('|')}|none> · karma · ascend · wood · eternal`,
+  '  contract <toad|snake|slug> · unlock <clay|puppet|curse> · ryo <n> · mission <reroll|complete>',
   '  learn <jutsu_id|all> · reset · cleanup',
   '  griefing <on|off> · pvp <on|off> · npcjutsu <on|off> · xprate <0.1-10> · hud <on|off>',
 ];
@@ -81,7 +84,23 @@ function run(p, args) {
       d.ascended = true;
       break;
     case 'contract':
-      d.contract = true;
+      if (!['toad', 'snake', 'slug'].includes(a1 ?? '')) return tell(p, '§cUsage: contract <toad|snake|slug>');
+      if (!d.contracts.includes(/** @type {string} */ (a1))) d.contracts.push(/** @type {string} */ (a1));
+      break;
+    case 'unlock':
+      if (!['clay', 'puppet', 'curse'].includes(a1 ?? '')) return tell(p, '§cUsage: unlock <clay|puppet|curse>');
+      if (!d.unlocks.includes(/** @type {string} */ (a1))) d.unlocks.push(/** @type {string} */ (a1));
+      break;
+    case 'eternal':
+      d.eternal = true;
+      break;
+    case 'ryo':
+      give(p, ITEM.ryo, Math.max(1, Math.min(640, Number(a1) || 0)));
+      break;
+    case 'mission':
+      if (a1 === 'reroll') rerollBoard(p);
+      else if (a1 === 'complete') forceComplete(p);
+      else return tell(p, '§cUsage: mission <reroll|complete>');
       break;
     case 'wood':
       d.wood = true;

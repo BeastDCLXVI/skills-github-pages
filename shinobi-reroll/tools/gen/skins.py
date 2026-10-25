@@ -146,6 +146,27 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
     if "mask" in spec.marks:
         mask = hexc("#2a2f3a")
         _rows(img, "head", range(5, 8), mask, rng, faces=("north", "east", "west", "south"), jitter=0.04)
+    if "gills" in spec.marks:
+        for y in (4, 5, 6):
+            _put(img, x0, y0 + y, shade(skin, 0.6))
+            _put(img, x0 + 7, y0 + y, shade(skin, 0.6))
+    if "eyeshadow" in spec.marks:
+        for x in (0, 1, 2, 5, 6, 7):
+            _put(img, x0 + x, y0 + 3, hexc("#7a3f9a"))
+    if "third_eye" in spec.marks:
+        _put(img, x0 + 3, y0 + 2, hexc("#f4f4f0"))
+        _put(img, x0 + 4, y0 + 2, hexc("#1a1a1a"))
+    if "beard" in spec.marks:
+        _rows(img, "head", range(6, 8), hair, rng, faces=("north", "east", "west"), jitter=0.05)
+    if "bangs_left" in spec.marks:
+        for y in range(1, 6):
+            for x in (0, 1, 2):
+                _put(img, x0 + x, y0 + y, shade(hair, 1 + rng.uniform(-0.06, 0.06)))
+    if "horn" in spec.marks:
+        hx, hy, hw, hh = _faces("hat")["north"]
+        for y in (0, 1, 2):
+            _put(img, hx + 3, hy + y, hexc("#e8e2d6"))
+            _put(img, hx + 4, hy + y, hexc("#d6cfc0"))
     if spec.headband:
         cloth = hexc(spec.headband)
         _rows(img, "head", range(2, 4), cloth, rng, faces=("north", "east", "west", "south"), jitter=0.04)
@@ -289,6 +310,26 @@ NPC_SKINS: dict[str, SkinSpec] = {
                                marks=["cheek_lines"], seed=9),
     "white_zetsu": SkinSpec(skin="#eceee4", hair="#eceee4", hair_style="bald", eye_style="blank",
                             top="#e3e6da", top_style="wraps", pants="#dfe2d4", shoes="#cfd3c4", seed=11),
+    "itachi": SkinSpec(skin="#e8c8a8", hair="#14121a", hair_style="long", eye_style="sharingan", top="#17151c",
+                       top_style="cloak", top_accent="#2a2730", pants="#17151c", shoes="#2d2a4a", headband="#2a2a2a",
+                       headband_scratched=True, marks=["cheek_lines"], seed=21),
+    "kisame": SkinSpec(skin="#7f9cbc", hair="#2a3f6a", hair_style="spiky", eyes="#f2f2e8", top="#17151c",
+                       top_style="cloak", top_accent="#2a2730", pants="#17151c", shoes="#2d2a4a", headband="#2a2a2a",
+                       headband_scratched=True, marks=["gills"], seed=23),
+    "deidara": SkinSpec(skin="#efcfa8", hair="#f2cf3c", hair_style="long", eyes="#3a6fd0", top="#17151c",
+                        top_style="cloak", top_accent="#2a2730", pants="#17151c", shoes="#2d2a4a", headband="#2a2a2a",
+                        headband_scratched=True, marks=["bangs_left"], seed=25),
+    "orochimaru": SkinSpec(skin="#f0eee6", hair="#141218", hair_style="long", eye_style="slit", top="#e8e4d6",
+                           top_style="robe", top_accent="#6b4a8f", pants="#3a3550", shoes="#2a2a30",
+                           marks=["eyeshadow"], seed=27),
+    "kinshiki": SkinSpec(skin="#efe8e0", hair="#f2efe8", hair_style="long", eye_style="byakugan", top="#ece6d8",
+                         top_style="robe", top_accent="#8a6a3a", pants="#d8d0c0", shoes="#5a4a3a",
+                         marks=["horns", "beard"], seed=29),
+    "jigen": SkinSpec(skin="#e2c4a4", hair="#1a1a20", hair_style="short", eye_style="rinnegan", top="#2e2b33",
+                      top_style="robe", top_accent="#5a4a6e", pants="#222026", shoes="#151519", marks=["horn"],
+                      seed=31),
+    "puppet_karasu": SkinSpec(skin="#9c6b3a", hair="#1a1a1a", hair_style="spiky", eyes="#f2d24a", top="#4a3a5e",
+                              top_style="wraps", pants="#3a2e48", shoes="#2a2030", marks=["third_eye"], seed=33),
     "momoshiki": SkinSpec(skin="#f2eee8", hair="#f4f2ee", hair_style="long", eye_style="byakugan",
                           top="#f1ede4", top_style="robe", top_accent="#6b4a8f", pants="#e8e3d8",
                           shoes="#3a2f45", marks=["horns"], seed=13),
