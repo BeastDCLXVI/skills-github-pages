@@ -14,7 +14,7 @@ from typing import Any
 
 NS = "shinobi"
 ADDON_NAME = "Shinobi Reroll"
-VERSION = [1, 2, 0]
+VERSION = [1, 3, 0]
 MIN_ENGINE = [1, 21, 90]
 
 # Format versions are pinned to the 1.21.90 engine (the first release with

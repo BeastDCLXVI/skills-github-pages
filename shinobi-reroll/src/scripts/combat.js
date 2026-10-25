@@ -4,7 +4,7 @@ import { dropToggles, flash } from './casting.js';
 import { sharinganXp, tryMangekyo } from './dojutsu.js';
 import { ENTITY, FX, ITEM, PARTICLE, SOUND } from './ids.js';
 import { releaseCharged } from './jutsu/index.js';
-import { deed, onCompanionDeath, onHurt, onKill, onPlayerDeath, trainingRank } from './innerpath.js';
+import { deed, onAllyHurt, onCompanionDeath, onHurt, onKill, onPlayerDeath, trainingRank } from './innerpath.js';
 import { advance } from './missions.js';
 import { zetsuSplit } from './npc.js';
 import { paperBomb } from './projectiles.js';
@@ -20,7 +20,7 @@ import {
 
 const XP_BY_TYPE = {
   [ENTITY.rogue]: 12, [ENTITY.akatsuki]: 45, [ENTITY.zetsu]: 5, [ENTITY.leaf]: 3, [ENTITY.momoshiki]: 700,
-  [ENTITY.juubi]: 1200,
+  [ENTITY.juubi]: 1200, [ENTITY.code]: 800, [ENTITY.clawGrime]: 15,
 };
 
 /** Resolve the player responsible for a hit (directly, via projectile, or via summon). @param {Entity | undefined} e */
@@ -98,6 +98,10 @@ function onPlayerHit(p, target) {
     }
     default:
       break;
+  }
+  if (rt(p).toggles.has('white_karma')) {
+    hurt(target, 4 * power(p), p);
+    fx(p.dimension, PARTICLE.mark, eyes(target), rgb('#f4f0e8'));
   }
   if (rt(p).toggles.has('baryon_mode')) {
     hurt(target, 6 * power(p), p);
@@ -210,8 +214,8 @@ function onDeath(dead, src) {
     } catch {}
   }
   const bijuu = bijuuByKey(typeId.split(':')[1] ?? '');
-  if (bijuu || typeId === ENTITY.juubi || typeId === ENTITY.momoshiki) {
-    const name = bijuu?.name ?? (typeId === ENTITY.juubi ? 'The Ten-Tails' : 'Momoshiki Otsutsuki');
+  if (bijuu || typeId === ENTITY.juubi || typeId === ENTITY.momoshiki || typeId === ENTITY.code) {
+    const name = bijuu?.name ?? ({ [ENTITY.juubi]: 'The Ten-Tails', [ENTITY.code]: 'Code of the Kara Inner' })[typeId] ?? 'Momoshiki Otsutsuki';
     world.sendMessage(`§6${name} has fallen${killer ? ` to ${killer.name}` : ''}!`);
   }
   if (!killer) return;
@@ -230,7 +234,7 @@ function onDeath(dead, src) {
   }
   advance(killer, 'hunt', dead);
   addXp(killer, xp);
-  if (bijuu || typeId === ENTITY.juubi || typeId === ENTITY.momoshiki) title(killer, '§6Victory', `§e+${xp} XP`, 50);
+  if (bijuu || typeId === ENTITY.juubi || typeId === ENTITY.momoshiki || typeId === ENTITY.code) title(killer, '§6Victory', `§e+${xp} XP`, 50);
 }
 
 export function startCombat() {
@@ -238,12 +242,18 @@ export function startCombat() {
     if (!valid(ev.hitEntity)) return;
     if (ev.damagingEntity instanceof Player) onPlayerHit(ev.damagingEntity, ev.hitEntity);
     else if (ev.damagingEntity?.typeId === ENTITY.puppet) effect(ev.hitEntity, FX.poison, 3, 1);
+    else if (ev.damagingEntity?.typeId === ENTITY.clawGrime && ev.hitEntity instanceof Player) {
+      // Claw Grime hunt chakra: every claw drains some
+      setChakra(ev.hitEntity, getChakra(ev.hitEntity) - 10);
+      flash(ev.hitEntity, '§8The Claw Grime devours your chakra!', 30);
+    }
   });
   world.afterEvents.entityHurt.subscribe((ev) => {
     const e = ev.hurtEntity;
     if (!valid(e)) return;
     if (e instanceof Player) onPlayerHurt(e, ev.damage, ev.damageSource);
     else if (e.typeId === ENTITY.zetsu) zetsuSplit(e);
+    if (valid(e) && (e instanceof Player || ownerId(e))) onAllyHurt(e);
   });
   world.afterEvents.entityDie.subscribe((ev) => onDeath(ev.deadEntity, ev.damageSource));
 }

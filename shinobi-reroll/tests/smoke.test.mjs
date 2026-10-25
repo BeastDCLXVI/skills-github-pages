@@ -124,7 +124,7 @@ test('every jutsu executes against a live target without errors', () => {
     d.eyeOn = !!j.eyes;
     d.eyeStage = 3;
     d.contracts = ['toad', 'snake', 'slug'];
-    d.unlocks = ['clay', 'puppet', 'curse'];
+    d.unlocks = ['clay', 'puppet', 'curse', 'code'];
     d.bijuu = 'kurama';
     d.sync = 100;
     d.karma = true;
@@ -646,4 +646,125 @@ test('Waterfall of Truth: strikes feed the reflection, calm ends the trial', asy
   assert.ok(q.chat.some((m) => m.includes('hatred feeds it')));
   for (const k of fall) log.blocks.delete(k);
   noWarnings('waterfall');
+});
+
+// ------------------------------------------------------------------ v1.3: Boruto & HD
+
+test('Boruto: Kara Inner Mark summons Code, White Karma unlocks his arts, Claw Marks blink', async () => {
+  const { ENTITY } = await import('../src/scripts/ids.js');
+  const p = makePlayer('Kawaki');
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
+  tick(60);
+  p.location = { x: 200, y: 64, z: 200 };
+  const d = store.getData(p);
+  d.rank = 4;
+  // summon Code with the mark (no other boss around)
+  hold(p, 'shinobi:kara_inner_mark');
+  use(p);
+  assert.ok(log.spawned.includes(ENTITY.code), 'Code arrives');
+  const code = overworld.getEntities({ type: ENTITY.code }).at(-1);
+  // his brain runs every phase without errors
+  code.location = { x: 205, y: 64, z: 200 };
+  code.hp = code.maxHp = 640;
+  for (let i = 0; i < 12; i++) tick(80);
+  code.hp = 200;
+  tick(80);
+  assert.ok(log.messages.some((m) => m.includes('limiters')), 'limiter release at half health');
+  for (let i = 0; i < 12; i++) tick(80);
+  noWarnings('code brain');
+
+  // White Karma Seal -> Claw Marks
+  hold(p, 'shinobi:white_karma_seal');
+  use(p);
+  assert.ok(d.unlocks.includes('code'), 'White Karma unlocked');
+  d.learned.push('claw_marks');
+  store.setChakra(p, 999);
+  casting.cast(p, 'claw_marks');
+  tick(5);
+  const mark = state.rt(p).clawMark;
+  assert.ok(mark, 'first cast carves a mark');
+  state.rt(p).cooldowns.clear();
+  const z = dummy('minecraft:zombie', { x: (p.location.x + mark.loc.x) / 2, y: 64, z: (p.location.z + mark.loc.z) / 2 });
+  const hp = z.hp;
+  casting.cast(p, 'claw_marks');
+  tick(5);
+  assert.equal(state.rt(p).clawMark, null, 'second cast consumes the mark');
+  assert.equal(p.location.x, mark.loc.x, 'blinked to the mark');
+  assert.ok(z.hp < hp, 'slashed what stood between');
+
+  // Claw Grime drain chakra
+  const grime = dummy(ENTITY.clawGrime, p.location);
+  store.setChakra(p, 100);
+  world.afterEvents.entityHitEntity.fire({ damagingEntity: grime, hitEntity: p });
+  assert.ok(store.getChakra(p) <= 90, 'chakra devoured');
+  noWarnings('boruto');
+});
+
+test('Boruto: Jigen becomes Isshiki below 30% health', async () => {
+  const { ENTITY } = await import('../src/scripts/ids.js');
+  const p = makePlayer('Boruto');
+  world.afterEvents.playerSpawn.fire({ player: p, initialSpawn: true });
+  tick(60);
+  p.location = { x: -200, y: 64, z: -200 };
+  const jigen = dummy(ENTITY.jigen, { x: -196, y: 64, z: -200 });
+  jigen.maxHp = 520;
+  jigen.hp = 100;
+  for (let i = 0; i < 6; i++) tick(80);
+  assert.equal(jigen.nameTag, 'Isshiki Otsutsuki');
+  assert.ok(jigen.hp > 100, 'the vessel heals as Isshiki takes over');
+  assert.ok(log.messages.some((m) => m.includes('Isshiki Otsutsuki')));
+  for (let i = 0; i < 10; i++) tick(80);
+  jigen.remove();
+  noWarnings('isshiki');
+});
+
+test('Boruto-era Nindo: the shadow guard answers, the future Hokage earns more', async () => {
+  const inner = await import('../src/scripts/innerpath.js');
+  const g = makePlayer('Guardian');
+  const ally = makePlayer('Ally');
+  for (const x of [g, ally]) world.afterEvents.playerSpawn.fire({ player: x, initialSpawn: true });
+  tick(60);
+  for (const x of [g, ally]) x.location = { x: 300, y: 64, z: 300 };
+  const dg = store.getData(g);
+  assert.equal(inner.chooseNindo(g, 'shadow'), null);
+  world.afterEvents.entityHurt.fire({ hurtEntity: ally, damage: 2, damageSource: { cause: 'entityAttack' } });
+  assert.ok(g.effects.has('minecraft:speed') && g.effects.has('minecraft:strength'), 'guardian empowered');
+  assert.equal(dg.resolve, 1);
+  // night kills build resolve
+  world.timeOfDay = 18000;
+  const z = dummy('minecraft:zombie', { x: 300, y: 64, z: 303 });
+  world.afterEvents.entityDie.fire({ deadEntity: z, damageSource: { cause: 'entityAttack', damagingEntity: g } });
+  world.timeOfDay = 6000;
+  assert.equal(dg.resolve, 3);
+
+  const s = makePlayer('Sarada');
+  world.afterEvents.playerSpawn.fire({ player: s, initialSpawn: true });
+  tick(60);
+  const ds = store.getData(s);
+  admin(s, 'clan none');
+  assert.equal(inner.chooseNindo(s, 'hokage'), null);
+  const jp = ds.jp;
+  admin(s, 'xp 100');
+  assert.equal(ds.rank, 1, 'Genin');
+  assert.equal(ds.jp, jp + 3 + 1 + 1, 'rank-up JP + clanless bonus + the future Hokage\'s extra point');
+  assert.equal(ds.resolve, 30);
+  noWarnings('boruto nindo');
+});
+
+test('HD textures: 32-texel heads, 32x icons and blocks, 2x creature textures', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const rp = new URL('../build/ShinobiReroll_RP/', import.meta.url);
+  if (!existsSync(rp)) return; // `npm run check` builds first; plain `npm test` may run without a build
+  const size = (rel) => {
+    const b = readFileSync(new URL(rel, rp));
+    return [b.readUInt32BE(16), b.readUInt32BE(20)];
+  };
+  assert.deepEqual(size('textures/entity/npc/code.png'), [256, 256], 'skins are 4x (head = 32x32x32 texels)');
+  assert.deepEqual(size('textures/entity/npc/shadow_clone.png'), [256, 256]);
+  assert.deepEqual(size('textures/items/kara_inner_mark.png'), [32, 32]);
+  assert.deepEqual(size('textures/items/kunai.png'), [32, 32]);
+  assert.deepEqual(size('textures/blocks/chakra_ore.png'), [32, 32]);
+  assert.deepEqual(size('textures/models/armor/leaf_headband.png'), [256, 128]);
+  const geo = JSON.parse(readFileSync(new URL('models/entity/claw_grime.geo.json', rp), 'utf8'))['minecraft:geometry'][0].description;
+  assert.deepEqual(size('textures/entity/claw_grime.png'), [geo.texture_width * 2, geo.texture_height * 2]);
 });

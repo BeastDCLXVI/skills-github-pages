@@ -107,6 +107,18 @@ export const syncMult = (d) => (d.innerPeace ? 2 : 1);
 export const missionMult = (d) => (d.nindo === 'word' ? 1.25 : 1) * (hasFocus(d, 'words') ? 1.15 : 1);
 /** The Training Post grants XP below this rank. @param {ShinobiData} d */
 export const trainingRank = (d) => (d.nindo === 'path' ? 4 : 3);
+/** XP multiplier from the Nindo. @param {ShinobiData} d */
+export const xpMult = (d) => (d.nindo === 'hokage' ? 1.1 : 1);
+
+/** Night time (the hours Boruto's shadow-work happens in). */
+export function isNight() {
+  try {
+    const t = world.getTimeOfDay();
+    return t >= 13000 && t < 23000;
+  } catch {
+    return false;
+  }
+}
 
 // ------------------------------------------------------------------ Nindo & Resolve
 
@@ -159,12 +171,46 @@ export function gainResolve(p, amount) {
 export function deed(p, kind) {
   const n = getData(p).nindo;
   if (kind === 'mission' && n === 'word') gainResolve(p, 20);
+  else if (kind === 'mission' && n === 'hokage') gainResolve(p, 8);
   else if (kind === 'abandon' && n === 'word') {
     gainResolve(p, -15);
     tell(p, '§6...but a ninja does not go back on their word. §7(-15 Resolve)');
   } else if (kind === 'learn' && n === 'path') gainResolve(p, 5);
   else if (kind === 'train' && n === 'limits') gainResolve(p, 1);
   else if (kind === 'seal' && n === 'peace') gainResolve(p, 30);
+}
+
+/** A rank-up: the future Hokage grows with every step. @param {Player} p */
+export function onRankUp(p) {
+  const d = getData(p);
+  if (d.nindo !== 'hokage') return;
+  d.jp += 1;
+  gainResolve(p, 30);
+  tell(p, '§4I Will Become Hokage:§r +1 extra Jutsu Point.');
+}
+
+/**
+ * Someone was hurt: shinobi sworn to protect from the shadows answer if it was an ally near them.
+ * @param {Entity} victim
+ */
+export function onAllyHurt(victim) {
+  let near;
+  try {
+    near = victim.dimension.getPlayers({ location: victim.location, maxDistance: 16 });
+  } catch {
+    return;
+  }
+  const owner = victim instanceof Player ? undefined : ownerId(victim);
+  for (const g of near) {
+    if (g.id === victim.id || getData(g).nindo !== 'shadow') continue;
+    if (!(victim instanceof Player) && owner !== g.id) continue;
+    if (cooldownLeft(g, 'shadow_guard') > 0) continue;
+    setCooldown(g, 'shadow_guard', 200);
+    effect(g, FX.speed, 5, 1);
+    effect(g, FX.strength, 5, 0);
+    flash(g, '§9From the shadows: §fprotect them!', 40);
+    gainResolve(g, 1);
+  }
 }
 
 /** Called after every successful cast. @param {Player} p @param {Jutsu} j */
@@ -265,6 +311,7 @@ export function onKill(killer, dead) {
   } catch {}
   if (!hostile && !great) return;
   if (d.nindo === 'fire') gainResolve(killer, great ? 15 : 1);
+  if (d.nindo === 'shadow' && isNight()) gainResolve(killer, 2);
   const allies = alliesNear(killer, 16);
   if (d.nindo === 'bonds' && allies.length) gainResolve(killer, 3);
   for (const a of allies) {
@@ -341,7 +388,7 @@ export function checkIn(p, entry) {
     effect(p, FX.saturation, 1, 2);
   }
   addXp(p, 15 + 5 * d.rank);
-  gainResolve(p, combo ? 10 : 5);
+  gainResolve(p, (combo ? 10 : 5) + (d.nindo === 'hokage' ? 3 : 0));
   return true;
 }
 

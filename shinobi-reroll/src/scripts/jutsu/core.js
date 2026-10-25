@@ -18,7 +18,7 @@ import {
  *   id: string, name: string, desc: string, rank: number, cost: number, cd: number, seals: string[],
  *   school: string,
  *   nature?: string, clan?: string, kekkei?: string, eyes?: string[], requires?: string[],
- *   flag?: 'jinchuriki' | 'karma' | 'ascended' | 'clay' | 'puppet' | 'curse',
+ *   flag?: 'jinchuriki' | 'karma' | 'ascended' | 'clay' | 'puppet' | 'curse' | 'code',
  *   contract?: 'toad' | 'snake' | 'slug', beast?: string, active?: string, minSync?: number,
  *   auto?: boolean, jp?: number, strain?: number,
  *   toggle?: { upkeep: number, onSecond?: (ctx: Ctx) => void, onStart?: (ctx: Ctx) => boolean | void, onEnd?: (p: Player) => void },
@@ -44,6 +44,7 @@ export const UNLOCKS = {
   clay: 'Explosion Release (mold Explosive Clay)',
   puppet: 'the Puppet Technique Scroll',
   curse: 'the Cursed Seal',
+  code: 'the White Karma Seal (defeat Code)',
 };
 
 /**

@@ -1,6 +1,6 @@
 # Jutsu catalogue
 
-_Generated from `src/scripts/jutsu/` by `tools/catalogue.mjs` — 96 techniques._
+_Generated from `src/scripts/jutsu/` by `tools/catalogue.mjs` — 101 techniques._
 
 Cost is chakra (before clan/Sage/Otsutsuki discounts). Toggles drain their upkeep every second while active.
 Techniques marked **auto** are granted automatically when you meet their requirements.
@@ -49,6 +49,7 @@ Techniques marked **auto** are granted automatically when you meet their require
 
 | Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
 |---|---|---|---|---|---|---|
+| Wind Style: Gale Palm | Genin | 15 | 4s | 2 JP | Wind nature | Boruto's favourite opener: a clap of compressed wind that blows enemies and projectiles away. |
 | Wind Style: Great Breakthrough | Genin | 20 | 5s | 2 JP | Wind nature | A gale that hurls enemies away. |
 | Wind Style: Vacuum Bullets | Chunin | 30 | 6s | 3 JP | Wind nature | Three compressed air bullets. |
 
@@ -59,6 +60,7 @@ Techniques marked **auto** are granted automatically when you meet their require
 | Lightning Style: Lightning Ball | Genin | 20 | 4s | 2 JP | Lightning nature | A crackling sphere that numbs its target. |
 | Chidori | Chunin | 40 | 8s | 3 JP | Lightning nature | A thousand birds chirp as you lunge through your target. |
 | Lightning Release Armor | Jonin | 0 + 4/s | 6s | 4 JP | Lightning nature | The Raikage's armor: blinding speed and strength while it drains chakra. |
+| Lightning Style: Purple Lightning | Jonin | 45 | 12s | 4 JP | Lightning nature | Kakashi's signature of the new era: a bolt of purple lightning that leaps from your target to two more enemies. |
 | Kirin | Sannin | 120 | 45s | 5 JP | Lightning nature | Call down a dragon of natural lightning on the point you look at. |
 
 ## Earth
@@ -265,4 +267,12 @@ Techniques marked **auto** are granted automatically when you meet their require
 |---|---|---|---|---|---|---|
 | Cursed Seal: Stage One | Genin | 15 + 2/s | 10s | 2 JP | Cursed Seal | Black flame marks spread over your body: strength and speed from Orochimaru's seal. |
 | Cursed Seal: Stage Two | Jonin | 25 + 4/s | 30s | 4 JP | Cursed Seal, while Cursed Seal: Stage One is active | Your body transforms and sprouts hand-shaped wings. Immense power, at a cost. |
+
+## Kara
+
+| Jutsu | Rank | Chakra | Cooldown | Learn | Requires | Effect |
+|---|---|---|---|---|---|---|
+| Claw Marks | Chunin | 15 | 2s | 3 JP | White Karma Seal | Code's teleportation: carve a mark where you look; cast again to vanish to it, slashing everything on the way. |
+| White Karma: Limiter Release | Jonin | 30 + 4/s | 20s | 4 JP | White Karma Seal | Release the limiters on your White Karma: overwhelming strength and speed, and every blow tears with claw marks. |
+| Claw Grime | Sannin | 60 | 45s | 5 JP | White Karma Seal | Two Claw Grime crawl out of your marks and hunt your enemies for a minute. |
 

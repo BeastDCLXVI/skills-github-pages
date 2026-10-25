@@ -78,6 +78,7 @@ def bone_transforms(model: Model):
 def render(model: Model, tex: Image.Image, size=260, yaw=35.0, pitch=20.0) -> Image.Image:
     tfs = bone_transforms(model)
     tpx = tex.load()
+    k = max(1, tex.width // model.tex_w)  # HD textures: sample the scaled UV region
     polys = []
     for c in model.cubes:
         ox, oy, oz = c.origin
@@ -93,7 +94,7 @@ def render(model: Model, tex: Image.Image, size=260, yaw=35.0, pitch=20.0) -> Im
         regions = box_faces(c.uv[0], c.uv[1], w, h, d)
         cube_tf = _about(c.pivot or c.origin, c.rotation) if c.rotation else None
         for face, pts in corners.items():
-            rx, ry, rw, rh = regions[face]
+            rx, ry, rw, rh = (v * k for v in regions[face])
             acc = [0, 0, 0, 0]
             for yy in range(ry, ry + rh):
                 for xx in range(rx, rx + rw):
@@ -141,13 +142,13 @@ def main(out: str) -> None:
                                                                 toad(), training_post(), decoy_log()]
     tiles = []
     for m in models:
-        tex = m.texture(seed=len(m.key))
+        tex = m.texture_hd(seed=len(m.key))
         front = render(m, tex, yaw=200, pitch=18)
         side = render(m, tex, yaw=110, pitch=12)
-        tile = Image.new("RGBA", (520 + tex.width * 2, 280), (40, 42, 50, 255))
+        tile = Image.new("RGBA", (520 + tex.width, max(280, tex.height + 20)), (40, 42, 50, 255))
         tile.paste(front, (0, 10))
         tile.paste(side, (260, 10))
-        tile.paste(tex.resize((tex.width * 2, tex.height * 2), Image.NEAREST), (520, 10))
+        tile.paste(tex, (520, 10))
         ImageDraw.Draw(tile).text((6, 2), f"{m.key}  tex {tex.width}x{tex.height}", fill=(255, 255, 255))
         tiles.append(tile)
     W = max(t.width for t in tiles)

@@ -5,7 +5,8 @@ import copy
 
 from . import sprites as S
 from .core import (FMT_ANIMATION, FMT_CLIENT_ENTITY, FMT_ENTITY, FMT_RENDER_CONTROLLER, FMT_SPAWN, Build, ident)
-from .models import BIJUU, JUUBI, Model, build_beast, decoy_log, serpent, slug, toad, training_post
+from .hd import hd_icon
+from .models import BIJUU, JUUBI, Model, build_beast, claw_grime, decoy_log, serpent, slug, toad, training_post
 from .skins import NPC_SKINS, paint_skin
 
 # Jutsu orb element index -> sprite key. Scripts mirror this table in ELEMENT_INDEX.
@@ -127,7 +128,7 @@ def emit_projectiles(b: Build) -> None:
     for pid, sprite_fn, dmg, grav, power, life in THROWN:
         b.bp.json(f"entities/{pid}.json", projectile_entity(ident(pid), dmg, grav, power, life))
         tex = f"textures/entity/projectiles/{pid}"
-        b.rp.png(tex + ".png", sprite_fn())
+        b.rp.png(tex + ".png", hd_icon(sprite_fn()))
         b.rp.json(f"entity/{pid}.entity.json",
                   sprite_client(ident(pid), {"default": tex}, "controller.render.item_sprite", "0.6"))
         b.rp_lang.add(f"entity.{ident(pid)}.name", pid.replace("_projectile", "").replace("_", " ").title())
@@ -145,7 +146,7 @@ def emit_projectiles(b: Build) -> None:
     textures = {}
     for i, key in enumerate(ORB_ELEMENTS):
         path = f"textures/entity/jutsu/{key}"
-        b.rp.png(path + ".png", S.jutsu_sprite(key))
+        b.rp.png(path + ".png", hd_icon(S.jutsu_sprite(key)))
         textures[key] = path
     b.rp.json("entity/jutsu_orb.entity.json",
               sprite_client(ident("jutsu_orb"), textures, "controller.render.shinobi.jutsu_orb",
@@ -172,7 +173,7 @@ def emit_projectiles(b: Build) -> None:
         "minecraft:timer": {"looping": False, "time": 8, "time_down_event": {"event": "shinobi:despawn"}},
     }, spawnable=False, groups=copy.deepcopy(DESPAWN_GROUP), events=copy.deepcopy(DESPAWN_EVENT), category="misc")
     b.bp.json("entities/paper_bomb.json", tag)
-    b.rp.png("textures/entity/projectiles/paper_bomb.png", S.explosive_tag())
+    b.rp.png("textures/entity/projectiles/paper_bomb.png", hd_icon(S.explosive_tag()))
     b.rp.json("entity/paper_bomb.entity.json",
               sprite_client(ident("paper_bomb"), {"default": "textures/entity/projectiles/paper_bomb"},
                             "controller.render.item_sprite", "0.8"))
@@ -447,7 +448,7 @@ def model_client(key: str, model: Model, egg: tuple[str, str] | None, anims: dic
 
 def emit_model(b: Build, key: str, model: Model, egg) -> None:
     b.rp.json(f"models/entity/{model.key}.geo.json", model.geometry())
-    b.rp.png(f"textures/entity/{key}.png", model.texture(seed=len(key)))
+    b.rp.png(f"textures/entity/{key}.png", model.texture_hd(seed=len(key)))
     anim = model.animations()
     if anim["animations"]:
         b.rp.json(f"animations/{model.key}.animation.json", anim)
@@ -464,6 +465,8 @@ MINI_BOSSES = {
     "orochimaru": ("Orochimaru", 240, 9, 0.33, ["akatsuki_boss", "sannin"], "0.9375", 320, True),
     "kinshiki": ("Kinshiki Otsutsuki", 360, 14, 0.3, ["otsutsuki"], "1.3", 350, False),
     "jigen": ("Jigen", 520, 14, 0.33, ["otsutsuki", "kara"], "1.0", 800, False),
+    # v1.3: Boruto
+    "code": ("Code", 640, 15, 0.36, ["kara", "kara_inner"], "1.0", 900, False),
 }
 
 
@@ -638,8 +641,20 @@ LOOT.update({
     "jigen": [
         _pool([_entry(ident("ryo"), count=(30, 64))]),
         _pool([_entry(ident("karma_seal"))]),
+        _pool([_entry(ident("kara_inner_mark"))], player_only=True),
         _pool([_entry(ident("chakra_fruit"))], chance=0.5),
         _pool([_entry(ident("clan_reroll_scroll"), count=(1, 3))]),
+    ],
+    # v1.3: Boruto
+    "code": [
+        _pool([_entry(ident("white_karma_seal"))]),
+        _pool([_entry(ident("ryo"), count=(30, 64))]),
+        _pool([_entry(ident("chakra_crystal_block"), count=(2, 4))]),
+        _pool([_entry(ident("clan_reroll_scroll"))], chance=0.5),
+    ],
+    "claw_grime": [
+        _pool([_entry(ident("chakra_crystal"), count=(0, 2))], player_only=True),
+        _pool([_entry(ident("ryo"), count=(0, 3))], player_only=True),
     ],
 })
 
@@ -656,6 +671,9 @@ SPAWNS = {
         {"test": "has_biome_tag", "operator": "==", "value": "monster"},
         {"test": "has_biome_tag", "operator": "!=", "value": "mushroom_island"}], surface=True, difficulty="normal")
        for key in ("itachi", "kisame", "deidara", "orochimaru")},
+    "claw_grime": dict(population="monster", weight=2, herd=(1, 2), brightness=(0, 7), biomes=[
+        {"test": "has_biome_tag", "operator": "==", "value": "monster"},
+        {"test": "has_biome_tag", "operator": "!=", "value": "mushroom_island"}], surface=True, difficulty="normal"),
     "leaf_shinobi": dict(population="creature", weight=4, herd=(1, 2), brightness=(7, 15), biomes=[
         {"any_of": [{"test": "has_biome_tag", "operator": "==", "value": "forest"},
                     {"test": "has_biome_tag", "operator": "==", "value": "plains"}]}], surface=True),
@@ -715,6 +733,42 @@ def dark_reflection() -> dict:
     return _entity(ident("dark_reflection"), c, spawnable=False, groups=groups, events=events)
 
 
+# --- v1.3: Boruto -------------------------------------------------------------------
+
+def claw_grime_entity() -> dict:
+    """Claw Grime: hostile chakra-hunters in the wild; loyal (and short-lived) when summoned with Code's arts."""
+    c = _base(45, ["claw_grime", "mob"], box=(0.9, 2.3), speed=0.3)
+    c.update({
+        "minecraft:attack": {"damage": 7},
+        "minecraft:behavior.melee_attack": {"priority": 3, "speed_multiplier": 1.3, "track_target": True},
+        "minecraft:behavior.random_stroll": {"priority": 7, "speed_multiplier": 0.8},
+        "minecraft:tameable": {"probability": 0.0, "tame_items": "minecraft:barrier",
+                               "tame_event": {"event": "minecraft:on_tame", "target": "self"}},
+        "minecraft:knockback_resistance": {"value": 0.5},
+        "minecraft:damage_sensor": {"triggers": {"cause": "fall", "deals_damage": "no"}},
+        "minecraft:loot": {"table": "loot_tables/entities/claw_grime.json"},
+        "minecraft:experience_reward": {"on_death": "query.last_hit_by_player ? 15 : 0"},
+    })
+    groups = _ally_groups(1.3)
+    groups["shinobi:tamed"]["minecraft:type_family"] = {"family": ["claw_grime", "shinobi_ally", "summon", "mob"]}
+    groups["shinobi:tamed"]["minecraft:behavior.nearest_attackable_target"] = {
+        "priority": 4, "must_see": True, "reselect_targets": True, "entity_types": ATTACK_MONSTERS}
+    groups["shinobi:tamed"]["minecraft:timer"] = {"looping": False, "time": 60,
+                                                  "time_down_event": {"event": "shinobi:despawn"}}
+    groups["shinobi:wild"] = {
+        "minecraft:type_family": {"family": ["claw_grime", "monster", "mob"]},
+        "minecraft:behavior.hurt_by_target": {"priority": 1},
+        "minecraft:behavior.nearest_attackable_target": {"priority": 2, "must_see": True, "reselect_targets": True,
+                                                         "within_radius": 28, "entity_types": ATTACK_PLAYERS_AND_ALLIES},
+        "minecraft:despawn": {"despawn_from_distance": {}},
+    }
+    events = _ally_events()
+    events["minecraft:entity_spawned"] = {"add": {"component_groups": ["shinobi:wild"]}}
+    events["minecraft:on_tame"] = {"remove": {"component_groups": ["shinobi:wild"]},
+                                   "add": {"component_groups": ["shinobi:tamed"]}}
+    return _entity(ident("claw_grime"), c, groups=groups, events=events)
+
+
 # --- emit everything -------------------------------------------------------------
 
 BEAST_EGGS = {
@@ -729,7 +783,7 @@ NPC_EGGS = {
     "akatsuki_rogue": ("#17151c", "#c0262b"), "white_zetsu": ("#eceee4", "#9ab88a"),
     "momoshiki": ("#f1ede4", "#6b4a8f"), "itachi": ("#17151c", "#d01020"), "kisame": ("#17151c", "#7f9cbc"),
     "deidara": ("#17151c", "#f2cf3c"), "orochimaru": ("#e8e4d6", "#6b4a8f"), "kinshiki": ("#ece6d8", "#8a6a3a"),
-    "jigen": ("#2e2b33", "#9a7ad8"),
+    "jigen": ("#2e2b33", "#9a7ad8"), "code": ("#26242c", "#ece8de"),
 }
 
 NPC_NAMES = {
@@ -792,6 +846,10 @@ def emit_entities(b: Build) -> None:
     b.bp.json("entities/summoned_slug.json", slug_entity())
     emit_model(b, "summoned_slug", slug(), None)
     b.rp_lang.add(f"entity.{ident('summoned_slug')}.name", "Katsuyu")
+    b.bp.json("entities/claw_grime.json", claw_grime_entity())
+    emit_model(b, "claw_grime", claw_grime(), ("#17151b", "#ece8de"))
+    b.rp_lang.add(f"entity.{ident('claw_grime')}.name", "Claw Grime")
+    b.rp_lang.add(f"item.spawn_egg.entity.{ident('claw_grime')}.name", "Spawn Claw Grime")
     b.bp.json("entities/training_post.json", training_post_entity())
     emit_model(b, "training_post", training_post(), None)
     b.rp_lang.add(f"entity.{ident('training_post')}.name", "Training Post")

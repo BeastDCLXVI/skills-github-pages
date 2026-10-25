@@ -28,10 +28,12 @@ const TEMPLATES = [
   { rank: 2, grade: 'B', kind: 'hunt', target: ENTITY.zetsu, label: 'Investigate the White Zetsu sightings', n: [5, 9], ryo: 14, xp: 90 },
   { rank: 2, grade: 'B', kind: 'gather', target: 'shinobi:zetsu_spore', label: 'Bring Zetsu samples to the research lab', n: [4, 8], ryo: 14, xp: 80 },
   { rank: 2, grade: 'B', kind: 'hunt', target: 'minecraft:creeper', label: 'Defuse the walking explosive tags', n: [3, 6], ryo: 12, xp: 80 },
+  { rank: 2, grade: 'B', kind: 'hunt', target: ENTITY.clawGrime, label: 'Track down the Claw Grime hunting chakra', n: [2, 4], ryo: 16, xp: 100 },
   { rank: 3, grade: 'A', kind: 'hunt', target: ENTITY.akatsuki, label: 'Intercept an Akatsuki operative', n: [1, 2], ryo: 30, xp: 220, jp: 1 },
   { rank: 3, grade: 'A', kind: 'hunt', target: 'family:akatsuki_boss', label: 'Bingo Book: defeat an S-rank criminal', n: [1, 1], ryo: 45, xp: 320, jp: 1 },
   { rank: 4, grade: 'S', kind: 'hunt', target: 'family:bijuu', label: 'Subdue a rampaging tailed beast', n: [1, 1], ryo: 80, xp: 600, jp: 2 },
   { rank: 5, grade: 'S', kind: 'hunt', target: 'family:otsutsuki', label: 'Repel the Otsutsuki invasion', n: [1, 1], ryo: 120, xp: 900, jp: 3 },
+  { rank: 5, grade: 'S', kind: 'hunt', target: 'family:kara_inner', label: 'Bingo Book: Code of the Kara Inner (use a Kara Inner Mark)', n: [1, 1], ryo: 150, xp: 1000, jp: 3 },
 ];
 
 export const GRADE_COLOR = { D: '§a', C: '§2', B: '§9', A: '§5', S: '§6' };

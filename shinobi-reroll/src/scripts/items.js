@@ -244,6 +244,19 @@ function acceptCurse(p) {
   ping(p, SOUND.curse, 0.8);
 }
 
+/** Code's White Karma: the arts of the Kara Inner. @param {Player} p */
+function acceptWhiteKarma(p) {
+  const d = getData(p);
+  if (d.unlocks.includes('code')) return tell(p, '§7The White Karma already burns in your palm.');
+  consumeHeld(p);
+  d.unlocks.push('code');
+  syncAutoJutsu(p);
+  touch(p);
+  title(p, '§fWhite Karma', '§7Claw Marks, Limiter Release and Claw Grime can now be learned.', 70);
+  fx(p.dimension, PARTICLE.shockwave, p.location, rgb('#f4f0e8'));
+  ping(p, SOUND.curse, 1.2);
+}
+
 /** @param {Player} p @param {string} kind */
 function signContract(p, kind) {
   const d = getData(p);
@@ -335,6 +348,14 @@ function onUse(p, item) {
         world.sendMessage('§5The Kara ring answers. Jigen, vessel of Isshiki Otsutsuki, has arrived.');
       }
       return;
+    case ITEM.karaInnerMark:
+      if (summonBoss(p, ENTITY.code, 12)) {
+        consumeHeld(p);
+        world.sendMessage('§fThe mark splits open. Code of the Kara Inner steps through his claw marks.');
+      }
+      return;
+    case ITEM.whiteKarmaSeal:
+      return acceptWhiteKarma(p);
     case ITEM.clay:
       return moldClay(p);
     case ITEM.uchihaEye:
@@ -444,7 +465,7 @@ const USABLE = new Set([
   ITEM.toadContract, ITEM.forbiddenScroll, ITEM.sigil, ITEM.gedoCore, ITEM.karmaSeal, ITEM.hashiramaCells, ITEM.kote,
   ITEM.explosiveTag, ITEM.gunbai, ITEM.karaRing, ITEM.clay, ITEM.uchihaEye, ITEM.curseSeal, ITEM.snakeContract,
   ITEM.slugContract, ITEM.puppetScroll, ITEM.blueprintGate, ITEM.blueprintRamen, ITEM.blueprintTraining, ITEM.hiramekarei,
-  ITEM.journal,
+  ITEM.journal, ITEM.karaInnerMark, ITEM.whiteKarmaSeal,
 ]);
 
 /** @type {Map<string, number>} */

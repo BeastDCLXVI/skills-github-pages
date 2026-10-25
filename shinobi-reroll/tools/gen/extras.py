@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from . import sprites as S
 from .core import FMT_ATTACHABLE, FMT_PARTICLE, Build, ident
+from .hd import FLAT, MatCanvas, render_hd
 from .pixel import box_faces, hexc, outline, scale, shade, swirl
 
 # --- armor -------------------------------------------------------------------------
@@ -31,14 +32,27 @@ def _band(px, faces, rows, color, rng):
                 _put(px, x, y0 + y, shade(color, 1 + rng.uniform(-0.05, 0.05)))
 
 
+ARMOR_HD_SCALE = 4
+
+
 def armor_layer(style: str, cloth: str | None = None, scratched: bool = False) -> Image.Image:
+    """Armor layer designed on the 64x32 vanilla armor layout, rendered HD (256x128)."""
+    faces = [r for f in (HEAD, BODY, ARM) for r in f.values()]
+    return render_hd(design_armor(style, cloth, scratched), ARMOR_HD_SCALE, faces, seed=zlib.crc32(style.encode()),
+                     fringe=False)
+
+
+def design_armor(style: str, cloth: str | None = None, scratched: bool = False) -> MatCanvas:
     rng = random.Random(zlib.crc32(style.encode()))
-    img = Image.new("RGBA", (64, 32), (0, 0, 0, 0))
+    img = MatCanvas(64, 32)
+    img.material = "cloth"
     px = img.load()
     if style == "headband":
         c = hexc(cloth or "#1f3f7a")
         _band(px, HEAD, range(1, 3), c, rng)
         x0, y0, w, h = HEAD["north"]
+        img.material = "metal"
+        img.feature("plate", x0 + 1, y0 + 1, 6, 2, scratched)
         plate, dark = hexc("#b4bec8"), hexc("#4f5966")
         for x in range(1, 7):
             for y in (1, 2):
@@ -49,6 +63,7 @@ def armor_layer(style: str, cloth: str | None = None, scratched: bool = False) -
         if scratched:
             for i, x in enumerate(range(1, 7)):
                 _put(px, x0 + x, y0 + 1 + (i % 2), hexc("#7a1418"))
+        img.material = "cloth"
         sx, sy, sw, sh = HEAD["south"]
         for y in range(3, 6):
             _put(px, sx + 3, sy + y, c)
@@ -56,13 +71,16 @@ def armor_layer(style: str, cloth: str | None = None, scratched: bool = False) -
     elif style == "mask":
         white, red, dark = hexc("#f1eee6"), hexc("#c0262b"), hexc("#1a1a1a")
         x0, y0, w, h = HEAD["north"]
+        img.material = "skin"  # porcelain: smooth top-lit gradient
         for y in range(1, 8):
             for x in range(8):
                 _put(px, x0 + x, y0 + y, shade(white, 1 + rng.uniform(-0.03, 0.03)))
+        img.material = FLAT
         for x, y in ((1, 3), (2, 3), (5, 3), (6, 3)):
             _put(px, x0 + x, y0 + y, dark)
         for x, y in ((1, 2), (6, 2), (2, 5), (5, 5), (3, 6), (4, 6)):
             _put(px, x0 + x, y0 + y, red)
+        img.material = "cloth"
         for side in ("east", "west"):
             sx, sy, sw, sh = HEAD[side]
             for y in range(2, 4):
@@ -77,6 +95,7 @@ def armor_layer(style: str, cloth: str | None = None, scratched: bool = False) -
         _band(px, HEAD, range(0, 3), white, rng)
         _band(px, HEAD, range(3, 4), hexc("#c9c3b6"), rng)
         fx, fy, fw, fh = HEAD["north"]
+        img.material = FLAT
         for x, y in ((3, 0), (4, 0), (2, 1), (3, 1), (4, 1), (5, 1), (3, 2), (4, 2)):
             _put(px, fx + x, fy + y, red)
     elif style in ("vest", "cloak"):
@@ -108,15 +127,11 @@ def armor_layer(style: str, cloth: str | None = None, scratched: bool = False) -
             for x, y in ((3, 3), (4, 3), (3, 4), (4, 4)):
                 _put(px, sx + x, sy + y, hexc("#c0262b"))
         else:
-            red, white = hexc("#c0262b"), hexc("#f4f1ea")
             for face, spots in ((BODY["north"], ((1, 3), (5, 8))), (BODY["south"], ((2, 2), (4, 7), (1, 10))),
                                 (ARM["north"], ((0, 5),)), (ARM["south"], ((1, 8),))):
                 fx, fy, fw, fh = face
                 for sx_, sy_ in spots:
-                    for dx, dy in ((0, 0), (1, 0), (1, -1), (2, 0)):
-                        _put(px, fx + sx_ + dx, fy + sy_ + dy, red)
-                    _put(px, fx + sx_, fy + sy_ + 1, white)
-                    _put(px, fx + sx_ + 2, fy + sy_ + 1, white)
+                    img.feature("cloud", fx + sx_, fy + sy_)
             for x in range(bw):
                 _put(px, bx + x, by, hexc("#2a2730"))
                 _put(px, bx + x, by + 1, hexc("#2a2730"))

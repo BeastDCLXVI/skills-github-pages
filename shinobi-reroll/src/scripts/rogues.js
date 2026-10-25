@@ -4,8 +4,8 @@ import { ENTITY, FX, PARTICLE, SOUND } from './ids.js';
 import { fan, ring } from './jutsu/core.js';
 import { spawnOrb } from './projectiles.js';
 import {
-  add, dash, dist, effect, enemiesAround, eyes, flatDir, fx, heal, healthFraction, hurt, isPlayer, knock, later, mul,
-  rgb, sound, stun, title, v3, valid,
+  add, dash, dist, effect, enemiesAround, eyes, flatDir, fx, heal, health, healthFraction, hurt, isPlayer, knock, later,
+  mul, rand, rgb, sound, stun, title, v3, valid,
 } from './util.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
@@ -13,6 +13,8 @@ import {
 
 const BLACK_FLAME = rgb('#140818');
 const SUSANOO = rgb('#8a3ad8');
+const WHITE_KARMA = rgb('#f4f0e8');
+const OTSUTSUKI = rgb('#9a7ad8');
 
 /** Step behind the target. @param {Entity} boss @param {Player} t */
 function behind(boss, t, distance = 2) {
@@ -219,21 +221,45 @@ function kinshiki(boss) {
 /** @param {Entity} boss */
 function jigen(boss) {
   absorbing(boss);
+  const mem = memory(boss);
+  const dim = boss.dimension;
+  // Phase two: the vessel cracks and Isshiki Otsutsuki himself takes over
+  if (!mem.isshiki && healthFraction(boss) < 0.3) {
+    mem.isshiki = 1;
+    heal(boss, (health(boss)?.effectiveMax ?? 520) * 0.4);
+    try {
+      boss.nameTag = 'Isshiki Otsutsuki';
+    } catch {}
+    effect(boss, FX.strength, 600, 1, false);
+    effect(boss, FX.speed, 600, 0, false);
+    fx(dim, PARTICLE.shockwave, boss.location, OTSUTSUKI);
+    sound(dim, SOUND.witherSpawn, boss.location, 0.7, 2);
+    world.sendMessage('§5Jigen\'s vessel cracks... §lIsshiki Otsutsuki§r§5 awakens!');
+    return;
+  }
   const t = prey(boss, 36);
   if (!t) {
     if (boss.hasTag('sr_absorbing')) boss.removeTag('sr_absorbing');
     return;
   }
-  const dim = boss.dimension;
-  if (!ready(boss, 'act', healthFraction(boss) < 0.5 ? 45 : 65)) return;
+  if (!ready(boss, 'act', mem.isshiki ? 35 : healthFraction(boss) < 0.5 ? 45 : 65)) return;
   const roll = Math.random();
+  if (mem.isshiki && roll < 0.35) {
+    // Sukunahikona: shrunken stakes that swell back to full size on impact
+    for (const d of fan(aim(boss, t), 5, 14)) {
+      spawnOrb(boss, { element: 'bone', color: '#2a2430', size: 1, speed: 2.8, damage: 9, radius: 2.5, explode: 1, dir: d });
+    }
+    sound(dim, SOUND.witherShoot, boss.location, 1.4, 1);
+    return;
+  }
   if (roll < 0.25) {
     const at = t.location;
-    for (const p of ring(at, 2, 12)) fx(dim, PARTICLE.mark, add(p, v3(0, 0.2, 0)), rgb('#9a7ad8'));
+    const size = mem.isshiki ? 3 : 2;
+    for (const p of ring(at, size, 12)) fx(dim, PARTICLE.mark, add(p, v3(0, 0.2, 0)), OTSUTSUKI);
     later(25, () => {
       fx(dim, PARTICLE.explosion, at);
       sound(dim, SOUND.anvil, at, 0.5, 2);
-      if (valid(boss)) for (const e of enemiesAround(boss, at, 4)) hurt(e, 24, boss);
+      if (valid(boss)) for (const e of enemiesAround(boss, at, size + 2)) hurt(e, mem.isshiki ? 30 : 24, boss);
     });
   } else if (roll < 0.5) {
     for (const d of fan(aim(boss, t), 3, 8)) spawnOrb(boss, { element: 'truth', size: 1, speed: 2.4, damage: 10, radius: 3, explode: 2, dir: d });
@@ -247,8 +273,73 @@ function jigen(boss) {
   }
 }
 
+/** Code of the Kara Inner: claw-mark ambushes, White Karma strikes, Claw Grime, and limiters that come off. @param {Entity} boss */
+function code(boss) {
+  const mem = memory(boss);
+  const dim = boss.dimension;
+  if (!mem.limiter && healthFraction(boss) < 0.5) {
+    mem.limiter = 1;
+    effect(boss, FX.speed, 600, 1, false);
+    effect(boss, FX.strength, 600, 1, false);
+    effect(boss, FX.resistance, 600, 0, false);
+    fx(dim, PARTICLE.shockwave, boss.location, WHITE_KARMA);
+    sound(dim, SOUND.roar, boss.location, 0.9, 2);
+    world.sendMessage('§fCode tears off his limiters! §7His White Karma flares.');
+    return;
+  }
+  const t = prey(boss, 40);
+  if (!t || !ready(boss, 'act', mem.limiter ? 40 : 60)) return;
+  const roll = Math.random();
+  if (roll < 0.3) {
+    // Claw Marks: carve marks around the target, then blink through each of them
+    const marks = [0, 1, 2].map(() => add(t.location, v3(rand(-5, 5), 0, rand(-5, 5))));
+    for (const m of marks) {
+      for (const dx of [-0.5, 0, 0.5]) fx(dim, PARTICLE.mark, add(m, v3(dx, 1, 0)), WHITE_KARMA);
+    }
+    sound(dim, SOUND.fangs, t.location, 1.3, 1);
+    marks.forEach((m, i) => {
+      later(20 + i * 8, () => {
+        if (!valid(boss)) return;
+        boss.tryTeleport(m, { checkForBlocks: true });
+        fx(dim, PARTICLE.mark, eyes(boss), WHITE_KARMA);
+        for (const e of enemiesAround(boss, m, 2.8)) hurt(e, 10, boss);
+      });
+    });
+  } else if (roll < 0.5) {
+    let grime = [];
+    try {
+      grime = dim.getEntities({ location: boss.location, maxDistance: 32, type: ENTITY.clawGrime });
+    } catch {}
+    if (grime.length < 4) {
+      for (const side of [-3, 3]) {
+        const at = add(boss.location, v3(side, 0.2, rand(-2, 2)));
+        try {
+          dim.spawnEntity(ENTITY.clawGrime, at);
+        } catch {}
+        fx(dim, PARTICLE.mark, add(at, v3(0, 1, 0)), WHITE_KARMA);
+      }
+      if (isPlayer(t)) title(t, ' ', '§fClaw Grime crawl out of Code\'s marks!', 30);
+    }
+  } else if (roll < 0.8) {
+    // White Karma strike: close the distance and hit like a falling mountain
+    dash(boss, flatDir(boss.location, t.location), 3.5, 0.2);
+    later(6, () => {
+      if (!valid(boss) || !valid(t) || dist(boss.location, t.location) > 4) return;
+      hurt(t, mem.limiter ? 20 : 15, boss);
+      knock(t, boss.location, 2.8, 0.7);
+      fx(dim, PARTICLE.shockwave, t.location, WHITE_KARMA);
+      sound(dim, SOUND.anvil, t.location, 0.7, 1.5);
+    });
+  } else {
+    for (const d of fan(aim(boss, t), 5, 16)) {
+      spawnOrb(boss, { element: 'karma', color: '#f4f0e8', size: 1, speed: 2.2, damage: 8, dir: d });
+    }
+  }
+}
+
 /** Behaviour per mini-boss type, dispatched from the shared boss loop. */
 export const ROGUE_BRAINS = {
+  [ENTITY.code]: code,
   [ENTITY.itachi]: itachi,
   [ENTITY.kisame]: kisame,
   [ENTITY.deidara]: deidara,

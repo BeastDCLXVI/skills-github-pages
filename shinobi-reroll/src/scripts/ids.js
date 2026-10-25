@@ -59,6 +59,8 @@ export const ITEM = Object.freeze({
   blueprintTraining: 'shinobi:blueprint_training_ground',
   flakVest: 'shinobi:flak_vest',
   journal: 'shinobi:shinobi_journal',
+  karaInnerMark: 'shinobi:kara_inner_mark',
+  whiteKarmaSeal: 'shinobi:white_karma_seal',
 });
 
 export const ENTITY = Object.freeze({
@@ -90,6 +92,8 @@ export const ENTITY = Object.freeze({
   snake: 'shinobi:summoned_snake',
   slug: 'shinobi:summoned_slug',
   darkReflection: 'shinobi:dark_reflection',
+  code: 'shinobi:code',
+  clawGrime: 'shinobi:claw_grime',
   ironGolem: 'minecraft:iron_golem',
   wolf: 'minecraft:wolf',
   lightning: 'minecraft:lightning_bolt',

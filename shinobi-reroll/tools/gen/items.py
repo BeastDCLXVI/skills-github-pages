@@ -8,6 +8,7 @@ from PIL import Image
 
 from . import sprites as S
 from .core import FMT_ITEM, Build, ident
+from .hd import hd_icon
 from .models import BIJUU
 
 
@@ -143,6 +144,11 @@ def build_items() -> list[Item]:
              stack=1, use_label="Study", rarity="rare"),
         Item("kara_ring", "Kara Ring", S.kara_ring, stack=1, use_label="Summon", glint=True, rarity="epic"),
         Item("shinobi_journal", "Shinobi Journal", S.journal, stack=1, use_label="Reflect", rarity="uncommon"),
+        # v1.3: Boruto: Code & the Kara Inner
+        Item("kara_inner_mark", "Kara Inner Mark", S.kara_inner_mark, stack=1, use_label="Summon", glint=True,
+             rarity="epic"),
+        Item("white_karma_seal", "White Karma Seal", S.white_karma_seal, stack=1, use_label="Accept White Karma",
+             glint=True, rarity="epic"),
         Item("blueprint_leaf_gate", "Blueprint: Leaf Village Gate", lambda: S.blueprint("#3a7a3a"), stack=16,
              use_label="Build"),
         Item("blueprint_ramen_stand", "Blueprint: Ichiraku Ramen Stand", lambda: S.blueprint("#c0262b"), stack=16,
@@ -220,6 +226,6 @@ def emit_items(b: Build, items: list[Item]) -> None:
                 "components": comps,
             },
         })
-        b.rp.png(f"textures/items/{it.id}.png", it.icon())
+        b.rp.png(f"textures/items/{it.id}.png", hd_icon(it.icon()))
         b.item_texture(it.id, f"textures/items/{it.id}")
         b.rp_lang.add(f"item.{ident(it.id)}.name", it.name)

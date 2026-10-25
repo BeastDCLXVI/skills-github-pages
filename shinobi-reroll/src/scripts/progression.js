@@ -1,7 +1,7 @@
 import { EquipmentSlot } from '@minecraft/server';
 import { CLANS, DOJUTSU, RANKS } from './data.js';
 import { ITEM, PARTICLE, SOUND } from './ids.js';
-import { deed } from './innerpath.js';
+import { deed, onRankUp, xpMult } from './innerpath.js';
 import { JUTSU, learnCost, meets } from './jutsu/index.js';
 import { rt } from './state.js';
 import { getData, loadoutSize, maxChakra, natureSlots, setChakra, touch } from './store.js';
@@ -21,6 +21,7 @@ export function power(p) {
   if (r.toggles.has('karma_mode')) m += 0.4;
   if (r.toggles.has('lightning_armor')) m += 0.15;
   if (r.toggles.has('tenseigan_mode')) m += 0.4;
+  if (r.toggles.has('white_karma')) m += 0.35;
   if (d.ascended) m += 0.4;
   if (worn(p, EquipmentSlot.Head) === ITEM.rogueHeadband) m += 0.1;
   return m;
@@ -31,7 +32,7 @@ export function addXp(p, amount) {
   if (amount <= 0) return;
   const d = getData(p);
   const before = d.xp;
-  d.xp += Math.max(1, Math.round(amount * (CLANS[d.clan]?.xpMult ?? 1) * settings().xpRate));
+  d.xp += Math.max(1, Math.round(amount * (CLANS[d.clan]?.xpMult ?? 1) * xpMult(d) * settings().xpRate));
   const milestones = Math.floor(d.xp / JP_EVERY_XP) - Math.floor(before / JP_EVERY_XP);
   if (milestones > 0) {
     d.jp += milestones;
@@ -47,6 +48,7 @@ export function addXp(p, amount) {
     fx(p.dimension, PARTICLE.burst, p.location);
     tell(p, `§6Rank up! You are now a ${r.color}${r.name}§6. Loadout slots: ${loadoutSize(d)}, nature slots: ${natureSlots(d)}.`);
     setChakra(p, maxChakra(p));
+    onRankUp(p);
   }
   touch(p);
   checkAwakening(p);

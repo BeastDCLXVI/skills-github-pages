@@ -104,6 +104,9 @@ def all_recipes() -> list[dict]:
                   unlock=CC),
         # v1.2: The Inner Path
         shapeless("shinobi_journal", ["minecraft:book", CC], "shinobi_journal", unlock="minecraft:book"),
+        # v1.3: Boruto
+        shaped("kara_inner_mark", ["OCO", "CRC", "OCO"], {"O": "minecraft:obsidian", "C": CC, "R": "kara_ring"},
+               "kara_inner_mark", unlock="kara_ring"),
         shapeless("explosive_clay", ["minecraft:clay_ball", "minecraft:gunpowder", CC], "explosive_clay", 4, unlock=CC),
         shapeless("kiba", ["minecraft:iron_sword", "minecraft:iron_sword", "minecraft:lightning_rod", CCB], "kiba",
                   unlock=CCB),

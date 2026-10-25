@@ -1,4 +1,8 @@
-"""64x64 humanoid skins (geometry.humanoid.custom layout) painted from a short spec."""
+"""Humanoid skins (geometry.humanoid.custom layout) designed at 64x64 from a short spec, rendered HD.
+
+The design canvas records materials (skin, hair, cloth, metal...) and features (eyes, crest, clouds);
+`paint_skin` renders it at 4x: 256x256, so the head is a 32x32x32-texel cube (see hd.py).
+"""
 from __future__ import annotations
 
 import random
@@ -6,7 +10,10 @@ from dataclasses import dataclass, field
 
 from PIL import Image
 
+from .hd import FLAT, MatCanvas, render_hd
 from .pixel import RGBA, box_faces, hexc, shade
+
+HD_SCALE = 4
 
 # (uv_u, uv_v, w, h, d) for each part of the player-style 64x64 layout
 PARTS = {
@@ -79,9 +86,15 @@ def _rows(img, part, rows: range, color, rng, faces=("north", "south", "east", "
                     _put(img, x, y0 + y, shade(color, mul * (1 + rng.uniform(-jitter, jitter))))
 
 
-def paint_skin(spec: SkinSpec) -> Image.Image:
+def paint_skin(spec: SkinSpec, scale: int = HD_SCALE) -> Image.Image:
+    """The finished skin texture (256x256 by default)."""
+    faces = [r for part in PARTS for r in _faces(part).values()]
+    return render_hd(design_skin(spec), scale, faces, seed=spec.seed)
+
+
+def design_skin(spec: SkinSpec) -> MatCanvas:
     rng = random.Random(spec.seed)
-    img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    img = MatCanvas(64, 64)
     skin = hexc(spec.skin)
     hair = hexc(spec.hair)
     top = hexc(spec.top)
@@ -89,8 +102,10 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
     shoes = hexc(spec.shoes)
 
     # --- head ---
+    img.material = "skin"
     _paint_box(img, "head", skin, rng, 0.03)
     hf = _faces("head")
+    img.material = "hair"
     if spec.hair_style != "bald":
         _fill_face(img, hf["up"], hair, rng, 0.08)
         back_rows = 8 if spec.hair_style == "long" else 5
@@ -109,6 +124,7 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
                 _put(img, x0, y0 + y, hair)
                 _put(img, x0 + w - 1, y0 + y, hair)
     # face details on the north face
+    img.material = FLAT
     x0, y0, w, h = hf["north"]
     white = hexc("#f4f4f0")
     iris = hexc(spec.eyes)
@@ -136,43 +152,54 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
         else:
             _put(img, outer, eye_y, white)
             _put(img, inner, eye_y, iris)
-    _put(img, x0 + 3, y0 + 6, shade(skin, 0.75))
-    _put(img, x0 + 4, y0 + 6, shade(skin, 0.75))
+        img.feature("eye", min(outer, inner), eye_y, spec.eye_style, spec.eyes, spec.skin)
+    if "mask" not in spec.marks:
+        img.feature("mouth", x0 + 3, y0 + 6, spec.skin)
     if "whiskers" in spec.marks:
-        for y in (5, 6):
-            _put(img, x0, y0 + y, shade(skin, 0.55))
-            _put(img, x0 + 7, y0 + y, shade(skin, 0.55))
+        img.feature("whiskers", x0, y0, spec.skin)
     if "cheek_lines" in spec.marks:
-        for y in (5, 6):
-            _put(img, x0 + 1, y0 + y, hexc("#8a3a8a"))
-            _put(img, x0 + 6, y0 + y, hexc("#8a3a8a"))
+        img.feature("vline", x0 + 1, y0 + 5, y0 + 6, "#8a3a8a")
+        img.feature("vline", x0 + 6, y0 + 5, y0 + 6, "#8a3a8a")
+    if "karma_marks" in spec.marks:  # White Karma: pale lines from the eyes down the cheeks and up the brow
+        for x in (x0 + 1, x0 + 2, x0 + 5, x0 + 6):
+            img.feature("vline", x, y0 + 5, y0 + 7, "#f6f2ea")
+        img.feature("vline", x0 + 3, y0 + 1, y0 + 3, "#f6f2ea")
+        img.feature("vline", x0 + 4, y0 + 1, y0 + 3, "#f6f2ea")
     if "mask" in spec.marks:
+        img.material = "cloth"
         mask = hexc("#2a2f3a")
         _rows(img, "head", range(5, 8), mask, rng, faces=("north", "east", "west", "south"), jitter=0.04)
+        img.material = FLAT
     if "gills" in spec.marks:
-        for y in (4, 5, 6):
-            _put(img, x0, y0 + y, shade(skin, 0.6))
-            _put(img, x0 + 7, y0 + y, shade(skin, 0.6))
+        gill = "#{:02x}{:02x}{:02x}".format(*shade(skin, 0.6)[:3])
+        img.feature("vline", x0, y0 + 4, y0 + 6, gill)
+        img.feature("vline", x0 + 7, y0 + 4, y0 + 6, gill)
     if "eyeshadow" in spec.marks:
         for x in (0, 1, 2, 5, 6, 7):
             _put(img, x0 + x, y0 + 3, hexc("#7a3f9a"))
     if "third_eye" in spec.marks:
         _put(img, x0 + 3, y0 + 2, hexc("#f4f4f0"))
         _put(img, x0 + 4, y0 + 2, hexc("#1a1a1a"))
+        img.feature("eye", x0 + 3, y0 + 2, "normal", "#1a1a1a", spec.skin)
+    img.material = "hair"
     if "beard" in spec.marks:
         _rows(img, "head", range(6, 8), hair, rng, faces=("north", "east", "west"), jitter=0.05)
     if "bangs_left" in spec.marks:
         for y in range(1, 6):
             for x in (0, 1, 2):
                 _put(img, x0 + x, y0 + y, shade(hair, 1 + rng.uniform(-0.06, 0.06)))
+    img.material = "bone"
     if "horn" in spec.marks:
         hx, hy, hw, hh = _faces("hat")["north"]
         for y in (0, 1, 2):
             _put(img, hx + 3, hy + y, hexc("#e8e2d6"))
             _put(img, hx + 4, hy + y, hexc("#d6cfc0"))
     if spec.headband:
+        img.material = "cloth"
         cloth = hexc(spec.headband)
         _rows(img, "head", range(2, 4), cloth, rng, faces=("north", "east", "west", "south"), jitter=0.04)
+        img.material = "metal"
+        img.feature("plate", x0 + 2, y0 + 2, 4, 2, spec.headband_scratched)
         plate = hexc("#aab4bf")
         for x in range(2, 6):
             for y in (2, 3):
@@ -185,6 +212,7 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
             _put(img, x0 + 4, y0 + 3, hexc("#7a1418"))
             _put(img, x0 + 5, y0 + 2, hexc("#7a1418"))
     # hat layer: spikes / horns for silhouette volume
+    img.material = "hair"
     if spec.hair_style == "spiky":
         hx0, hy0, hw, hh = _faces("hat")["up"]
         for x in range(hw):
@@ -198,12 +226,14 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
                     _put(img, sx + x, sy, shade(hair, 1.05))
                     _put(img, sx + x, sy + 1, shade(hair, 0.95))
     if "horns" in spec.marks:
+        img.material = "bone"
         nx, ny, nw, nh = _faces("hat")["north"]
         horn = hexc("#efe8dc")
         for (x, y) in ((1, 0), (1, 1), (6, 0), (6, 1)):
             _put(img, nx + x, ny + y, horn)
 
     # --- body ---
+    img.material = "wrap" if spec.top_style == "wraps" else "cloth"
     _paint_box(img, "body", top, rng)
     bf = _faces("body")
     bx, by, bw, bh = bf["north"]
@@ -233,26 +263,33 @@ def paint_skin(spec: SkinSpec) -> Image.Image:
     # --- arms ---
     sleeve_rows = range(0, 10) if spec.sleeves == "long" else range(0, 4)
     for arm in ("right_arm", "left_arm"):
+        img.material = "skin"
         _paint_box(img, arm, skin, rng, 0.03)
+        img.material = "wrap" if spec.top_style == "wraps" else "cloth"
         _rows(img, arm, sleeve_rows, top, rng, faces=("north", "south", "east", "west"))
         x, y, w, d = _faces(arm)["up"]
         _fill_face(img, (x, y, w, d), shade(top, 1.1), rng)
         if spec.top_style == "jumpsuit" and spec.top_accent:
             _rows(img, arm, range(0, 3), accent, rng)
         if "bandages" in spec.marks:
+            img.material = "wrap"
             _rows(img, arm, range(10, 12), hexc("#e8e2d0"), rng)
         if spec.top_style == "cloak":
             _clouds(img, arm, rng, small=True)
 
     # --- legs ---
     for leg in ("right_leg", "left_leg"):
+        img.material = "cloth"
         _paint_box(img, leg, pants, rng)
+        img.material = "wrap"
         _rows(img, leg, range(9, 10), hexc("#e8e2d0"), rng)  # leg wraps
+        img.material = "shoe"
         _rows(img, leg, range(10, 12), shoes, rng)
         x, y, w, d = _faces(leg)["down"]
         _fill_face(img, (x, y, w, d), shade(shoes, 0.8), rng)
 
     # --- outer layers ---
+    img.material = "cloth"
     if spec.top_style in ("cloak", "robe"):
         robe = top
         _paint_box_outer(img, "jacket", robe, rng, rows=range(0, 12))
@@ -283,7 +320,7 @@ def _paint_box_outer(img, part, color, rng, rows: range):
 
 
 def _clouds(img, part, rng, small: bool = False):
-    red, white = hexc("#c0262b"), hexc("#f4f1ea")
+    """Akatsuki clouds: positions are chosen here, the clouds themselves are drawn at HD (hd._cloud)."""
     f = _faces(part)
     for name in ("north", "south"):
         x0, y0, w, h = f[name]
@@ -291,10 +328,7 @@ def _clouds(img, part, rng, small: bool = False):
         for _ in range(spots):
             cx = x0 + rng.randrange(0, max(1, w - 2))
             cy = y0 + rng.randrange(2, max(3, h - 2))
-            for dx, dy in ((0, 0), (1, 0), (1, -1), (2, 0)):
-                _put(img, cx + dx, cy + dy, red)
-            _put(img, cx, cy + 1, white)
-            _put(img, cx + 2, cy + 1, white)
+            img.feature("cloud", cx, cy)
 
 
 NPC_SKINS: dict[str, SkinSpec] = {
@@ -333,6 +367,10 @@ NPC_SKINS: dict[str, SkinSpec] = {
                       seed=31),
     "puppet_karasu": SkinSpec(skin="#9c6b3a", hair="#1a1a1a", hair_style="spiky", eyes="#f2d24a", top="#4a3a5e",
                               top_style="wraps", pants="#3a2e48", shoes="#2a2030", marks=["third_eye"], seed=33),
+    # v1.3: Code of the Kara Inner (White Karma marks)
+    "code": SkinSpec(skin="#d8b494", hair="#ebe7df", hair_style="long", eyes="#c8a040", top="#26242c",
+                     top_style="robe", top_accent="#bdb6a8", pants="#1e1c22", shoes="#121014",
+                     marks=["karma_marks", "bandages"], seed=41),
     # v1.2: the inner darkness met at the Waterfall of Truth
     "dark_reflection": SkinSpec(skin="#4a3f58", hair="#120e18", hair_style="spiky", eye_style="void", top="#1a1622",
                                 top_accent="#4a2a5a", pants="#1a1622", shoes="#0e0c12", headband="#1a1622",

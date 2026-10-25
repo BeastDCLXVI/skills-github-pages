@@ -21,6 +21,7 @@ any mod's source code. Each Java-side technique maps onto a native Bedrock mecha
 | Key bindings (`KeyMapping`) for hand seals / jutsu wheel | Items with touch-friendly interact buttons (Chakra Focus, Shinobi Scroll), sneak modifiers, `playerButtonInput` (sneak + jump = dojutsu) | `items.js`, `dojutsu.js` |
 | Client↔server packets (`SimpleChannel`, Fabric networking) | Not needed: scripts run server-side; UI via forms, titles and the action bar | `ui.js`, `casting.js` (HUD) |
 | GUI screens & HUD overlays (`RenderGuiOverlayEvent`) | `@minecraft/server-ui` Action/Modal/Message forms + action-bar chakra HUD | `ui.js`, `casting.js` |
+| HD resource packs (32x/64x textures) | Designs at 16/64 px rendered 2–4× by a material-aware renderer; Bedrock samples by normalised UVs, so vanilla and generated geometry carry HD textures unchanged | `tools/gen/hd.py` |
 | GeckoLib animated entities | Bedrock geometry + animation + render-controller JSON, generated from parametric box models | `tools/gen/models.py` |
 | Custom renderers for projectiles | Billboarded `geometry.item_sprite` with a property-driven texture array (one entity renders 20 jutsu elements) | `entities.py` (`jutsu_orb`), render controller |
 | Particle types & client particle factories | Particle-effect JSON with Molang colour variables (`variable.color`) set from scripts | `tools/gen/extras.py`, `util.fx()` |
@@ -50,8 +51,9 @@ what the previous one cannot:
 
 1. **Type-check**: `tsc --checkJs` against the official `@minecraft/server` 2.0.0 / `server-ui` 2.0.0 typings.
 2. **Smoke tests**: the real scripts run in Node against an in-memory mock of the Script API. They cover
-   spawn, admin commands, **every one of the 96 jutsu**, all items, menus, missions, the shop, blueprints, bosses,
-   mini-bosses, NPCs, terrain, persistence and the Inner Path (Nindo, journal, bonds, Waterfall trial).
+   spawn, admin commands, **every one of the 101 jutsu**, all items, menus, missions, the shop, blueprints, bosses,
+   mini-bosses (Code, Isshiki), NPCs, terrain, persistence, the Inner Path (Nindo, journal, bonds, Waterfall trial)
+   and the HD texture sizes of the built pack.
 3. **Cross-reference validation**: every icon, texture, geometry, animation, render controller, loot table,
    recipe ingredient, lang key, component name and script identifier must resolve
    (vanilla ids come from `@minecraft/vanilla-data`).

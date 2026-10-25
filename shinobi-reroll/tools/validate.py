@@ -284,8 +284,9 @@ def validate(bp: Path, rp: Path, scripts: Path, schemas: Path | None = None):
                 if not (rp / f"{t}.png").exists():
                     continue  # reported by the client-entity texture check
                 size = _png_size(rp / f"{t}.png")
-                if size != (tw, th):
-                    P(f"{k}: texture {t} is {size}, geometry expects {(tw, th)}")
+                # HD textures: any power-of-two multiple of the geometry's texture size (UVs are normalised)
+                if not any(size == (tw * m, th * m) for m in (1, 2, 4, 8)):
+                    P(f"{k}: texture {t} is {size}, geometry expects {(tw, th)} or an HD multiple of it")
         bones = {b["name"] for b in g["bones"]}
         for b in g["bones"]:
             if b.get("parent") and b["parent"] not in bones:

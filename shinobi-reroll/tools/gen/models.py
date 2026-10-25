@@ -13,7 +13,17 @@ from dataclasses import dataclass, field
 from PIL import Image
 
 from .core import FMT_ANIMATION, FMT_GEOMETRY
+from .hd import FLAT, MatCanvas, render_hd
 from .pixel import box_faces, hexc, shade
+
+# Surface material per model (HD micro-detail); anything not listed is furred.
+MODEL_MATERIAL = {
+    "isobu": "scale", "chomei": "scale", "juubi": "scale", "summoned_snake": "scale", "claw_grime": "scale",
+    "saiken": "skin", "gyuki": "skin", "summoned_toad": "skin", "summoned_slug": "skin",
+    "training_post": "wood", "substitution_log": "wood",
+}
+ROLE_MATERIAL = {"shell": "scale", "spike": "bone", "horn": "bone", "wing": FLAT, "eye_white": FLAT}
+HD_MODEL_SCALE = 2
 
 
 @dataclass
@@ -132,11 +142,20 @@ class Model:
         return horiz, max(ys) * 1.3
 
     # -- texture -------------------------------------------------------------
-    def texture(self, seed: int = 0) -> Image.Image:
+    def _material(self, role: str) -> str:
+        return ROLE_MATERIAL.get(role) or MODEL_MATERIAL.get(self.key, "fur")
+
+    def texture_hd(self, seed: int = 0, scale: int = HD_MODEL_SCALE) -> Image.Image:
+        """The finished texture at `scale`x the geometry's texture size (UVs are normalised in Bedrock)."""
+        faces = [r for c in self.cubes for r in box_faces(c.uv[0], c.uv[1], *c.size).values()]
+        return render_hd(self.texture(seed, canvas=True), scale, faces, seed=seed, fringe=False)
+
+    def texture(self, seed: int = 0, canvas: bool = False):
         rng = random.Random(seed)
-        img = Image.new("RGBA", (self.tex_w, self.tex_h), (0, 0, 0, 0))
+        img = MatCanvas(self.tex_w, self.tex_h)
         px = img.load()
         for c in self.cubes:
+            img.material = self._material(c.role)
             w, h, d = c.size
             faces = box_faces(c.uv[0], c.uv[1], w, h, d)
             base = hexc(self.palette.get(c.role, self.palette["body"]))
@@ -149,8 +168,14 @@ class Model:
                 for yy in range(fh):
                     for xx in range(fw):
                         col = shade(face_col, 1 + rng.uniform(-0.06, 0.06))
-                        col = self._pattern(c, fname, xx, yy, fw, fh, col, rng)
-                        px[fx + xx, fy + yy] = col
+                        pat = self._pattern(c, fname, xx, yy, fw, fh, col, rng)
+                        if pat != col:
+                            mat, img.material = img.material, FLAT
+                            px[fx + xx, fy + yy] = pat
+                            img.material = mat
+                        else:
+                            px[fx + xx, fy + yy] = col
+            img.material, body_mat = FLAT, img.material  # eyes, mouths and rings stay crisp
             if c.role == "head":
                 self._face(img, faces["north"])
             if c.role == "eye_bump":
@@ -166,6 +191,7 @@ class Model:
                         for xx in range(fw):
                             r = max(abs(xx - cx), abs(yy - cy))
                             px[fx + xx, fy + yy] = shade(ring, 0.8 if int(r) % 2 else 1.05) if r < min(fw, fh) / 2 - 0.5 else shade(base, 0.9)
+            img.material = body_mat
             if c.role in ("tail", "tentacle") and self.features.get("tail_tip"):
                 tip = hexc(self.features["tail_tip"])
                 if self.features.get("tip_bones") and c.bone in self.features["tip_bones"]:
@@ -175,7 +201,7 @@ class Model:
                             for xx in range(fw):
                                 if fname in ("north", "up", "down") or rng.random() < 0.5 or yy > fh // 2:
                                     px[fx + xx, fy + yy] = shade(tip, 1 + rng.uniform(-0.05, 0.05))
-        return img
+        return img if canvas else img.img
 
     def _pattern(self, c, fname, x, y, w, h, col, rng):
         pat = self.features.get("pattern")
@@ -391,7 +417,7 @@ def quadruped(key: str, palette: dict, *, body=(12, 10, 20), head=(10, 9, 8), sn
 
 def upright(key: str, palette: dict, *, torso=(14, 16, 10), head=(10, 10, 9), leg=(6, 10, 6), arm=(5, 15, 5),
             tails=1, tail_w=5, tail_len=8, tail_segs=3, tail_spread=60, tail_lift=20, ears="round", horns=0,
-            snout=None, tail_role="tail", scale=1.0, features=None) -> Model:
+            snout=None, tail_role="tail", scale=1.0, features=None, extra=None) -> Model:
     m = Model(key, palette, scale)
     m.features.update(features or {})
     tw, th, td = torso
@@ -434,6 +460,8 @@ def upright(key: str, palette: dict, *, torso=(14, 16, 10), head=(10, 10, 9), le
     if tails:
         _tails(m, tails, (0, lh + th * 0.25, td / 2 - 1), tail_segs, tail_w, tail_len, tail_spread if tails > 1 else 0,
                tail_lift, role=tail_role)
+    if extra:
+        extra(m, torso, leg, arm)
     m.pack()
     return m
 
@@ -582,3 +610,22 @@ def slug() -> Model:
                                         "snout": "#e8f0ff", "tail": "#e8f0ff"},
                      body=(10, 7, 20), head=(8, 7, 6), snout=None, legs=False, tails=0, ears="stalks", scale=1.8,
                      features={"pattern": "tribal", "eyes": "none", "mouth": True})
+
+
+def claw_grime() -> Model:
+    """v1.3: Claw Grime, the black beasts born from Code's claw marks: hunched, long-armed, white-marked."""
+    def claws(m, torso, leg, arm):
+        tw, th, _ = torso
+        lw, lh, _ = leg
+        aw, ah, _ = arm
+        for i, sx in enumerate((-1, 1)):
+            x = sx * (tw / 2 + aw / 2)
+            for k in (-1, 0, 1):
+                m.cube(m.features["arms"][i], (x + k * 1.6 - 0.5, lh + th - ah - 4, -0.5), (1, 5, 1), "spike")
+        for k in (-1, 0, 1):  # spines along the hunched back
+            m.cube("body", (k * 3 - 0.5, lh + th - 2 - abs(k) * 2, torso[2] / 2 - 1), (1, 4, 2), "spike")
+    return upright("claw_grime", {
+        "body": "#17151b", "belly": "#26222c", "head": "#1b1920", "arm": "#141218", "leg": "#17151b",
+        "accent": "#ece8de", "eye": "#ff2a3a", "pupil": "#ffd0d8", "spike": "#ece8de", "horn": "#ece8de",
+    }, torso=(12, 13, 9), head=(9, 8, 8), leg=(4, 9, 4), arm=(4, 19, 4), tails=0, ears="none", horns=0,
+        scale=1.25, features={"pattern": "tribal", "eyes": "slit", "teeth": True}, extra=claws)

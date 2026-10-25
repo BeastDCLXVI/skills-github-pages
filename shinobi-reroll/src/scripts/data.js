@@ -144,7 +144,7 @@ export const SEALS = ['Rat', 'Ox', 'Tiger', 'Hare', 'Dragon', 'Snake', 'Horse', 
 
 /**
  * A shinobi's Nindo (ninja way): a vow chosen once, with a boon and the deeds that build Resolve.
- * @typedef {{ name: string, who: string, color: string, boon: string, way: string }} Nindo
+ * @typedef {{ name: string, who: string, color: string, boon: string, way: string, era?: string }} Nindo
  */
 /** @type {Record<string, Nindo>} */
 export const NINDO = {
@@ -177,6 +177,17 @@ export const NINDO = {
     name: 'Surpass My Limits', who: 'Rock Lee', color: '§2',
     boon: 'The Eight Gates cost 25% less health; taijutsu costs 15% less chakra.',
     way: 'Train at the Training Post (+1) and use taijutsu (+2 Resolve).',
+  },
+  // v1.3: the Boruto era
+  shadow: {
+    name: 'Protect the Village from the Shadows', who: 'Boruto Uzumaki', color: '§9', era: 'Boruto',
+    boon: 'When an ally near you is hurt, you strike back from the shadows: Speed and Strength (every 10 s).',
+    way: 'Defeat hostile creatures at night (+2) and come to an ally\'s aid (+1 Resolve).',
+  },
+  hokage: {
+    name: 'I Will Become Hokage', who: 'Sarada Uchiha', color: '§4', era: 'Boruto',
+    boon: '10% more XP from everything, and every rank-up grants an extra Jutsu Point.',
+    way: 'Rank up (+30), complete missions (+8) and keep your journal (+3 Resolve).',
   },
 };
 
@@ -216,7 +227,7 @@ export const FOCI = {
   },
   self: {
     name: 'Self', art: 'Meditation & sage arts', mind: 'self smarts',
-    schools: ['Senjutsu', 'Six Paths', 'Karma'], perk: 'Resolve grows 50% faster today.',
+    schools: ['Senjutsu', 'Six Paths', 'Karma', 'Kara'], perk: 'Resolve grows 50% faster today.',
   },
   nature: {
     name: 'Nature', art: 'Elemental releases', mind: 'nature smarts', perk: '',

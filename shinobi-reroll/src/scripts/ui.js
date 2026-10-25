@@ -105,7 +105,7 @@ async function profile(p) {
     `§lTailed Beast:§r ${d.bijuu ? `${bijuuByKey(d.bijuu)?.name} (sync ${Math.floor(d.sync)}%)` : 'None'}`,
     `§lKarma:§r ${d.karma ? `Yes (energy ${Math.floor(d.karmaEnergy)})` : 'No'}  ·  §lOtsutsuki:§r ${d.ascended ? 'Ascended' : 'No'}`,
     `§lContracts:§r ${d.contracts.length ? d.contracts.join(', ') : 'none'}${d.contracts.includes('toad') ? ` · natural energy ${Math.floor(d.sageEnergy)}%` : ''}`,
-    d.unlocks.length ? `§lArts:§r ${d.unlocks.map((u) => ({ clay: 'Explosion Release', puppet: 'Puppetry', curse: 'Cursed Seal' })[u] ?? u).join(', ')}` : '',
+    d.unlocks.length ? `§lArts:§r ${d.unlocks.map((u) => ({ clay: 'Explosion Release', puppet: 'Puppetry', curse: 'Cursed Seal', code: 'White Karma' })[u] ?? u).join(', ')}` : '',
     `§lNindo:§r ${d.nindo ? `${NINDO[d.nindo].color}${NINDO[d.nindo].name}§r · Resolve ${Math.floor(d.resolve)}/${RESOLVE_MAX}` : 'not chosen'}${d.innerPeace ? ' · §fInner Peace' : ''}`,
     '',
     `§7Jutsu learned: ${d.learned.length} · casts: ${d.casts} · defeated: ${d.kills} · missions: ${d.missionsDone} · rerolls: ${d.rerolls}`,
@@ -349,7 +349,7 @@ async function nindoMenu(p) {
       d.nindo ? '§7Choosing a different way resets your Resolve.' : '',
     ].filter(Boolean).join('\n'))
     .button('§lBack');
-  for (const k of NINDO_KEYS) form.button(`${d.nindo === k ? '§6» ' : NINDO[k].color}${NINDO[k].name}\n§8${NINDO[k].who}`);
+  for (const k of NINDO_KEYS) form.button(`${d.nindo === k ? '§6» ' : NINDO[k].color}${NINDO[k].name}\n§8${NINDO[k].who}${NINDO[k].era ? ` · ${NINDO[k].era} era` : ''}`);
   const res = await show(form, p);
   if (!res || res.canceled) return;
   if (!res.selection) return innerPathMenu(p);
@@ -493,6 +493,14 @@ const CODEX = [
     'The §3Shinobi Journal§r is a private daily page: how your chakra feels, what you train today, and one small intention. Two focuses together make a mixed thought.',
     'The Waterfall of Truth: sneak and be still beside a tall waterfall. Your dark reflection cannot be beaten by force. Stay calm, and do not strike.',
     'Shinobi carry heavy things; so do people. If something outside the game feels too heavy, talk to someone you trust. If you might be in danger, contact your local emergency number or a crisis line.',
+  ]],
+  ['Boruto: Code & the Kara', [
+    'Defeat Jigen and he becomes §5Isshiki Otsutsuki§r below 30% health: Sukunahikona stakes and bigger Daikokuten strikes. He drops a §fKara Inner Mark§r.',
+    'Use the Kara Inner Mark (or craft one: Kara Ring, Chakra Crystals, Obsidian) to face §fCode§r. He blinks through claw marks, summons Claw Grime and tears off his limiters at half health.',
+    'Code drops the §fWhite Karma Seal§r: Claw Marks (carve a mark, cast again to vanish to it), White Karma: Limiter Release and Claw Grime summons.',
+    'Wild Claw Grime roam at night and devour the chakra of anyone they claw.',
+    'New for everyone: Wind Style: Gale Palm (Boruto, Genin) and Lightning Style: Purple Lightning (Kakashi, Jonin).',
+    'Two Boruto-era Nindo: Protect the Village from the Shadows (Boruto) and I Will Become Hokage (Sarada).',
   ]],
   ['Commands (operators)', [
     '/scriptevent shinobi:admin help — list admin commands.',

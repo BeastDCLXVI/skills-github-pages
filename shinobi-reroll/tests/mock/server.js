@@ -542,6 +542,11 @@ export const world = {
     guard('world.getAbsoluteTime');
     return 1000000 + system.currentTick;
   },
+  timeOfDay: 6000,
+  getTimeOfDay() {
+    guard('world.getTimeOfDay');
+    return this.timeOfDay;
+  },
   getEntity(id) {
     guard('world.getEntity');
     for (const d of Object.values(dims)) if (d.entities.has(id)) return d.entities.get(id);

@@ -794,3 +794,21 @@ def journal() -> Image.Image:
     pal = {"o": OUT, "s": hexc("#2a4a2a"), "b": hexc("#3f6f3a"), "l": hexc("#5a8f4a"), "y": hexc("#e8c65a"),
            "d": hexc("#a8862a"), "p": hexc("#efe3c2"), "r": hexc("#c0262b")}
     return sprite(rows, pal)
+
+
+def kara_inner_mark() -> Image.Image:
+    """v1.3: Kara Inner Mark: a dark disc torn by three white claw slashes."""
+    glyph = ["..o.o", ".o.o.", ".o.o.", "o.o..", "o...."]
+    return chakra_orb("#2a2430", glyph=glyph, glyph_color="#f4f0e8", rim="#8a7a9a")
+
+
+def white_karma_seal() -> Image.Image:
+    """v1.3: the White Karma, a pale version of the Karma seal."""
+    img = karma_seal()
+    px = img.load()
+    swap = {hexc("#6b2d8f"): hexc("#8a8478"), hexc("#141018"): hexc("#f2eee6"), hexc("#b46cf0"): hexc("#1a1820")}
+    for y in range(img.height):
+        for x in range(img.width):
+            if px[x, y] in swap:
+                px[x, y] = swap[px[x, y]]
+    return img

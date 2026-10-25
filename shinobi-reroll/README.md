@@ -2,16 +2,17 @@
 
 A full-scale **Bedrock add-on (`.mcaddon`)** that rebuilds the Java-edition Naruto/Boruto mod
 experience (Forge / NeoForge / Fabric / LiteLoader, Mixin-based) natively on the Bedrock Script API.
-It includes chakra, ranks, **clan rerolls**, nature releases and kekkei genkai, **96 jutsu**, dojutsu
+It includes chakra, ranks, **clan rerolls**, nature releases and kekkei genkai, **101 jutsu**, dojutsu
 evolution, all nine tailed beasts plus the Ten-Tails, Akatsuki and Otsutsuki bosses, the Karma, a
 **mission board with a Ryo economy**, village blueprints, ninja tools, legendary swords and pills, and
-**the Inner Path**: your Nindo, Resolve, bonds, a private journal and the Waterfall of Truth.
+**the Inner Path**: your Nindo, Resolve, bonds, a private journal and the Waterfall of Truth. v1.3 adds the
+**Boruto era** (Code, Claw Grime, Isshiki) and **HD textures** throughout.
 
 > Unofficial fan work. *Naruto* and *Boruto* belong to Masashi Kishimoto / Shueisha / Studio Pierrot.
 > This project is not affiliated with them, Mojang or Microsoft. All code and every texture and model
 > here is original: generated procedurally by `tools/gen`. No code or assets from existing mods are used.
 
-**Download:** [`dist/ShinobiReroll-v1.2.0.mcaddon`](dist/ShinobiReroll-v1.2.0.mcaddon), with separate
+**Download:** [`dist/ShinobiReroll-v1.3.0.mcaddon`](dist/ShinobiReroll-v1.3.0.mcaddon), with separate
 `.mcpack` files alongside it.
 **Requires:** Minecraft Bedrock **1.21.90 or newer** (Script API `@minecraft/server` 2.0.0, stable).
 No experimental toggles.
@@ -125,7 +126,7 @@ guaranteed Rare or better. Clan-only techniques you lose are refunded as Jutsu P
 Naruto is a story about loneliness, bonds and the promises people live by. v1.2 builds that into play
 (Shinobi Scroll › **Inner Path**):
 
-* **Nindo (ninja way).** Swear one of six vows, in your own words if you like. Each grants a boon and
+* **Nindo (ninja way).** Swear one of eight vows (two from the Boruto era), in your own words if you like. Each grants a boon and
   builds **Resolve** when you live by it. You can change it every three in-game days, but that resets Resolve.
 
   | Nindo | Boon | Resolve grows when you… |
@@ -136,6 +137,8 @@ Naruto is a story about loneliness, bonds and the promises people live by. v1.2 
   | Forge My Own Path (Neji) | double casting XP, Training Post until Sannin | practise and learn jutsu |
   | Break the Cycle of Hatred (Jiraiya) | seal beasts below 40%, faster meditation | meditate, seal tailed beasts |
   | Surpass My Limits (Rock Lee) | Eight Gates −25% health cost, taijutsu −15% chakra | train, use taijutsu |
+  | Protect the Village from the Shadows (Boruto) | Speed + Strength when an ally near you is hurt | defeat hostile creatures at night, aid allies |
+  | I Will Become Hokage (Sarada) | +10% XP, +1 extra JP per rank-up | rank up, complete missions, keep your journal |
 
 * **Unbreakable Will.** At 100 Resolve, the next blow that drops you below 20% health lifts you back to 60%
   ("I won't give up!") and costs 50 Resolve.
@@ -152,6 +155,39 @@ Naruto is a story about loneliness, bonds and the promises people live by. v1.2 
   waterfall. Your **Dark Reflection** steps out. It cannot be harmed, and every strike makes it stronger
   and angrier. Stay calm for 20 seconds while it whispers, and you gain **Inner Peace**: +3 JP, faster
   chakra and doubled tailed-beast sync.
+
+## Boruto: Code & the Kara (v1.3)
+
+* **Isshiki Otsutsuki.** Below 30% health, Jigen's vessel cracks and Isshiki takes over. He heals, hits
+  harder, fires Sukunahikona stakes that swell on impact, and widens his Daikokuten strikes. He drops a
+  **Kara Inner Mark**.
+* **Code** (use a Kara Inner Mark; craft one from a Kara Ring, Chakra Crystals and Obsidian). He carves claw
+  marks around you and blinks through them, delivers White Karma strikes and summons Claw Grime. At half
+  health he tears off his limiters. He drops the **White Karma Seal**.
+* **Claw Grime.** Black long-clawed beasts that roam at night (normal difficulty and above) and devour the
+  chakra of anyone they claw.
+* **New jutsu** (101 total):
+  * Wind Style: Gale Palm (Boruto's opener, Genin)
+  * Lightning Style: Purple Lightning (Kakashi, Jonin; chains to two more enemies)
+  * From the White Karma Seal: **Claw Marks** (carve a mark, cast again to vanish to it, slashing everything
+    in between), **White Karma: Limiter Release** and **Claw Grime** summons.
+* Missions: B-rank Claw Grime hunts and an S-rank bounty on Code.
+
+## HD textures (v1.3)
+
+Every texture is still *designed* at classic resolution, then rendered in HD by a material-aware renderer
+(`tools/gen/hd.py`):
+
+* **Skins** are 4× (256×256): the head is a **32×32×32-texel** cube. Each low-res pixel knows its material,
+  so the skins get hair strands, cloth weave, brushed-steel headband plates and soft face shading.
+* Eyes (Sharingan tomoe, Byakugan, Rinnegan rings), the village crest, whiskers and Akatsuki clouds are
+  redrawn natively at full resolution.
+* **Icons** and projectiles are 32×32 (Scale2x plus a light bevel). **Blocks** are drawn natively at 32×32.
+* **Tailed beasts and summons** are 2×, with fur, scales or wood grain depending on the creature.
+* **Armor layers** are 4×.
+
+Bedrock samples entity textures by normalised UVs, so the vanilla 64×64 humanoid geometry carries the HD
+skins unchanged. The validator accepts any power-of-two multiple of a geometry's texture size.
 
 ## Tools, weapons, food
 
@@ -186,14 +222,15 @@ NPCs: **Leaf Shinobi** (tame with ramen; they fight and throw shuriken for you),
 | Explosive Clay ×4 | Clay Ball + Gunpowder + Chakra Crystal |
 | Kiba · Nuibari · Shibuki · Hiramekarei | Iron sword(s) + Lightning Rod / String / Explosive Tags / Prismarine Crystals + Chakra Crystal Block |
 | Shinobi Journal | Book + Chakra Crystal |
+| Kara Inner Mark | Kara Ring, 4 Chakra Crystals, 4 Obsidian |
 
-All 47 recipes appear in the recipe book once you hold an ingredient.
+All 48 recipes appear in the recipe book once you hold an ingredient.
 
 ## Operator commands
 
 `/scriptevent shinobi:admin help`. Examples: `xp 500`, `rank 3`, `clan uchiha`, `eye mangekyo`,
 `bijuu kurama`, `karma`, `ascend`, `eternal`, `contract snake`, `unlock clay`, `ryo 50`, `mission complete`,
-`learn all`, `nindo word`, `resolve 100`, `peace`, `journal` (new page today), `trial` (start the
+`learn all`, `unlock code`, `nindo shadow`, `resolve 100`, `peace`, `journal` (new page today), `trial` (start the
 Waterfall trial here), `reset`, `cleanup`. World rules: `griefing on|off`
 (jutsu explosions break blocks, off by default), `pvp on|off`, `npcjutsu on|off`, `xprate 2`.
 
@@ -205,17 +242,19 @@ Waterfall trial here), `reset`, `cleanup`. World rules: `griefing on|off`
 shinobi-reroll/
 ├─ src/scripts/        Script API gameplay (ES modules, type-checked JS)
 │  ├─ main.js          entry: wires every system
-│  ├─ jutsu/           96 jutsu in 7 files + registry/requirements
+│  ├─ jutsu/           101 jutsu in 8 files + registry/requirements
 │  ├─ casting.js       cast pipeline, hand seals, toggles, chakra regen, HUD
 │  ├─ store.js         persistent shinobi profiles (dynamic properties)
 │  ├─ missions.js      daily mission board, progress hooks, rewards
 │  ├─ innerpath.js     Nindo, Resolve, bonds, journal, Waterfall of Truth
+│  ├─ jutsu/boruto.js  Gale Palm, Purple Lightning, Code's arts
 │  ├─ shop.js          Ryo shop and buy-back
 │  ├─ builder.js       village blueprints
 │  ├─ rogues.js        Akatsuki / Sannin / Otsutsuki mini-boss AI
 │  └─ …                dojutsu, combat, bosses, npc, items, ui, terrain, admin
 ├─ tools/
 │  ├─ gen/             generator for every BP/RP file, model, texture, particle, recipe
+│  │  └─ hd.py         material-aware HD renderer (4x skins, 2x models, 32x icons)
 │  ├─ build.py         generate → validate → package dist/*.mcaddon
 │  ├─ validate.py      cross-reference + optional official-schema validation
 │  ├─ preview.py       software renderer for the generated models
@@ -239,11 +278,20 @@ See [docs/TRANSFORMATION.md](docs/TRANSFORMATION.md) for how each Java mod-loade
 layers do and don't prove.
 
 **Testing status:** the add-on is type-checked against the official API typings, smoke-tested
-(21 scenarios; every jutsu, item, menu, mission, shop, blueprint, AI loop and the Inner Path runs without errors against a mock API),
+(25 scenarios; every jutsu, item, menu, mission, shop, blueprint, AI loop, the Inner Path and the Boruto bosses run without errors against a mock API, and HD texture sizes are checked),
 cross-reference validated, and checked against Mojang's JSON schemas. It has **not** been play-tested in a live
 Minecraft client from the build environment, so please report anything that behaves differently in game.
 
 ## Changelog
+
+**1.3.0: Boruto & HD**
+* HD textures: 4× skins (32×32×32-texel heads) and armor, 2× creature textures, 32×32 icons and blocks, rendered
+  by a new material-aware HD renderer with natively redrawn eyes, crests, clouds and whiskers.
+* Code of the Kara Inner (boss), Claw Grime (mob and summon), and Jigen's phase two as Isshiki Otsutsuki.
+* Kara Inner Mark and White Karma Seal; Claw Marks, White Karma: Limiter Release, Claw Grime summons,
+  Gale Palm and Purple Lightning (101 jutsu).
+* Boruto-era Nindo: Protect the Village from the Shadows (Boruto) and I Will Become Hokage (Sarada).
+* Claw Grime hunts and a Code bounty on the mission board; a Boruto page in the Codex.
 
 **1.2.0: The Inner Path**
 * Nindo: six ninja ways with boons, optional private mottos and a three-day oath lock.
