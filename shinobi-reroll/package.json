@@ -1,0 +1,24 @@
+{
+  "name": "shinobi-reroll",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Naruto / Shippuden / Boruto themed Minecraft Bedrock add-on (.mcaddon) — a Java mod-loader concept rebuilt on the Bedrock Script API.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --import ./tests/register.mjs --test tests/smoke.test.mjs",
+    "docs": "node --import ./tests/register.mjs tools/catalogue.mjs > docs/JUTSU.md",
+    "build": "python3 tools/build.py",
+    "check": "npm run typecheck && npm test && python3 tools/build.py --check",
+    "preview": "python3 tools/preview.py build/model_preview.png"
+  },
+  "devDependencies": {
+    "@minecraft/server": "2.0.0",
+    "@minecraft/server-ui": "2.0.0",
+    "@minecraft/vanilla-data": "1.26.52",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
